@@ -6,8 +6,9 @@ import { Property, ChatMessage, ShortlistItem, GuestPreferences } from '@/types'
 import ChatPanel from '@/components/explore/ChatPanel';
 import MapPanel from '@/components/explore/MapPanel';
 import ShortlistPanel from '@/components/explore/ShortlistPanel';
+import OfferModal from '@/components/explore/OfferModal';
 import { Button } from '@/components/ui/button';
-import { MapPin, LogOut, Menu, X } from 'lucide-react';
+import { MapPin, LogOut, Menu } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
@@ -24,9 +25,12 @@ export default function Explore() {
   const [mapboxToken, setMapboxToken] = useState('');
   const [isMobileChatOpen, setIsMobileChatOpen] = useState(false);
   const [preferences, setPreferences] = useState<GuestPreferences>({
-    adults: 1,
+    adults: 2,
     children: 0,
   });
+  const [offerModalOpen, setOfferModalOpen] = useState(false);
+  const [offerProperty, setOfferProperty] = useState<Property | null>(null);
+  const [sentOfferIds, setSentOfferIds] = useState<string[]>([]);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -157,12 +161,13 @@ export default function Explore() {
     setShortlist(prev => prev.filter(item => item.property.id !== propertyId));
   };
 
-  const handleMakeOffer = () => {
-    // TODO: Navigate to offer page
-    toast({
-      title: 'Coming Soon',
-      description: 'The offer system will be implemented in the next phase.',
-    });
+  const handleMakeOffer = (property: Property) => {
+    setOfferProperty(property);
+    setOfferModalOpen(true);
+  };
+
+  const handleOfferSent = (propertyId: string) => {
+    setSentOfferIds((prev) => [...prev, propertyId]);
   };
 
   const handleSignOut = async () => {
@@ -210,6 +215,7 @@ export default function Explore() {
                   items={shortlist}
                   onRemove={handleRemoveFromShortlist}
                   onMakeOffer={handleMakeOffer}
+                  sentOfferIds={sentOfferIds}
                 />
               </div>
             </SheetContent>
@@ -237,6 +243,7 @@ export default function Explore() {
             items={shortlist}
             onRemove={handleRemoveFromShortlist}
             onMakeOffer={handleMakeOffer}
+            sentOfferIds={sentOfferIds}
           />
         </div>
 
@@ -257,10 +264,21 @@ export default function Explore() {
               items={shortlist}
               onRemove={handleRemoveFromShortlist}
               onMakeOffer={handleMakeOffer}
+              sentOfferIds={sentOfferIds}
             />
           </div>
         </div>
       </div>
+
+      {/* Offer Modal */}
+      <OfferModal
+        open={offerModalOpen}
+        onOpenChange={setOfferModalOpen}
+        property={offerProperty}
+        initialAdults={preferences.adults}
+        initialChildren={preferences.children}
+        onOfferSent={handleOfferSent}
+      />
     </div>
   );
 }
