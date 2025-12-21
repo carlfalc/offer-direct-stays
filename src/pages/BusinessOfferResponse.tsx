@@ -70,82 +70,158 @@ export default function BusinessOfferResponse() {
   }, [offerId, token, user]);
 
   const loadOffer = async () => {
+    // Validate offerId exists
     if (!offerId) {
-      setError('No offer ID provided');
+      console.error('Missing offer ID in URL params');
+      setError('Missing offer ID. Please check the link.');
       setLoading(false);
       return;
     }
 
-    // Build query
-    let query = supabase
-      .from('offers')
-      .select(`
-        id,
-        status,
-        offer_amount,
-        counter_amount,
-        adults,
-        children,
-        check_in_date,
-        check_out_date,
-        guest_notes,
-        response_token,
-        response_token_expires_at,
-        guest_user_id,
-        property:properties!inner(id, name, country),
-        room:rooms(id, name)
-      `)
-      .eq('id', offerId)
-      .single();
-
-    const { data, error: fetchError } = await query;
-
-    if (fetchError) {
-      console.error('Error loading offer:', fetchError);
-      setError('Could not load offer details. Please check the link.');
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(offerId)) {
+      console.error('Invalid offer ID format:', offerId);
+      setError('Invalid offer ID format. Please check the link.');
       setLoading(false);
       return;
     }
 
-    if (!data) {
-      setError('Offer not found');
-      setLoading(false);
-      return;
-    }
+    try {
+      let offerData: any = null;
+      let guestUserId: string | null = null;
 
-    // Validate token access
-    if (token) {
-      if (data.response_token !== token) {
-        setError('Invalid access token');
-        setLoading(false);
-        return;
+      // If token provided, use the secure RPC function
+      if (token) {
+        if (!uuidRegex.test(token)) {
+          console.error('Invalid token format:', token);
+          setError('Invalid access token format.');
+          setLoading(false);
+          return;
+        }
+
+        const { data: rpcData, error: rpcError } = await supabase
+          .rpc('get_offer_by_token', {
+            _offer_id: offerId,
+            _token: token,
+          });
+
+        if (rpcError) {
+          console.error('RPC error loading offer:', rpcError);
+          setError('Could not load offer details. Please check the link.');
+          setLoading(false);
+          return;
+        }
+
+        if (!rpcData || rpcData.length === 0) {
+          console.error('Offer not found or token expired/invalid');
+          setError('Offer not found or access link has expired.');
+          setLoading(false);
+          return;
+        }
+
+        const offer = rpcData[0];
+        guestUserId = offer.guest_user_id;
+
+        // Fetch property details
+        const { data: propData } = await supabase
+          .from('properties')
+          .select('id, name, country')
+          .eq('id', offer.property_id)
+          .single();
+
+        // Fetch room details if exists
+        let roomData = null;
+        if (offer.room_id) {
+          const { data: room } = await supabase
+            .from('rooms')
+            .select('id, name')
+            .eq('id', offer.room_id)
+            .single();
+          roomData = room;
+        }
+
+        offerData = {
+          ...offer,
+          property: propData,
+          room: roomData,
+        };
+      } else {
+        // No token - user must be logged in, use regular query
+        if (!user) {
+          navigate(`/auth?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`);
+          return;
+        }
+
+        const { data, error: fetchError } = await supabase
+          .from('offers')
+          .select(`
+            id,
+            status,
+            offer_amount,
+            counter_amount,
+            adults,
+            children,
+            check_in_date,
+            check_out_date,
+            guest_notes,
+            response_token,
+            response_token_expires_at,
+            guest_user_id,
+            property:properties!inner(id, name, country),
+            room:rooms(id, name)
+          `)
+          .eq('id', offerId)
+          .single();
+
+        if (fetchError) {
+          console.error('Error loading offer:', fetchError);
+          if (fetchError.code === 'PGRST116') {
+            setError('Offer not found or you do not have permission to view it.');
+          } else if (fetchError.code === '22P02') {
+            setError('Invalid offer ID format.');
+          } else {
+            setError('Could not load offer details. Please try again.');
+          }
+          setLoading(false);
+          return;
+        }
+
+        if (!data) {
+          setError('Offer not found');
+          setLoading(false);
+          return;
+        }
+
+        guestUserId = data.guest_user_id;
+        offerData = {
+          ...data,
+          property: data.property as OfferDetails['property'],
+          room: data.room as OfferDetails['room'],
+        };
       }
-      
-      if (data.response_token_expires_at && new Date(data.response_token_expires_at) < new Date()) {
-        setError('This link has expired');
-        setLoading(false);
-        return;
+
+      // Fetch guest profile
+      let profileData = null;
+      if (guestUserId) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('first_name')
+          .eq('user_id', guestUserId)
+          .maybeSingle();
+        profileData = profile;
       }
-    } else if (!user) {
-      // No token and not logged in
-      navigate(`/auth?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`);
-      return;
+
+      setOffer({
+        ...offerData,
+        guest_profile: profileData,
+      });
+      setLoading(false);
+    } catch (err) {
+      console.error('Unexpected error loading offer:', err);
+      setError('An unexpected error occurred. Please try again.');
+      setLoading(false);
     }
-
-    // Fetch guest profile
-    const { data: profileData } = await supabase
-      .from('profiles')
-      .select('first_name')
-      .eq('user_id', data.guest_user_id)
-      .single();
-
-    setOffer({
-      ...data,
-      property: data.property as OfferDetails['property'],
-      room: data.room as OfferDetails['room'],
-      guest_profile: profileData,
-    });
-    setLoading(false);
   };
 
   const handleAccept = async () => {

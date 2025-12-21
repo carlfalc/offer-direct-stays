@@ -506,6 +506,25 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_offer_by_token: {
+        Args: { _offer_id: string; _token: string }
+        Returns: {
+          adults: number
+          check_in_date: string
+          check_out_date: string
+          children: number
+          counter_amount: number
+          guest_notes: string
+          guest_user_id: string
+          id: string
+          offer_amount: number
+          property_id: string
+          response_token: string
+          response_token_expires_at: string
+          room_id: string
+          status: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
