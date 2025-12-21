@@ -520,6 +520,7 @@ export type Database = {
         | "declined"
         | "cancelled"
         | "confirmed"
+        | "submitted"
       property_type:
         | "hotel"
         | "motel"
@@ -664,6 +665,7 @@ export const Constants = {
         "declined",
         "cancelled",
         "confirmed",
+        "submitted",
       ],
       property_type: [
         "hotel",
