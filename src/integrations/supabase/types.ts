@@ -71,6 +71,7 @@ export type Database = {
           created_at: string
           fee_acknowledged: boolean
           id: string
+          payment_collection_method: string
           physical_address: string
           terms_accepted: boolean
           updated_at: string
@@ -90,6 +91,7 @@ export type Database = {
           created_at?: string
           fee_acknowledged?: boolean
           id?: string
+          payment_collection_method?: string
           physical_address: string
           terms_accepted?: boolean
           updated_at?: string
@@ -109,6 +111,7 @@ export type Database = {
           created_at?: string
           fee_acknowledged?: boolean
           id?: string
+          payment_collection_method?: string
           physical_address?: string
           terms_accepted?: boolean
           updated_at?: string
@@ -238,6 +241,11 @@ export type Database = {
           accessibility_needs: string | null
           adults: number
           amenities_required: string[] | null
+          bcf_amount: number | null
+          bcf_currency: string | null
+          bcf_paid_at: string | null
+          bcf_payment_status: string | null
+          bcf_stripe_payment_id: string | null
           check_in_date: string
           check_out_date: string
           children: number
@@ -258,6 +266,11 @@ export type Database = {
           accessibility_needs?: string | null
           adults?: number
           amenities_required?: string[] | null
+          bcf_amount?: number | null
+          bcf_currency?: string | null
+          bcf_paid_at?: string | null
+          bcf_payment_status?: string | null
+          bcf_stripe_payment_id?: string | null
           check_in_date: string
           check_out_date: string
           children?: number
@@ -278,6 +291,11 @@ export type Database = {
           accessibility_needs?: string | null
           adults?: number
           amenities_required?: string[] | null
+          bcf_amount?: number | null
+          bcf_currency?: string | null
+          bcf_paid_at?: string | null
+          bcf_payment_status?: string | null
+          bcf_stripe_payment_id?: string | null
           check_in_date?: string
           check_out_date?: string
           children?: number
