@@ -9,6 +9,8 @@ import Auth from "./pages/Auth";
 import Explore from "./pages/Explore";
 import OfferPayment from "./pages/OfferPayment";
 import OfferConfirmed from "./pages/OfferConfirmed";
+import BusinessClaim from "./pages/BusinessClaim";
+import BusinessOfferResponse from "./pages/BusinessOfferResponse";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +28,8 @@ const App = () => (
             <Route path="/explore" element={<Explore />} />
             <Route path="/offer-payment" element={<OfferPayment />} />
             <Route path="/offer-confirmed" element={<OfferConfirmed />} />
+            <Route path="/business/claim" element={<BusinessClaim />} />
+            <Route path="/business/offers/:offerId" element={<BusinessOfferResponse />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
