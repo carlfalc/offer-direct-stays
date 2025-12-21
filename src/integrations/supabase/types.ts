@@ -126,6 +126,7 @@ export type Database = {
           guest_user_id: string
           id: string
           is_unlocked: boolean
+          last_message_at: string | null
           offer_id: string
         }
         Insert: {
@@ -134,6 +135,7 @@ export type Database = {
           guest_user_id: string
           id?: string
           is_unlocked?: boolean
+          last_message_at?: string | null
           offer_id: string
         }
         Update: {
@@ -142,6 +144,7 @@ export type Database = {
           guest_user_id?: string
           id?: string
           is_unlocked?: boolean
+          last_message_at?: string | null
           offer_id?: string
         }
         Relationships: [

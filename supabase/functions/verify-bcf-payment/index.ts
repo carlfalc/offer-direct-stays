@@ -79,14 +79,17 @@ serve(async (req) => {
     if (updateError) throw new Error(`Error updating offer: ${updateError.message}`);
     logStep("Offer updated to confirmed", { offer_id });
 
-    // Create billable event for the business
+    // Fetch offer with property and business details
     const { data: offer } = await supabaseClient
       .from("offers")
-      .select("property_id, properties:property_id(business_id)")
+      .select("guest_user_id, property_id, properties:property_id(business_id, businesses:business_id(user_id))")
       .eq("id", offer_id)
       .single();
 
     const businessId = (offer?.properties as any)?.business_id;
+    const businessUserId = (offer?.properties as any)?.businesses?.user_id;
+    const guestUserId = offer?.guest_user_id;
+
     if (businessId) {
       const bcfAmount = parseFloat(session.metadata?.bcf_amount || "8.99");
       await supabaseClient.from("billable_events").insert({
@@ -98,16 +101,47 @@ serve(async (req) => {
       logStep("Billable event created", { business_id: businessId });
     }
 
-    // Unlock the conversation for two-way chat
-    const { error: convError } = await supabaseClient
+    // Create or update conversation for two-way chat
+    // First check if conversation exists
+    const { data: existingConv } = await supabaseClient
       .from("conversations")
-      .update({ is_unlocked: true })
-      .eq("offer_id", offer_id);
-    
-    if (convError) {
-      logStep("Warning: Could not unlock conversation", { error: convError.message });
+      .select("id")
+      .eq("offer_id", offer_id)
+      .maybeSingle();
+
+    if (existingConv) {
+      // Update existing conversation
+      const { error: convError } = await supabaseClient
+        .from("conversations")
+        .update({ 
+          is_unlocked: true,
+          business_user_id: businessUserId,
+          last_message_at: new Date().toISOString()
+        })
+        .eq("offer_id", offer_id);
+      
+      if (convError) {
+        logStep("Warning: Could not unlock conversation", { error: convError.message });
+      } else {
+        logStep("Conversation unlocked");
+      }
     } else {
-      logStep("Conversation unlocked");
+      // Create new conversation
+      const { error: convError } = await supabaseClient
+        .from("conversations")
+        .insert({
+          offer_id: offer_id,
+          guest_user_id: guestUserId,
+          business_user_id: businessUserId,
+          is_unlocked: true,
+          last_message_at: new Date().toISOString()
+        });
+      
+      if (convError) {
+        logStep("Warning: Could not create conversation", { error: convError.message });
+      } else {
+        logStep("Conversation created and unlocked");
+      }
     }
 
     return new Response(JSON.stringify({ 

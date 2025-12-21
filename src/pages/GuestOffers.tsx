@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { MapPin, Calendar, Users, Home, ArrowLeft } from 'lucide-react';
+import { MapPin, Calendar, Users, Home, ArrowLeft, MessageSquare } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface GuestOffer {
@@ -118,14 +118,20 @@ export default function GuestOffers() {
     <div className="min-h-screen bg-background">
       <div className="max-w-4xl mx-auto px-4 py-8">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/')}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">My Offers</h1>
-            <p className="text-muted-foreground">Track and manage your accommodation offers</p>
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" onClick={() => navigate('/explore')}>
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">My Offers</h1>
+              <p className="text-muted-foreground">Track and manage your accommodation offers</p>
+            </div>
           </div>
+          <Button variant="outline" onClick={() => navigate('/messages')}>
+            <MessageSquare className="h-4 w-4 mr-2" />
+            Messages
+          </Button>
         </div>
 
         {/* Content */}
