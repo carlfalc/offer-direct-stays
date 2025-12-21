@@ -182,4 +182,20 @@
     background: hsl(var(--border));
     border-radius: 3px;
   }
+
+  /* Subtle pulse animation for voice input */
+  .animate-pulse-subtle {
+    animation: pulse-subtle 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  @keyframes pulse-subtle {
+    0%, 100% {
+      opacity: 1;
+      box-shadow: 0 0 0 0 hsl(var(--primary) / 0.4);
+    }
+    50% {
+      opacity: 0.9;
+      box-shadow: 0 0 0 8px hsl(var(--primary) / 0);
+    }
+  }
 }

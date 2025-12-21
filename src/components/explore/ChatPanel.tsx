@@ -1,10 +1,11 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Send, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ChatMessage, Property, GuestPreferences } from '@/types';
 import PropertyCard from './PropertyCard';
+import VoiceMicButton from '@/components/VoiceMicButton';
 
 interface ChatPanelProps {
   messages: ChatMessage[];
@@ -22,6 +23,7 @@ export default function ChatPanel({
   shortlistedIds
 }: ChatPanelProps) {
   const [input, setInput] = useState('');
+  const [showVoiceHint, setShowVoiceHint] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -31,13 +33,26 @@ export default function ChatPanel({
     }
   }, [messages]);
 
+  // Hide voice hint after first message
+  useEffect(() => {
+    if (messages.length > 0) {
+      setShowVoiceHint(false);
+    }
+  }, [messages]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (input.trim() && !isLoading) {
       onSendMessage(input.trim());
       setInput('');
+      setShowVoiceHint(false);
     }
   };
+
+  const handleVoiceTranscript = useCallback((text: string) => {
+    setInput(text);
+    setShowVoiceHint(false);
+  }, []);
 
   return (
     <div className="flex flex-col h-full bg-card border-r border-border">
@@ -115,8 +130,19 @@ export default function ChatPanel({
       </ScrollArea>
 
       {/* Input */}
-      <form onSubmit={handleSubmit} className="p-4 border-t border-border">
-        <div className="flex gap-2">
+      <div className="p-4 border-t border-border space-y-2">
+        {/* Voice hint */}
+        {showVoiceHint && (
+          <p className="text-xs text-muted-foreground text-center">
+            Prefer to talk? Tap the mic and tell us what you need.
+          </p>
+        )}
+        
+        <form onSubmit={handleSubmit} className="flex gap-2">
+          <VoiceMicButton 
+            onTranscript={handleVoiceTranscript}
+            disabled={isLoading}
+          />
           <Input
             ref={inputRef}
             value={input}
@@ -133,8 +159,8 @@ export default function ChatPanel({
           >
             <Send className="h-4 w-4" />
           </Button>
-        </div>
-      </form>
+        </form>
+      </div>
     </div>
   );
 }
