@@ -121,6 +121,7 @@ export type Database = {
       }
       conversations: {
         Row: {
+          business_id: string | null
           business_user_id: string | null
           created_at: string
           guest_user_id: string
@@ -130,6 +131,7 @@ export type Database = {
           offer_id: string
         }
         Insert: {
+          business_id?: string | null
           business_user_id?: string | null
           created_at?: string
           guest_user_id: string
@@ -139,6 +141,7 @@ export type Database = {
           offer_id: string
         }
         Update: {
+          business_id?: string | null
           business_user_id?: string | null
           created_at?: string
           guest_user_id?: string
@@ -148,6 +151,13 @@ export type Database = {
           offer_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "conversations_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "conversations_offer_id_fkey"
             columns: ["offer_id"]

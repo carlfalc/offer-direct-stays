@@ -105,33 +105,55 @@ serve(async (req) => {
     // First check if conversation exists
     const { data: existingConv } = await supabaseClient
       .from("conversations")
-      .select("id")
+      .select("id, business_id, business_user_id")
       .eq("offer_id", offer_id)
       .maybeSingle();
 
+    const conversationData = {
+      is_unlocked: true,
+      business_id: businessId,
+      business_user_id: businessUserId,
+      guest_user_id: guestUserId,
+      last_message_at: new Date().toISOString()
+    };
+
     if (existingConv) {
-      // Update existing conversation
+      // Update existing conversation - fill in any missing fields
+      const updateData: any = { 
+        is_unlocked: true,
+        last_message_at: new Date().toISOString()
+      };
+      
+      // Only update business fields if they're not already set
+      if (!existingConv.business_id && businessId) {
+        updateData.business_id = businessId;
+      }
+      if (!existingConv.business_user_id && businessUserId) {
+        updateData.business_user_id = businessUserId;
+      }
+      
       const { error: convError } = await supabaseClient
         .from("conversations")
-        .update({ 
-          is_unlocked: true,
-          business_user_id: businessUserId,
-          last_message_at: new Date().toISOString()
-        })
+        .update(updateData)
         .eq("offer_id", offer_id);
       
       if (convError) {
         logStep("Warning: Could not unlock conversation", { error: convError.message });
       } else {
-        logStep("Conversation unlocked");
+        logStep("Conversation unlocked", { 
+          id: existingConv.id, 
+          business_id: businessId, 
+          business_user_id: businessUserId 
+        });
       }
     } else {
-      // Create new conversation
+      // Create new conversation with all fields
       const { error: convError } = await supabaseClient
         .from("conversations")
         .insert({
           offer_id: offer_id,
           guest_user_id: guestUserId,
+          business_id: businessId,
           business_user_id: businessUserId,
           is_unlocked: true,
           last_message_at: new Date().toISOString()
@@ -140,7 +162,12 @@ serve(async (req) => {
       if (convError) {
         logStep("Warning: Could not create conversation", { error: convError.message });
       } else {
-        logStep("Conversation created and unlocked");
+        logStep("Conversation created and unlocked", {
+          offer_id,
+          guest_user_id: guestUserId,
+          business_id: businessId,
+          business_user_id: businessUserId
+        });
       }
     }
 

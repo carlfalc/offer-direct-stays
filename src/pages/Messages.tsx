@@ -14,6 +14,7 @@ interface Conversation {
   offer_id: string;
   guest_user_id: string;
   business_user_id: string | null;
+  business_id: string | null;
   is_unlocked: boolean;
   last_message_at: string;
   created_at: string;
@@ -47,6 +48,15 @@ export default function Messages() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState<'guest' | 'business' | null>(null);
+  const [debugInfo, setDebugInfo] = useState<{
+    authUid: string;
+    role: string;
+    businessIds: string[];
+    totalConversations: number;
+    firstConversation: any;
+  } | null>(null);
+  
+  const isDev = import.meta.env.DEV;
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -75,7 +85,18 @@ export default function Messages() {
       const role = roleData?.role === 'business' ? 'business' : 'guest';
       setUserRole(role);
 
+      // For business users, also get their business IDs for fallback matching
+      let businessIds: string[] = [];
+      if (role === 'business') {
+        const { data: businessData } = await supabase
+          .from('businesses')
+          .select('id')
+          .eq('user_id', user.id);
+        businessIds = (businessData || []).map(b => b.id);
+      }
+
       // Fetch conversations where user is participant
+      // Include business_id in select for fallback matching
       const { data: convData, error: convError } = await supabase
         .from('conversations')
         .select(`
@@ -83,11 +104,11 @@ export default function Messages() {
           offer_id,
           guest_user_id,
           business_user_id,
+          business_id,
           is_unlocked,
           last_message_at,
           created_at
         `)
-        .or(`guest_user_id.eq.${user.id},business_user_id.eq.${user.id}`)
         .order('last_message_at', { ascending: false });
 
       if (convError) {
@@ -96,7 +117,37 @@ export default function Messages() {
         return;
       }
 
-      if (!convData || convData.length === 0) {
+      // Debug logging and state
+      const debugData = {
+        authUid: user.id,
+        role,
+        businessIds,
+        totalConversations: convData?.length || 0,
+        firstConversation: convData?.[0] ? {
+          id: convData[0].id,
+          offer_id: convData[0].offer_id,
+          business_user_id: convData[0].business_user_id,
+          business_id: convData[0].business_id,
+          guest_user_id: convData[0].guest_user_id,
+          is_unlocked: convData[0].is_unlocked
+        } : null
+      };
+      console.log('[Messages Debug]', debugData);
+      setDebugInfo(debugData);
+
+      // Filter conversations client-side for proper matching
+      // (RLS should handle this, but we filter for clarity)
+      const filteredConvData = (convData || []).filter(conv => {
+        if (role === 'guest') {
+          return conv.guest_user_id === user.id;
+        } else {
+          // Business: match by business_user_id OR business_id
+          return conv.business_user_id === user.id || 
+                 (conv.business_id && businessIds.includes(conv.business_id));
+        }
+      });
+
+      if (filteredConvData.length === 0) {
         setConversations([]);
         setLoading(false);
         return;
@@ -104,7 +155,7 @@ export default function Messages() {
 
       // Fetch related offer and property data
       const conversationsWithDetails = await Promise.all(
-        convData.map(async (conv) => {
+        filteredConvData.map(async (conv) => {
           // Get offer with property
           const { data: offerData } = await supabase
             .from('offers')
@@ -302,6 +353,29 @@ export default function Messages() {
                 </div>
               </Card>
             ))}
+          </div>
+        )}
+
+        {/* Dev-only debug panel */}
+        {isDev && debugInfo && (
+          <div className="mt-8 p-4 bg-muted/50 border border-border rounded-lg text-xs font-mono">
+            <h4 className="font-semibold mb-2 text-foreground">🔧 Messages Debug Panel (dev only)</h4>
+            <div className="space-y-1 text-muted-foreground">
+              <p><span className="text-foreground">auth.uid:</span> {debugInfo.authUid}</p>
+              <p><span className="text-foreground">role:</span> {debugInfo.role}</p>
+              <p><span className="text-foreground">businessIds:</span> {debugInfo.businessIds.join(', ') || 'none'}</p>
+              <p><span className="text-foreground">conversations found:</span> {debugInfo.totalConversations}</p>
+              {debugInfo.firstConversation && (
+                <div className="mt-2 p-2 bg-background rounded">
+                  <p className="text-foreground mb-1">First conversation:</p>
+                  <p>offer_id: {debugInfo.firstConversation.offer_id}</p>
+                  <p>business_user_id: {debugInfo.firstConversation.business_user_id || 'null'}</p>
+                  <p>business_id: {debugInfo.firstConversation.business_id || 'null'}</p>
+                  <p>guest_user_id: {debugInfo.firstConversation.guest_user_id}</p>
+                  <p>is_unlocked: {String(debugInfo.firstConversation.is_unlocked)}</p>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </main>
