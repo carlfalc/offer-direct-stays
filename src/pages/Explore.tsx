@@ -195,6 +195,14 @@ export default function Explore() {
         </div>
         
         <div className="flex items-center gap-2">
+          {/* Navigation links */}
+          <Button variant="ghost" size="sm" onClick={() => navigate('/offers')} className="hidden sm:flex">
+            My Offers
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => navigate('/messages')} className="hidden sm:flex">
+            Messages
+          </Button>
+          
           {/* Mobile chat toggle */}
           <Sheet open={isMobileChatOpen} onOpenChange={setIsMobileChatOpen}>
             <SheetTrigger asChild>

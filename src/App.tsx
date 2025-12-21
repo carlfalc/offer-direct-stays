@@ -13,6 +13,8 @@ import BusinessClaim from "./pages/BusinessClaim";
 import BusinessOfferResponse from "./pages/BusinessOfferResponse";
 import GuestOffers from "./pages/GuestOffers";
 import BusinessDashboard from "./pages/BusinessDashboard";
+import Messages from "./pages/Messages";
+import Conversation from "./pages/Conversation";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +36,8 @@ const App = () => (
             <Route path="/business/offers/:offerId" element={<BusinessOfferResponse />} />
             <Route path="/business/dashboard" element={<BusinessDashboard />} />
             <Route path="/offers" element={<GuestOffers />} />
+            <Route path="/messages" element={<Messages />} />
+            <Route path="/messages/:conversationId" element={<Conversation />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
