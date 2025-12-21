@@ -258,6 +258,7 @@ export type Database = {
           payment_confirmed: boolean | null
           property_id: string
           response_token: string | null
+          response_token_expires_at: string | null
           room_id: string | null
           status: Database["public"]["Enums"]["offer_status"]
           updated_at: string
@@ -283,6 +284,7 @@ export type Database = {
           payment_confirmed?: boolean | null
           property_id: string
           response_token?: string | null
+          response_token_expires_at?: string | null
           room_id?: string | null
           status?: Database["public"]["Enums"]["offer_status"]
           updated_at?: string
@@ -308,6 +310,7 @@ export type Database = {
           payment_confirmed?: boolean | null
           property_id?: string
           response_token?: string | null
+          response_token_expires_at?: string | null
           room_id?: string | null
           status?: Database["public"]["Enums"]["offer_status"]
           updated_at?: string
