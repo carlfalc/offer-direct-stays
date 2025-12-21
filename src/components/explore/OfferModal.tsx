@@ -145,7 +145,7 @@ export default function OfferModal({
       check_in_date: checkInDate,
       check_out_date: checkOutDate,
       guest_notes: requirements.trim() || null,
-      status: 'pending',
+      status: 'submitted',
       bcf_payment_status: 'pending',
       bcf_currency: currency,
       bcf_amount: bcfAmount,
