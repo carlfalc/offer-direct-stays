@@ -1,1 +1,7 @@
 project_id = "ymxhuosifhfjroeirjpn"
+
+[functions.create-bcf-payment]
+verify_jwt = false
+
+[functions.verify-bcf-payment]
+verify_jwt = false
