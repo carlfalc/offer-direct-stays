@@ -186,9 +186,9 @@ export default function Explore() {
   const shortlistedIds = shortlist.map(item => item.property.id);
 
   return (
-    <div className="h-screen flex flex-col bg-background">
+    <div className="h-screen flex flex-col bg-background overflow-hidden">
       {/* Header */}
-      <header className="h-14 border-b border-border bg-card flex items-center justify-between px-4 flex-shrink-0">
+      <header className="h-14 border-b border-border bg-card flex items-center justify-between px-4 flex-shrink-0 z-10">
         <div className="flex items-center gap-2">
           <MapPin className="h-5 w-5 text-primary" />
           <span className="font-semibold text-foreground">findastay</span>
@@ -228,27 +228,31 @@ export default function Explore() {
         </div>
       </header>
 
-      {/* Main content */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Chat panel - desktop */}
-        <div className="hidden lg:flex lg:flex-col lg:w-[400px] xl:w-[450px] flex-shrink-0">
-          <ChatPanel
-            messages={messages}
-            onSendMessage={handleSendMessage}
-            isLoading={isLoading}
-            onPropertySelect={handlePropertySelect}
-            shortlistedIds={shortlistedIds}
-          />
-          <ShortlistPanel
-            items={shortlist}
-            onRemove={handleRemoveFromShortlist}
-            onMakeOffer={handleMakeOffer}
-            sentOfferIds={sentOfferIds}
-          />
+      {/* Main content - 2 column layout */}
+      <div className="flex-1 flex min-h-0">
+        {/* Left column: Chat panel - desktop only */}
+        <div className="hidden lg:flex lg:flex-col w-[400px] xl:w-[450px] flex-shrink-0 border-r border-border overflow-hidden">
+          <div className="flex-1 min-h-0 overflow-hidden">
+            <ChatPanel
+              messages={messages}
+              onSendMessage={handleSendMessage}
+              isLoading={isLoading}
+              onPropertySelect={handlePropertySelect}
+              shortlistedIds={shortlistedIds}
+            />
+          </div>
+          <div className="flex-shrink-0">
+            <ShortlistPanel
+              items={shortlist}
+              onRemove={handleRemoveFromShortlist}
+              onMakeOffer={handleMakeOffer}
+              sentOfferIds={sentOfferIds}
+            />
+          </div>
         </div>
 
-        {/* Map panel */}
-        <div className="flex-1 relative">
+        {/* Right column: Map panel */}
+        <div className="flex-1 relative min-w-0">
           <MapPanel
             properties={properties}
             selectedPropertyId={selectedPropertyId}
@@ -259,7 +263,7 @@ export default function Explore() {
           />
           
           {/* Mobile shortlist bar */}
-          <div className="lg:hidden absolute bottom-0 left-0 right-0">
+          <div className="lg:hidden absolute bottom-0 left-0 right-0 z-10">
             <ShortlistPanel
               items={shortlist}
               onRemove={handleRemoveFromShortlist}
