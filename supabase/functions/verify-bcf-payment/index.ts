@@ -117,7 +117,11 @@ serve(async (req) => {
       last_message_at: new Date().toISOString()
     };
 
+    let conversationId: string | null = null;
+    const systemMessage = "Booking confirmed ✅ You can now message the property directly here.";
+
     if (existingConv) {
+      conversationId = existingConv.id;
       // Update existing conversation - fill in any missing fields
       const updateData: any = { 
         is_unlocked: true,
@@ -148,7 +152,7 @@ serve(async (req) => {
       }
     } else {
       // Create new conversation with all fields
-      const { error: convError } = await supabaseClient
+      const { data: newConv, error: convError } = await supabaseClient
         .from("conversations")
         .insert({
           offer_id: offer_id,
@@ -157,17 +161,51 @@ serve(async (req) => {
           business_user_id: businessUserId,
           is_unlocked: true,
           last_message_at: new Date().toISOString()
-        });
+        })
+        .select("id")
+        .single();
       
       if (convError) {
         logStep("Warning: Could not create conversation", { error: convError.message });
       } else {
+        conversationId = newConv?.id || null;
         logStep("Conversation created and unlocked", {
           offer_id,
+          conversation_id: conversationId,
           guest_user_id: guestUserId,
           business_id: businessId,
           business_user_id: businessUserId
         });
+      }
+    }
+
+    // Insert system message if conversation exists and no system message yet
+    if (conversationId && guestUserId) {
+      // Check if system message already exists
+      const { data: existingMsg } = await supabaseClient
+        .from("messages")
+        .select("id")
+        .eq("conversation_id", conversationId)
+        .eq("content", systemMessage)
+        .maybeSingle();
+
+      if (!existingMsg) {
+        const { error: msgError } = await supabaseClient
+          .from("messages")
+          .insert({
+            conversation_id: conversationId,
+            sender_user_id: guestUserId,
+            content: systemMessage,
+            is_read: false
+          });
+
+        if (msgError) {
+          logStep("Warning: Could not insert system message", { error: msgError.message });
+        } else {
+          logStep("System message inserted", { conversation_id: conversationId });
+        }
+      } else {
+        logStep("System message already exists", { conversation_id: conversationId });
       }
     }
 
