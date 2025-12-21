@@ -6,9 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { MapPin, Calendar, Users, Home, ArrowLeft, MessageSquare } from 'lucide-react';
-import { format } from 'date-fns';
-
+import { MapPin, Calendar, Users, Home, ArrowLeft, MessageSquare, FlaskConical } from 'lucide-react';
+import { format, addDays } from 'date-fns';
+import { toast } from 'sonner';
 interface GuestOffer {
   id: string;
   offer_amount: number;
@@ -48,6 +48,8 @@ export default function GuestOffers() {
   const [offers, setOffers] = useState<GuestOffer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedOfferId, setSelectedOfferId] = useState<string | null>(null);
+  const [demoLoading, setDemoLoading] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -102,6 +104,195 @@ export default function GuestOffers() {
     }
   }, [user]);
 
+  // Demo Tool Functions (dev only)
+  const createDemoOffer = async () => {
+    if (!user) return;
+    setDemoLoading('create');
+    try {
+      // Get first demo property + room
+      const { data: property } = await supabase
+        .from('properties')
+        .select('id')
+        .limit(1)
+        .single();
+
+      if (!property) {
+        toast.error('No demo property found');
+        return;
+      }
+
+      const { data: room } = await supabase
+        .from('rooms')
+        .select('id')
+        .eq('property_id', property.id)
+        .limit(1)
+        .single();
+
+      const { data: offer, error } = await supabase
+        .from('offers')
+        .insert({
+          guest_user_id: user.id,
+          property_id: property.id,
+          room_id: room?.id || null,
+          offer_amount: 150,
+          check_in_date: format(addDays(new Date(), 7), 'yyyy-MM-dd'),
+          check_out_date: format(addDays(new Date(), 10), 'yyyy-MM-dd'),
+          adults: 2,
+          children: 0,
+          status: 'submitted',
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      toast.success('Demo offer created');
+      setSelectedOfferId(offer.id);
+      // Reload offers
+      window.location.reload();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to create demo offer');
+    } finally {
+      setDemoLoading(null);
+    }
+  };
+
+  const simulateBusinessAccept = async () => {
+    if (!selectedOfferId) {
+      toast.error('Select an offer first (click on an offer card)');
+      return;
+    }
+    setDemoLoading('accept');
+    try {
+      const { error } = await supabase
+        .from('offers')
+        .update({ status: 'accepted' })
+        .eq('id', selectedOfferId);
+
+      if (error) throw error;
+      toast.success('Offer accepted');
+      window.location.reload();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to accept offer');
+    } finally {
+      setDemoLoading(null);
+    }
+  };
+
+  const simulateConfirmed = async () => {
+    if (!selectedOfferId) {
+      toast.error('Select an offer first (click on an offer card)');
+      return;
+    }
+    setDemoLoading('confirm');
+    try {
+      // Update offer to confirmed
+      const { error: offerError } = await supabase
+        .from('offers')
+        .update({ 
+          status: 'confirmed',
+          bcf_payment_status: 'paid',
+          bcf_paid_at: new Date().toISOString()
+        })
+        .eq('id', selectedOfferId);
+
+      if (offerError) throw offerError;
+
+      // Get offer details
+      const { data: offer } = await supabase
+        .from('offers')
+        .select('guest_user_id, property_id')
+        .eq('id', selectedOfferId)
+        .single();
+
+      if (!offer) throw new Error('Offer not found');
+
+      // Get property business_id
+      const { data: property } = await supabase
+        .from('properties')
+        .select('business_id')
+        .eq('id', offer.property_id)
+        .single();
+
+      // Get business owner user_id
+      let businessUserId: string | null = null;
+      if (property?.business_id) {
+        const { data: business } = await supabase
+          .from('businesses')
+          .select('user_id')
+          .eq('id', property.business_id)
+          .single();
+        businessUserId = business?.user_id || null;
+      }
+
+      // Check for existing conversation
+      const { data: existingConv } = await supabase
+        .from('conversations')
+        .select('id')
+        .eq('offer_id', selectedOfferId)
+        .maybeSingle();
+
+      let conversationId: string | null = null;
+      const systemMessage = "Booking confirmed ✅ You can now message the property directly here.";
+
+      if (existingConv) {
+        conversationId = existingConv.id;
+        await supabase
+          .from('conversations')
+          .update({
+            is_unlocked: true,
+            business_id: property?.business_id || null,
+            business_user_id: businessUserId,
+            last_message_at: new Date().toISOString()
+          })
+          .eq('id', conversationId);
+      } else {
+        const { data: newConv, error: convError } = await supabase
+          .from('conversations')
+          .insert({
+            offer_id: selectedOfferId,
+            guest_user_id: offer.guest_user_id,
+            business_id: property?.business_id || null,
+            business_user_id: businessUserId,
+            is_unlocked: true,
+            last_message_at: new Date().toISOString()
+          })
+          .select('id')
+          .single();
+
+        if (convError) throw convError;
+        conversationId = newConv?.id || null;
+      }
+
+      // Insert system message if conversation exists
+      if (conversationId) {
+        const { data: existingMsg } = await supabase
+          .from('messages')
+          .select('id')
+          .eq('conversation_id', conversationId)
+          .eq('content', systemMessage)
+          .maybeSingle();
+
+        if (!existingMsg) {
+          await supabase
+            .from('messages')
+            .insert({
+              conversation_id: conversationId,
+              sender_user_id: offer.guest_user_id,
+              content: systemMessage,
+              is_read: false
+            });
+        }
+      }
+
+      toast.success('Offer confirmed + conversation unlocked');
+      window.location.reload();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to confirm offer');
+    } finally {
+      setDemoLoading(null);
+    }
+  };
+
   if (authLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -133,6 +324,56 @@ export default function GuestOffers() {
             Messages
           </Button>
         </div>
+
+        {/* Demo Tools Panel (dev only) */}
+        {import.meta.env.DEV && (
+          <Card className="mb-6 border-dashed border-2 border-amber-500/50 bg-amber-500/5">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2 text-amber-600">
+                <FlaskConical className="h-4 w-4" />
+                Demo Tools (dev only)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-2">
+              <div className="flex flex-wrap gap-2">
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={createDemoOffer}
+                  disabled={demoLoading !== null}
+                >
+                  {demoLoading === 'create' ? 'Creating...' : 'A) Create Demo Offer'}
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={simulateBusinessAccept}
+                  disabled={demoLoading !== null || !selectedOfferId}
+                >
+                  {demoLoading === 'accept' ? 'Accepting...' : 'B) Simulate Business Accept'}
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={simulateConfirmed}
+                  disabled={demoLoading !== null || !selectedOfferId}
+                >
+                  {demoLoading === 'confirm' ? 'Confirming...' : 'C) Simulate Confirmed (unlock chat)'}
+                </Button>
+              </div>
+              {selectedOfferId && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  Selected offer: {selectedOfferId.slice(0, 8)}...
+                </p>
+              )}
+              {!selectedOfferId && offers.length > 0 && (
+                <p className="text-xs text-amber-600 mt-2">
+                  Click an offer card to select it for B & C actions
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Content */}
         {loading ? (
@@ -180,9 +421,14 @@ export default function GuestOffers() {
               const status = statusConfig[offer.status] || statusConfig.submitted;
               const checkIn = new Date(offer.check_in_date);
               const checkOut = new Date(offer.check_out_date);
+              const isSelected = selectedOfferId === offer.id;
 
               return (
-                <Card key={offer.id} className="hover:shadow-md transition-shadow">
+                <Card 
+                  key={offer.id} 
+                  className={`hover:shadow-md transition-shadow cursor-pointer ${isSelected ? 'ring-2 ring-primary' : ''}`}
+                  onClick={() => setSelectedOfferId(offer.id)}
+                >
                   <CardContent className="p-6">
                     <div className="flex flex-col sm:flex-row justify-between gap-4">
                       <div className="space-y-2 flex-1">
@@ -243,13 +489,13 @@ export default function GuestOffers() {
                         </Badge>
 
                         {offer.status === 'countered' && (
-                          <Button size="sm" variant="outline" onClick={() => navigate(`/offer-payment?offer_id=${offer.id}`)}>
+                          <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); navigate(`/offer-payment?offer_id=${offer.id}`); }}>
                             View Counter
                           </Button>
                         )}
 
                         {offer.status === 'accepted' && (
-                          <Button size="sm" onClick={() => navigate(`/offer-payment?offer_id=${offer.id}`)}>
+                          <Button size="sm" onClick={(e) => { e.stopPropagation(); navigate(`/offer-payment?offer_id=${offer.id}`); }}>
                             Pay to Confirm
                           </Button>
                         )}

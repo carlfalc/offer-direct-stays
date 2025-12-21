@@ -156,32 +156,20 @@ export default function MapPanel({
     }
   }, [properties, selectedPropertyId, shortlistedIds, isMapReady, onPropertySelect]);
 
-  // No token state
+  // No token state - show placeholder instead of blocking UI
   if (!mapboxToken) {
     return (
-      <div className="h-full flex items-center justify-center bg-muted/50 p-8">
-        <div className="max-w-md text-center space-y-4">
-          <h3 className="font-semibold text-lg">Map Setup Required</h3>
-          <p className="text-sm text-muted-foreground">
-            Enter your Mapbox public token to enable the map. You can find it at{' '}
-            <a 
-              href="https://mapbox.com" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-primary underline"
-            >
-              mapbox.com
-            </a>{' '}
-            in the Tokens section of your dashboard.
-          </p>
-          <div className="space-y-2 text-left">
-            <Label htmlFor="mapbox-token">Mapbox Public Token</Label>
-            <Input
-              id="mapbox-token"
-              placeholder="pk.eyJ1..."
-              onChange={(e) => onTokenChange(e.target.value)}
-            />
+      <div className="h-full flex flex-col items-center justify-center bg-muted/30 p-8 border-l border-border">
+        <div className="text-center space-y-3 max-w-xs">
+          <div className="w-16 h-16 mx-auto bg-muted rounded-full flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+            </svg>
           </div>
+          <h3 className="font-semibold text-foreground">Map preview (coming soon)</h3>
+          <p className="text-sm text-muted-foreground">
+            Add your Mapbox token in Settings to enable the 3D map.
+          </p>
         </div>
       </div>
     );
