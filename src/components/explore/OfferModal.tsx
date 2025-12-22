@@ -172,7 +172,8 @@ export default function OfferModal({
     onOpenChange(false);
   };
 
-  const ModalContent = () => (
+  // Inline JSX to prevent remount on state changes (fixes scroll jump)
+  const modalContent = (
     <ScrollArea className="max-h-[70vh] pr-4">
       <div className="space-y-6 py-4">
         {/* Property Header Block */}
@@ -331,7 +332,7 @@ export default function OfferModal({
     </ScrollArea>
   );
 
-  const ModalFooter = () => (
+  const modalFooter = (
     <div className="flex gap-3 pt-4 border-t border-border">
       <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
         Cancel
@@ -361,8 +362,8 @@ export default function OfferModal({
             </DrawerDescription>
           </DrawerHeader>
           <div className="px-4 pb-4">
-            <ModalContent />
-            <ModalFooter />
+            {modalContent}
+            {modalFooter}
           </div>
         </DrawerContent>
       </Drawer>
@@ -379,8 +380,8 @@ export default function OfferModal({
             booking commitment fee to confirm.
           </DialogDescription>
         </DialogHeader>
-        <ModalContent />
-        <ModalFooter />
+        {modalContent}
+        {modalFooter}
       </DialogContent>
     </Dialog>
   );
