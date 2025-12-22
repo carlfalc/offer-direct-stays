@@ -264,6 +264,7 @@ export type Database = {
           children: number
           counter_amount: number | null
           created_at: string
+          currency: string | null
           guest_notes: string | null
           guest_user_id: string
           id: string
@@ -290,6 +291,7 @@ export type Database = {
           children?: number
           counter_amount?: number | null
           created_at?: string
+          currency?: string | null
           guest_notes?: string | null
           guest_user_id: string
           id?: string
@@ -316,6 +318,7 @@ export type Database = {
           children?: number
           counter_amount?: number | null
           created_at?: string
+          currency?: string | null
           guest_notes?: string | null
           guest_user_id?: string
           id?: string
@@ -513,6 +516,35 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      watchlists: {
+        Row: {
+          created_at: string
+          id: string
+          property_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          property_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          property_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "watchlists_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

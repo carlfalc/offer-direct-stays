@@ -2,14 +2,16 @@ import { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Property } from '@/types';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { useTrip } from '@/contexts/TripContext';
+import { Lightbulb } from 'lucide-react';
 
 interface MapPanelProps {
   properties: Property[];
   selectedPropertyId: string | null;
   shortlistedIds: string[];
+  watchlistedIds?: string[];
   onPropertySelect: (property: Property) => void;
+  onPropertyClick?: (property: Property) => void;
   mapboxToken: string;
   onTokenChange: (token: string) => void;
 }
@@ -18,7 +20,9 @@ export default function MapPanel({
   properties,
   selectedPropertyId,
   shortlistedIds,
+  watchlistedIds = [],
   onPropertySelect,
+  onPropertyClick,
   mapboxToken,
   onTokenChange,
 }: MapPanelProps) {
@@ -26,6 +30,7 @@ export default function MapPanel({
   const map = useRef<mapboxgl.Map | null>(null);
   const markers = useRef<mapboxgl.Marker[]>([]);
   const [isMapReady, setIsMapReady] = useState(false);
+  const { getPropertyPriceEstimate, trip } = useTrip();
 
   // Initialize map
   useEffect(() => {
@@ -67,68 +72,77 @@ export default function MapPanel({
     markers.current.forEach((marker) => marker.remove());
     markers.current = [];
 
-    // Add new markers
+    const currencySymbol = trip.currency === 'AUD' ? 'A$' : 'NZ$';
+
+    // Add new markers with price labels
     properties.forEach((property) => {
       if (property.latitude && property.longitude) {
         const isSelected = property.id === selectedPropertyId;
         const isShortlisted = shortlistedIds.includes(property.id);
+        const isWatchlisted = watchlistedIds.includes(property.id);
 
-        // Create custom marker element
+        // Get price estimate for pin
+        const priceEstimate = getPropertyPriceEstimate(property.id);
+        const displayPrice = Math.round((priceEstimate.low + priceEstimate.high) / 2);
+
+        // Create custom marker element with price label
         const el = document.createElement('div');
-        el.className = 'custom-marker';
+        el.className = 'custom-marker-with-price';
         el.style.cssText = `
-          width: ${isSelected ? '36px' : '28px'};
-          height: ${isSelected ? '36px' : '28px'};
-          background: ${isShortlisted ? 'hsl(150, 14%, 50%)' : isSelected ? 'hsl(38, 72%, 62%)' : 'hsl(215, 50%, 25%)'};
-          border-radius: 50%;
-          border: 3px solid white;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-          cursor: pointer;
-          transition: all 0.2s ease;
           display: flex;
+          flex-direction: column;
           align-items: center;
-          justify-content: center;
+          cursor: pointer;
+          transition: transform 0.2s ease;
         `;
 
-        // Add inner dot for shortlisted
-        if (isShortlisted) {
-          const check = document.createElement('div');
-          check.style.cssText = `
-            width: 8px;
-            height: 8px;
-            background: white;
-            border-radius: 50%;
-          `;
-          el.appendChild(check);
-        }
+        // Price label
+        const priceLabel = document.createElement('div');
+        priceLabel.textContent = `~${currencySymbol}${displayPrice}`;
+        priceLabel.style.cssText = `
+          background: ${isShortlisted || isWatchlisted ? 'hsl(150, 14%, 50%)' : isSelected ? 'hsl(38, 72%, 62%)' : 'hsl(215, 50%, 25%)'};
+          color: white;
+          font-size: 11px;
+          font-weight: 600;
+          padding: 4px 8px;
+          border-radius: 12px;
+          white-space: nowrap;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+          transform: ${isSelected ? 'scale(1.1)' : 'scale(1)'};
+        `;
+        el.appendChild(priceLabel);
+
+        // Pin dot
+        const pinDot = document.createElement('div');
+        pinDot.style.cssText = `
+          width: 8px;
+          height: 8px;
+          background: ${isShortlisted || isWatchlisted ? 'hsl(150, 14%, 50%)' : isSelected ? 'hsl(38, 72%, 62%)' : 'hsl(215, 50%, 25%)'};
+          border-radius: 50%;
+          margin-top: 2px;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        `;
+        el.appendChild(pinDot);
 
         el.addEventListener('mouseenter', () => {
-          el.style.transform = 'scale(1.2)';
+          el.style.transform = 'scale(1.1)';
+          el.style.zIndex = '10';
         });
         el.addEventListener('mouseleave', () => {
           el.style.transform = 'scale(1)';
+          el.style.zIndex = '';
         });
 
-        const marker = new mapboxgl.Marker({ element: el })
+        const marker = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
           .setLngLat([property.longitude, property.latitude])
           .addTo(map.current!);
 
-        // Add popup
-        const popup = new mapboxgl.Popup({
-          offset: 25,
-          closeButton: false,
-          className: 'property-popup',
-        }).setHTML(`
-          <div style="padding: 8px; min-width: 150px;">
-            <strong style="display: block; margin-bottom: 4px;">${property.name}</strong>
-            <span style="color: #666; font-size: 12px;">${property.city}, ${property.country}</span>
-          </div>
-        `);
-
-        marker.setPopup(popup);
-
         el.addEventListener('click', () => {
-          onPropertySelect(property);
+          if (onPropertyClick) {
+            onPropertyClick(property);
+          } else {
+            onPropertySelect(property);
+          }
         });
 
         markers.current.push(marker);
@@ -154,7 +168,7 @@ export default function MapPanel({
         });
       }
     }
-  }, [properties, selectedPropertyId, shortlistedIds, isMapReady, onPropertySelect]);
+  }, [properties, selectedPropertyId, shortlistedIds, watchlistedIds, isMapReady, onPropertySelect, onPropertyClick, getPropertyPriceEstimate, trip.currency]);
 
   // No token state - show placeholder instead of blocking UI
   if (!mapboxToken) {
@@ -178,6 +192,16 @@ export default function MapPanel({
   return (
     <div className="relative h-full w-full">
       <div ref={mapContainer} className="absolute inset-0" />
+      
+      {/* Map tip overlay */}
+      <div className="absolute top-4 left-4 right-16 z-10 pointer-events-none">
+        <div className="bg-background/90 backdrop-blur-sm rounded-lg px-3 py-2 shadow-md border border-border inline-flex items-center gap-2 max-w-md">
+          <Lightbulb className="h-4 w-4 text-primary flex-shrink-0" />
+          <p className="text-xs text-muted-foreground">
+            <span className="font-medium text-foreground">Tip:</span> Move the map to explore more stays. Tap a pin to see rooms & make an offer.
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
