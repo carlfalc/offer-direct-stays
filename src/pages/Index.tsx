@@ -49,7 +49,10 @@ export default function Index() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
                 size="lg" 
-                onClick={() => navigate('/auth')}
+                onClick={() => {
+                  localStorage.setItem('signup_intent', 'guest');
+                  navigate('/auth');
+                }}
                 className="bg-accent text-accent-foreground hover:bg-accent/90 text-lg px-8"
               >
                 Start Exploring
@@ -58,7 +61,10 @@ export default function Index() {
               <Button 
                 size="lg" 
                 variant="outline"
-                onClick={() => navigate('/auth')}
+                onClick={() => {
+                  localStorage.setItem('signup_intent', 'business');
+                  navigate('/auth');
+                }}
                 className="text-lg px-8"
               >
                 I'm a Business
