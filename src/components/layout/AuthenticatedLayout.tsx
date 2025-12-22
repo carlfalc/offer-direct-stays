@@ -1,9 +1,11 @@
-import { ReactNode } from 'react';
+import { ReactNode, useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { MapPin, LogOut, Heart, Plane, MessageSquare, Send, LayoutDashboard, Menu, Settings } from 'lucide-react';
+import { MapPin, LogOut, Heart, Plane, MessageSquare, Send, LayoutDashboard, Menu, Settings, Building2 } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface AuthenticatedLayoutProps {
   children: ReactNode;
@@ -15,14 +17,50 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
   const { user, signOut, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { toast } = useToast();
+  const [hasBusiness, setHasBusiness] = useState<boolean | null>(null);
+
+  // Check if user has a business record
+  useEffect(() => {
+    const checkBusiness = async () => {
+      if (!user) {
+        setHasBusiness(null);
+        return;
+      }
+      
+      const { data } = await supabase
+        .from('businesses')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      setHasBusiness(!!data);
+    };
+    
+    checkBusiness();
+  }, [user]);
+
+  // Route guard for /business/* pages
+  const isBusinessRoute = location.pathname.startsWith('/business');
+  
+  useEffect(() => {
+    // Only run guard after we know hasBusiness status and user is loaded
+    if (hasBusiness === null || authLoading) return;
+    
+    // If on business route but no business record, redirect to settings
+    if (isBusinessRoute && hasBusiness === false && location.pathname !== '/business/settings') {
+      toast({
+        title: 'Business Profile Required',
+        description: 'Create your business profile to access the Business Portal.',
+      });
+      navigate('/business/settings');
+    }
+  }, [hasBusiness, isBusinessRoute, location.pathname, authLoading, navigate, toast]);
 
   const handleSignOut = async () => {
     await signOut();
     navigate('/');
   };
-
-  // Check if it's a business route
-  const isBusinessRoute = location.pathname.startsWith('/business');
 
   const guestNavItems = [
     { label: 'My Offers', path: '/offers', icon: Send },
@@ -31,13 +69,19 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
     { label: 'Messages', path: '/messages', icon: MessageSquare },
   ];
 
+  // Add Business Portal link if user has a business
+  if (hasBusiness === true) {
+    guestNavItems.push({ label: 'Business Portal', path: '/business/dashboard', icon: Building2 });
+  }
+
   const businessNavItems = [
     { label: 'Dashboard', path: '/business/dashboard', icon: LayoutDashboard },
     { label: 'Settings', path: '/business/settings', icon: Settings },
     { label: 'Messages', path: '/messages', icon: MessageSquare },
   ];
 
-  const navItems = isBusinessRoute ? businessNavItems : guestNavItems;
+  // Show business nav only if on business route AND has business record
+  const navItems = (isBusinessRoute && hasBusiness === true) ? businessNavItems : guestNavItems;
 
   if (authLoading) {
     return (
