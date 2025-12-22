@@ -3,16 +3,20 @@ import { Send, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ChatMessage, Property, GuestPreferences } from '@/types';
-import PropertyCard from './PropertyCard';
+import { ChatMessage, Property, Room } from '@/types';
+import PropertyResultCard from './PropertyResultCard';
 import VoiceMicButton from '@/components/VoiceMicButton';
+import { useTrip } from '@/contexts/TripContext';
 
 interface ChatPanelProps {
   messages: ChatMessage[];
   onSendMessage: (message: string) => void;
   isLoading: boolean;
   onPropertySelect: (property: Property) => void;
+  onMakeOffer: (property: Property, room?: Room) => void;
+  onAddToWatchlist: (property: Property) => void;
   shortlistedIds: string[];
+  watchlistedIds: string[];
 }
 
 export default function ChatPanel({ 
@@ -20,12 +24,16 @@ export default function ChatPanel({
   onSendMessage, 
   isLoading,
   onPropertySelect,
-  shortlistedIds
+  onMakeOffer,
+  onAddToWatchlist,
+  shortlistedIds,
+  watchlistedIds
 }: ChatPanelProps) {
   const [input, setInput] = useState('');
   const [showVoiceHint, setShowVoiceHint] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { getPropertyPriceEstimate } = useTrip();
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -100,16 +108,17 @@ export default function ChatPanel({
               >
                 <p className="whitespace-pre-wrap">{message.content}</p>
                 
-                {/* Property recommendations */}
+                {/* Property recommendations with new card design */}
                 {message.properties && message.properties.length > 0 && (
                   <div className="mt-4 space-y-3">
                     {message.properties.map((property) => (
-                      <PropertyCard
+                      <PropertyResultCard
                         key={property.id}
                         property={property}
-                        onSelect={() => onPropertySelect(property)}
-                        isShortlisted={shortlistedIds.includes(property.id)}
-                        compact
+                        onMakeOffer={() => onMakeOffer(property)}
+                        onAddToWatchlist={() => onAddToWatchlist(property)}
+                        isWatchlisted={watchlistedIds.includes(property.id)}
+                        priceEstimate={getPropertyPriceEstimate(property.id)}
                       />
                     ))}
                   </div>

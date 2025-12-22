@@ -1,19 +1,23 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useTrip } from '@/contexts/TripContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Property, ChatMessage, ShortlistItem, GuestPreferences } from '@/types';
+import { Property, ChatMessage, ShortlistItem, Room } from '@/types';
 import ChatPanel from '@/components/explore/ChatPanel';
 import MapPanel from '@/components/explore/MapPanel';
 import ShortlistPanel from '@/components/explore/ShortlistPanel';
+import TripSummaryBar from '@/components/explore/TripSummaryBar';
+import PropertyDetailSheet from '@/components/explore/PropertyDetailSheet';
 import OfferModal from '@/components/explore/OfferModal';
 import { Button } from '@/components/ui/button';
-import { MapPin, LogOut, Menu } from 'lucide-react';
+import { MapPin, LogOut, Menu, Heart, Plane } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 export default function Explore() {
   const { user, signOut, loading: authLoading } = useAuth();
+  const { trip, setDestination, setCheckIn, setCheckOut, getPropertyPriceEstimate } = useTrip();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -22,14 +26,18 @@ export default function Explore() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
   const [shortlist, setShortlist] = useState<ShortlistItem[]>([]);
+  const [watchlistedIds, setWatchlistedIds] = useState<string[]>([]);
   const [mapboxToken, setMapboxToken] = useState('');
   const [isMobileChatOpen, setIsMobileChatOpen] = useState(false);
-  const [preferences, setPreferences] = useState<GuestPreferences>({
-    adults: 2,
-    children: 0,
-  });
+
+  // Property detail sheet
+  const [detailProperty, setDetailProperty] = useState<Property | null>(null);
+  const [detailSheetOpen, setDetailSheetOpen] = useState(false);
+
+  // Offer modal
   const [offerModalOpen, setOfferModalOpen] = useState(false);
   const [offerProperty, setOfferProperty] = useState<Property | null>(null);
+  const [offerRoom, setOfferRoom] = useState<Room | null>(null);
   const [sentOfferIds, setSentOfferIds] = useState<string[]>([]);
 
   // Redirect if not authenticated
@@ -39,30 +47,42 @@ export default function Explore() {
     }
   }, [user, authLoading, navigate]);
 
-  // Load properties on mount
+  // Load properties and watchlist on mount
   useEffect(() => {
-    const loadProperties = async () => {
-      const { data, error } = await supabase
-        .from('properties')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error loading properties:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to load properties',
-          variant: 'destructive',
-        });
-      } else if (data) {
-        setProperties(data as Property[]);
-      }
-    };
-
     if (user) {
       loadProperties();
+      loadWatchlist();
     }
-  }, [user, toast]);
+  }, [user]);
+
+  const loadProperties = async () => {
+    const { data, error } = await supabase
+      .from('properties')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error loading properties:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load properties',
+        variant: 'destructive',
+      });
+    } else if (data) {
+      setProperties(data as Property[]);
+    }
+  };
+
+  const loadWatchlist = async () => {
+    const { data, error } = await supabase
+      .from('watchlists')
+      .select('property_id')
+      .eq('user_id', user?.id);
+
+    if (!error && data) {
+      setWatchlistedIds(data.map((w: any) => w.property_id));
+    }
+  };
 
   const handleSendMessage = async (content: string) => {
     // Add user message
@@ -80,48 +100,69 @@ export default function Explore() {
     let response = '';
     let recommendedProperties: Property[] = [];
 
-    // Check for destination keywords
-    const nzCities = ['auckland', 'wellington', 'christchurch', 'queenstown', 'rotorua'];
-    const auCities = ['sydney', 'melbourne', 'brisbane', 'gold coast', 'perth'];
-    
-    const mentionedNZCity = nzCities.find(city => lowerContent.includes(city));
-    const mentionedAUCity = auCities.find(city => lowerContent.includes(city));
+    // City destinations with coordinates
+    const cityData: Record<string, { lat: number; lng: number; country: 'NZ' | 'AU' }> = {
+      auckland: { lat: -36.8485, lng: 174.7633, country: 'NZ' },
+      wellington: { lat: -41.2865, lng: 174.7762, country: 'NZ' },
+      christchurch: { lat: -43.5321, lng: 172.6362, country: 'NZ' },
+      queenstown: { lat: -45.0312, lng: 168.6626, country: 'NZ' },
+      rotorua: { lat: -38.1368, lng: 176.2497, country: 'NZ' },
+      sydney: { lat: -33.8688, lng: 151.2093, country: 'AU' },
+      melbourne: { lat: -37.8136, lng: 144.9631, country: 'AU' },
+      brisbane: { lat: -27.4698, lng: 153.0251, country: 'AU' },
+      'gold coast': { lat: -28.0167, lng: 153.4000, country: 'AU' },
+      perth: { lat: -31.9505, lng: 115.8605, country: 'AU' },
+    };
 
-    if (mentionedNZCity || mentionedAUCity) {
-      const city = mentionedNZCity || mentionedAUCity;
-      const country = mentionedNZCity ? 'NZ' : 'AU';
+    // Check for destination keywords
+    const matchedCity = Object.keys(cityData).find(city => lowerContent.includes(city));
+
+    if (matchedCity) {
+      const cityInfo = cityData[matchedCity];
       
+      // Update trip context
+      setDestination({
+        city: matchedCity.charAt(0).toUpperCase() + matchedCity.slice(1),
+        country: cityInfo.country,
+        latitude: cityInfo.lat,
+        longitude: cityInfo.lng,
+        radius: 50,
+      });
+
       recommendedProperties = properties.filter(
-        p => p.city.toLowerCase().includes(city!) || p.country === country
+        p => p.city.toLowerCase().includes(matchedCity) || p.country === cityInfo.country
       ).slice(0, 5);
 
       if (recommendedProperties.length > 0) {
-        response = `Great choice! I found ${recommendedProperties.length} properties in ${city?.charAt(0).toUpperCase()}${city?.slice(1)}. Here are my recommendations:\n\nClick on any property to add it to your shortlist, then you can make an offer.`;
+        const currencySymbol = cityInfo.country === 'AU' ? 'A$' : 'NZ$';
+        response = `Great choice! I found ${recommendedProperties.length} properties in ${matchedCity.charAt(0).toUpperCase() + matchedCity.slice(1)}.\n\nHere are my recommendations based on your search. Click "Make an offer" to start your booking, or add to your Watchlist to save for later.`;
       } else {
-        response = `I couldn't find any properties in ${city} right now. Would you like to explore other destinations?`;
+        response = `I couldn't find any properties in ${matchedCity} right now. Would you like to explore other destinations?`;
       }
     } else if (lowerContent.includes('new zealand') || lowerContent.includes('nz')) {
+      setDestination({
+        city: 'New Zealand',
+        country: 'NZ',
+        latitude: -41.5,
+        longitude: 172.5,
+        radius: 500,
+      });
       recommendedProperties = properties.filter(p => p.country === 'NZ').slice(0, 5);
-      response = `Here are some great options across New Zealand:\n\nClick on any property to add it to your shortlist.`;
+      response = `Here are some great options across New Zealand:\n\nClick "Make an offer" or add to your Watchlist.`;
     } else if (lowerContent.includes('australia') || lowerContent.includes('au')) {
+      setDestination({
+        city: 'Australia',
+        country: 'AU',
+        latitude: -25.2744,
+        longitude: 133.7751,
+        radius: 1000,
+      });
       recommendedProperties = properties.filter(p => p.country === 'AU').slice(0, 5);
-      response = `Here are some great options across Australia:\n\nClick on any property to add it to your shortlist.`;
-    } else if (lowerContent.includes('room') || lowerContent.includes('recommend')) {
-      if (shortlist.length > 0) {
-        response = `Based on your party size of ${preferences.adults} adult${preferences.adults > 1 ? 's' : ''}${preferences.children > 0 ? ` and ${preferences.children} child${preferences.children > 1 ? 'ren' : ''}` : ''}, I'd recommend looking at the Deluxe or Family Suite options at your shortlisted properties.\n\nWould you like to proceed with making an offer?`;
-      } else {
-        response = `To recommend rooms, I'll need to know your preferences first. How many adults and children will be staying? And do you have any accessibility requirements or preferred amenities?`;
-      }
-    } else if (lowerContent.includes('offer') || lowerContent.includes('book')) {
-      if (shortlist.length > 0) {
-        response = `You have ${shortlist.length} ${shortlist.length === 1 ? 'property' : 'properties'} in your shortlist. Click "Make an Offer" below to proceed.\n\n💡 **Tip**: Guests typically start offers between NZ$180–$230 per night for similar stays. This is just a guide – providers may accept, counter, or decline your offer.`;
-      } else {
-        response = `You haven't shortlisted any properties yet. Tell me where you'd like to stay and I'll recommend some options!`;
-      }
+      response = `Here are some great options across Australia:\n\nClick "Make an offer" or add to your Watchlist.`;
     } else if (lowerContent.includes('hello') || lowerContent.includes('hi') || lowerContent.includes('hey')) {
-      response = `Hello! Welcome to findastay. I'm here to help you find the perfect accommodation.\n\nWhere would you like to stay? You can mention a city like Auckland, Sydney, Queenstown, or Melbourne – or just say "New Zealand" or "Australia" to browse options.`;
+      response = `Hello! I'm here to help you find the perfect accommodation.\n\nWhere would you like to stay? You can mention a city like Auckland, Sydney, Queenstown, or Melbourne.`;
     } else {
-      response = `I'd love to help you find accommodation! Could you tell me:\n\n• **Where** would you like to stay? (city or country)\n• **When** are you planning to travel?\n• **Who's** travelling? (number of guests)\n\nFor example, try saying "I'm looking for a hotel in Auckland for 2 adults"`;
+      response = `I'd love to help you find accommodation! Tell me:\n\n• **Where** would you like to stay? (city or country)\n• **When** are you planning to travel?\n• **Who's** travelling? (number of guests)\n\nFor example, try saying "I'm looking for a hotel in Auckland"`;
     }
 
     // Simulate AI thinking delay
@@ -144,26 +185,64 @@ export default function Explore() {
     
     if (isAlreadyShortlisted) {
       setShortlist(prev => prev.filter(item => item.property.id !== property.id));
-      toast({
-        description: `${property.name} removed from shortlist`,
-      });
+      toast({ description: `${property.name} removed from shortlist` });
     } else {
       setShortlist(prev => [...prev, { property }]);
-      toast({
-        description: `${property.name} added to shortlist`,
-      });
+      toast({ description: `${property.name} added to shortlist` });
     }
     
     setSelectedPropertyId(property.id);
+  };
+
+  const handlePropertyPinClick = (property: Property) => {
+    setDetailProperty(property);
+    setDetailSheetOpen(true);
+    setSelectedPropertyId(property.id);
+  };
+
+  const handleAddToWatchlist = async (property: Property) => {
+    if (!user) return;
+
+    const isWatchlisted = watchlistedIds.includes(property.id);
+
+    if (isWatchlisted) {
+      // Remove from watchlist
+      const { error } = await supabase
+        .from('watchlists')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('property_id', property.id);
+
+      if (error) {
+        toast({ title: 'Error', description: 'Failed to remove from watchlist', variant: 'destructive' });
+      } else {
+        setWatchlistedIds(prev => prev.filter(id => id !== property.id));
+        toast({ description: `${property.name} removed from watchlist` });
+      }
+    } else {
+      // Add to watchlist
+      const { error } = await supabase
+        .from('watchlists')
+        .insert({ user_id: user.id, property_id: property.id });
+
+      if (error) {
+        toast({ title: 'Error', description: 'Failed to add to watchlist', variant: 'destructive' });
+      } else {
+        setWatchlistedIds(prev => [...prev, property.id]);
+        toast({ description: `${property.name} added to watchlist` });
+      }
+    }
   };
 
   const handleRemoveFromShortlist = (propertyId: string) => {
     setShortlist(prev => prev.filter(item => item.property.id !== propertyId));
   };
 
-  const handleMakeOffer = (property: Property) => {
+  const handleMakeOffer = (property: Property, room?: Room) => {
     setOfferProperty(property);
+    setOfferRoom(room || null);
     setOfferModalOpen(true);
+    setDetailSheetOpen(false);
   };
 
   const handleOfferSent = (propertyId: string) => {
@@ -199,6 +278,14 @@ export default function Explore() {
           <Button variant="ghost" size="sm" onClick={() => navigate('/offers')} className="hidden sm:flex">
             My Offers
           </Button>
+          <Button variant="ghost" size="sm" onClick={() => navigate('/watchlist')} className="hidden sm:flex">
+            <Heart className="h-4 w-4 mr-1" />
+            Watchlist
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => navigate('/trips')} className="hidden sm:flex">
+            <Plane className="h-4 w-4 mr-1" />
+            Trips
+          </Button>
           <Button variant="ghost" size="sm" onClick={() => navigate('/messages')} className="hidden sm:flex">
             Messages
           </Button>
@@ -217,12 +304,15 @@ export default function Explore() {
                   onSendMessage={handleSendMessage}
                   isLoading={isLoading}
                   onPropertySelect={handlePropertySelect}
+                  onMakeOffer={handleMakeOffer}
+                  onAddToWatchlist={handleAddToWatchlist}
                   shortlistedIds={shortlistedIds}
+                  watchlistedIds={watchlistedIds}
                 />
                 <ShortlistPanel
                   items={shortlist}
                   onRemove={handleRemoveFromShortlist}
-                  onMakeOffer={handleMakeOffer}
+                  onMakeOffer={(p) => handleMakeOffer(p)}
                   sentOfferIds={sentOfferIds}
                 />
               </div>
@@ -236,6 +326,9 @@ export default function Explore() {
         </div>
       </header>
 
+      {/* Trip Summary Bar */}
+      <TripSummaryBar />
+
       {/* Main content - 2 column layout */}
       <div className="flex-1 flex min-h-0">
         {/* Left column: Chat panel - desktop only */}
@@ -246,14 +339,17 @@ export default function Explore() {
               onSendMessage={handleSendMessage}
               isLoading={isLoading}
               onPropertySelect={handlePropertySelect}
+              onMakeOffer={handleMakeOffer}
+              onAddToWatchlist={handleAddToWatchlist}
               shortlistedIds={shortlistedIds}
+              watchlistedIds={watchlistedIds}
             />
           </div>
           <div className="flex-shrink-0">
             <ShortlistPanel
               items={shortlist}
               onRemove={handleRemoveFromShortlist}
-              onMakeOffer={handleMakeOffer}
+              onMakeOffer={(p) => handleMakeOffer(p)}
               sentOfferIds={sentOfferIds}
             />
           </div>
@@ -265,7 +361,9 @@ export default function Explore() {
             properties={properties}
             selectedPropertyId={selectedPropertyId}
             shortlistedIds={shortlistedIds}
+            watchlistedIds={watchlistedIds}
             onPropertySelect={handlePropertySelect}
+            onPropertyClick={handlePropertyPinClick}
             mapboxToken={mapboxToken}
             onTokenChange={setMapboxToken}
           />
@@ -275,20 +373,30 @@ export default function Explore() {
             <ShortlistPanel
               items={shortlist}
               onRemove={handleRemoveFromShortlist}
-              onMakeOffer={handleMakeOffer}
+              onMakeOffer={(p) => handleMakeOffer(p)}
               sentOfferIds={sentOfferIds}
             />
           </div>
         </div>
       </div>
 
+      {/* Property Detail Sheet (for pin clicks) */}
+      <PropertyDetailSheet
+        property={detailProperty}
+        open={detailSheetOpen}
+        onOpenChange={setDetailSheetOpen}
+        onMakeOffer={handleMakeOffer}
+        onAddToWatchlist={handleAddToWatchlist}
+        isWatchlisted={detailProperty ? watchlistedIds.includes(detailProperty.id) : false}
+      />
+
       {/* Offer Modal */}
       <OfferModal
         open={offerModalOpen}
         onOpenChange={setOfferModalOpen}
         property={offerProperty}
-        initialAdults={preferences.adults}
-        initialChildren={preferences.children}
+        initialAdults={trip.adults}
+        initialChildren={trip.children}
         onOfferSent={handleOfferSent}
       />
     </div>
