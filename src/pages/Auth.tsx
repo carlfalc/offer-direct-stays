@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -7,7 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, MapPin } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Loader2, MapPin, Building2 } from 'lucide-react';
 import { z } from 'zod';
 
 const emailSchema = z.string().email('Please enter a valid email address');
@@ -25,6 +26,18 @@ export default function Auth() {
   const [signupPassword, setSignupPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [signupIntent, setSignupIntent] = useState<string | null>(null);
+
+  useEffect(() => {
+    const intent = localStorage.getItem('signup_intent');
+    setSignupIntent(intent);
+  }, []);
+
+  const getRedirectPath = () => {
+    const intent = localStorage.getItem('signup_intent');
+    localStorage.removeItem('signup_intent');
+    return intent === 'business' ? '/business/settings' : '/explore';
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,7 +69,7 @@ export default function Auth() {
         variant: 'destructive',
       });
     } else {
-      navigate('/explore');
+      navigate(getRedirectPath());
     }
   };
 
@@ -96,11 +109,14 @@ export default function Auth() {
         });
       }
     } else {
+      const redirectPath = getRedirectPath();
       toast({
         title: 'Account Created',
-        description: 'Welcome to findastay! You can now start exploring.',
+        description: redirectPath === '/business/settings' 
+          ? 'Welcome! Let\'s set up your business profile.'
+          : 'Welcome to findastay! You can now start exploring.',
       });
-      navigate('/explore');
+      navigate(redirectPath);
     }
   };
 
@@ -117,11 +133,25 @@ export default function Auth() {
           </p>
         </div>
 
+        {signupIntent === 'business' && (
+          <div className="mb-4 p-4 bg-primary/10 rounded-lg border border-primary/20">
+            <div className="flex items-center gap-2 mb-1">
+              <Building2 className="h-4 w-4 text-primary" />
+              <Badge variant="secondary" className="text-xs">Business Onboarding</Badge>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              After signup you'll set up your business profile.
+            </p>
+          </div>
+        )}
+
         <Card className="border-border shadow-lg">
           <CardHeader className="space-y-1 pb-4">
             <CardTitle className="text-xl text-center">Welcome</CardTitle>
             <CardDescription className="text-center">
-              Sign in or create an account to continue
+              {signupIntent === 'business' 
+                ? 'Create a business account to list your properties'
+                : 'Sign in or create an account to continue'}
             </CardDescription>
           </CardHeader>
           <CardContent>
