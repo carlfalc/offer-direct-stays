@@ -174,15 +174,7 @@ export default function OfferConfirmed() {
   const remainingBalance = offer.offer_amount - bcfAmount;
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="h-14 border-b border-border bg-card flex items-center px-4">
-        <div className="flex items-center gap-2">
-          <MapPin className="h-5 w-5 text-primary" />
-          <span className="font-semibold text-foreground">findastay</span>
-        </div>
-      </header>
-
+    <div className="min-h-full bg-background">
       <main className="container max-w-2xl mx-auto py-8 px-4">
         <Card>
           <CardHeader className="text-center">
