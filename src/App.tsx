@@ -13,6 +13,7 @@ import OfferPayment from "./pages/OfferPayment";
 import OfferConfirmed from "./pages/OfferConfirmed";
 import BusinessClaim from "./pages/BusinessClaim";
 import BusinessOfferResponse from "./pages/BusinessOfferResponse";
+import BusinessSettings from "./pages/BusinessSettings";
 import GuestOffers from "./pages/GuestOffers";
 import BusinessDashboard from "./pages/BusinessDashboard";
 import Messages from "./pages/Messages";
@@ -92,6 +93,11 @@ const App = () => (
               <Route path="/business/dashboard" element={
                 <AuthenticatedLayout>
                   <BusinessDashboard />
+                </AuthenticatedLayout>
+              } />
+              <Route path="/business/settings" element={
+                <AuthenticatedLayout>
+                  <BusinessSettings />
                 </AuthenticatedLayout>
               } />
               

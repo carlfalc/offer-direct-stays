@@ -2,7 +2,7 @@ import { ReactNode } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { MapPin, LogOut, Heart, Plane, MessageSquare, Send, LayoutDashboard, Menu } from 'lucide-react';
+import { MapPin, LogOut, Heart, Plane, MessageSquare, Send, LayoutDashboard, Menu, Settings } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 interface AuthenticatedLayoutProps {
@@ -33,6 +33,7 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
 
   const businessNavItems = [
     { label: 'Dashboard', path: '/business/dashboard', icon: LayoutDashboard },
+    { label: 'Settings', path: '/business/settings', icon: Settings },
     { label: 'Messages', path: '/messages', icon: MessageSquare },
   ];
 
