@@ -265,67 +265,7 @@ export default function Explore() {
   const shortlistedIds = shortlist.map(item => item.property.id);
 
   return (
-    <div className="h-screen flex flex-col bg-background overflow-hidden">
-      {/* Header */}
-      <header className="h-14 border-b border-border bg-card flex items-center justify-between px-4 flex-shrink-0 z-10">
-        <div className="flex items-center gap-2">
-          <MapPin className="h-5 w-5 text-primary" />
-          <span className="font-semibold text-foreground">findastay</span>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          {/* Navigation links */}
-          <Button variant="ghost" size="sm" onClick={() => navigate('/offers')} className="hidden sm:flex">
-            My Offers
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => navigate('/watchlist')} className="hidden sm:flex">
-            <Heart className="h-4 w-4 mr-1" />
-            Watchlist
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => navigate('/trips')} className="hidden sm:flex">
-            <Plane className="h-4 w-4 mr-1" />
-            Trips
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => navigate('/messages')} className="hidden sm:flex">
-            Messages
-          </Button>
-          
-          {/* Mobile chat toggle */}
-          <Sheet open={isMobileChatOpen} onOpenChange={setIsMobileChatOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="lg:hidden">
-                <Menu className="h-5 w-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-full sm:w-[400px] p-0">
-              <div className="h-full flex flex-col">
-                <ChatPanel
-                  messages={messages}
-                  onSendMessage={handleSendMessage}
-                  isLoading={isLoading}
-                  onPropertySelect={handlePropertySelect}
-                  onMakeOffer={handleMakeOffer}
-                  onAddToWatchlist={handleAddToWatchlist}
-                  shortlistedIds={shortlistedIds}
-                  watchlistedIds={watchlistedIds}
-                />
-                <ShortlistPanel
-                  items={shortlist}
-                  onRemove={handleRemoveFromShortlist}
-                  onMakeOffer={(p) => handleMakeOffer(p)}
-                  sentOfferIds={sentOfferIds}
-                />
-              </div>
-            </SheetContent>
-          </Sheet>
-          
-          <Button variant="ghost" size="sm" onClick={handleSignOut}>
-            <LogOut className="h-4 w-4 mr-2" />
-            Sign Out
-          </Button>
-        </div>
-      </header>
-
+    <div className="h-full flex flex-col overflow-hidden">
       {/* Trip Summary Bar */}
       <TripSummaryBar />
 

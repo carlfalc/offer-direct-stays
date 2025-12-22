@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { TripProvider } from "@/contexts/TripContext";
+import AuthenticatedLayout from "@/components/layout/AuthenticatedLayout";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Explore from "./pages/Explore";
@@ -31,20 +32,70 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
+              {/* Public routes */}
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
-              <Route path="/explore" element={<Explore />} />
-              <Route path="/offer-payment" element={<OfferPayment />} />
-              <Route path="/offer-confirmed" element={<OfferConfirmed />} />
-              <Route path="/business/claim" element={<BusinessClaim />} />
-              <Route path="/business/offers/:offerId" element={<BusinessOfferResponse />} />
-              <Route path="/business/dashboard" element={<BusinessDashboard />} />
-              <Route path="/offers" element={<GuestOffers />} />
-              <Route path="/messages" element={<Messages />} />
-              <Route path="/messages/:conversationId" element={<Conversation />} />
-              <Route path="/watchlist" element={<Watchlist />} />
-              <Route path="/trips" element={<Trips />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              
+              {/* Authenticated routes with shared layout */}
+              <Route path="/explore" element={
+                <AuthenticatedLayout fullHeight>
+                  <Explore />
+                </AuthenticatedLayout>
+              } />
+              <Route path="/offers" element={
+                <AuthenticatedLayout>
+                  <GuestOffers />
+                </AuthenticatedLayout>
+              } />
+              <Route path="/watchlist" element={
+                <AuthenticatedLayout>
+                  <Watchlist />
+                </AuthenticatedLayout>
+              } />
+              <Route path="/trips" element={
+                <AuthenticatedLayout>
+                  <Trips />
+                </AuthenticatedLayout>
+              } />
+              <Route path="/messages" element={
+                <AuthenticatedLayout>
+                  <Messages />
+                </AuthenticatedLayout>
+              } />
+              <Route path="/messages/:conversationId" element={
+                <AuthenticatedLayout fullHeight>
+                  <Conversation />
+                </AuthenticatedLayout>
+              } />
+              <Route path="/offer-payment" element={
+                <AuthenticatedLayout>
+                  <OfferPayment />
+                </AuthenticatedLayout>
+              } />
+              <Route path="/offer-confirmed" element={
+                <AuthenticatedLayout>
+                  <OfferConfirmed />
+                </AuthenticatedLayout>
+              } />
+              
+              {/* Business routes */}
+              <Route path="/business/claim" element={
+                <AuthenticatedLayout>
+                  <BusinessClaim />
+                </AuthenticatedLayout>
+              } />
+              <Route path="/business/offers/:offerId" element={
+                <AuthenticatedLayout>
+                  <BusinessOfferResponse />
+                </AuthenticatedLayout>
+              } />
+              <Route path="/business/dashboard" element={
+                <AuthenticatedLayout>
+                  <BusinessDashboard />
+                </AuthenticatedLayout>
+              } />
+              
+              {/* Catch-all */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

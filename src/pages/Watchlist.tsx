@@ -122,26 +122,13 @@ export default function Watchlist() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="h-14 border-b border-border bg-card flex items-center justify-between px-4">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div className="flex items-center gap-2">
-            <Heart className="h-5 w-5 text-destructive" />
-            <span className="font-semibold">My Watchlist</span>
-          </div>
-        </div>
-        
-        <Button variant="ghost" size="sm" onClick={() => navigate('/explore')}>
-          Explore
-        </Button>
-      </header>
-
+    <div className="min-h-full bg-background">
       {/* Content */}
       <main className="max-w-3xl mx-auto p-4">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-foreground">My Watchlist</h1>
+          <p className="text-muted-foreground">Properties you've saved for later</p>
+        </div>
         {loading ? (
           <div className="flex items-center justify-center py-16">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />

@@ -193,23 +193,12 @@ export default function BusinessDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-full bg-background">
       <div className="max-w-5xl mx-auto px-4 py-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/explore')}>
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">Offer Inbox</h1>
-              <p className="text-muted-foreground">Manage incoming offers for your properties</p>
-            </div>
-          </div>
-          <Button variant="outline" onClick={() => navigate('/messages')}>
-            <MessageSquare className="h-4 w-4 mr-2" />
-            Messages
-          </Button>
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-foreground">Offer Inbox</h1>
+          <p className="text-muted-foreground">Manage incoming offers for your properties</p>
         </div>
 
         {/* Content */}

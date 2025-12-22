@@ -279,13 +279,10 @@ export default function Conversation() {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-card flex-shrink-0">
-        <div className="container mx-auto px-4 h-14 flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/messages')}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
+    <div className="h-full flex flex-col bg-background">
+      {/* Conversation Header (not main nav, just context) */}
+      <div className="border-b border-border bg-card flex-shrink-0">
+        <div className="container mx-auto px-4 h-12 flex items-center gap-4">
           <div className="flex-1 min-w-0">
             <h1 className="font-semibold text-foreground truncate">
               {conversation.other_party_name}
@@ -305,7 +302,7 @@ export default function Conversation() {
             {conversation.offer?.status}
           </Badge>
         </div>
-      </header>
+      </div>
 
       {/* Locked Banner */}
       {!conversation.is_unlocked && (
