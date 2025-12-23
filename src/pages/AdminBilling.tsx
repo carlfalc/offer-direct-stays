@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { format } from 'date-fns';
+import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { FileText, DollarSign, Clock, CheckCircle, Search, ChevronDown } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { FileText, DollarSign, Clock, CheckCircle, Search, ChevronDown, Loader2, Plus } from 'lucide-react';
+import { toast } from 'sonner';
 
 type InvoiceStatus = 'pending' | 'paid' | 'void' | 'draft';
 
@@ -68,8 +71,16 @@ function formatCurrency(amount: number) {
 }
 
 export default function AdminBilling() {
+  const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [showGenerateDialog, setShowGenerateDialog] = useState(false);
+  
+  // Default to last month
+  const lastMonth = subMonths(new Date(), 1);
+  const [periodStart, setPeriodStart] = useState(format(startOfMonth(lastMonth), 'yyyy-MM-dd'));
+  const [periodEnd, setPeriodEnd] = useState(format(endOfMonth(lastMonth), 'yyyy-MM-dd'));
 
   // Fetch invoices with business info
   const { data: invoices, isLoading: invoicesLoading } = useQuery({
@@ -126,6 +137,66 @@ export default function AdminBilling() {
     return lineItems?.filter(item => item.invoice_id === invoiceId) || [];
   };
 
+  const handleGenerateInvoices = async (dryRun: boolean = false) => {
+    setIsGenerating(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('Not authenticated');
+      }
+
+      const response = await supabase.functions.invoke('generate-monthly-invoices', {
+        body: {
+          period_start: periodStart,
+          period_end: periodEnd,
+          dry_run: dryRun,
+        },
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
+
+      const result = response.data;
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Unknown error');
+      }
+
+      const { summary } = result;
+      
+      if (dryRun) {
+        toast.info('Dry Run Results', {
+          description: `Would create ${summary.invoices_created} invoices, ${summary.line_items_created} line items for ${summary.businesses_processed} businesses.`,
+          duration: 5000,
+        });
+      } else {
+        toast.success('Invoices Generated', {
+          description: `Created ${summary.invoices_created} invoices, ${summary.line_items_created} line items. Updated ${summary.events_updated} events.`,
+          duration: 5000,
+        });
+        
+        // Refresh data
+        queryClient.invalidateQueries({ queryKey: ['admin-invoices'] });
+        queryClient.invalidateQueries({ queryKey: ['admin-invoice-line-items'] });
+        setShowGenerateDialog(false);
+      }
+
+      if (summary.errors?.length > 0) {
+        console.warn('Generation errors:', summary.errors);
+        toast.warning(`${summary.errors.length} warnings occurred`, {
+          description: 'Check console for details',
+        });
+      }
+
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to generate invoices';
+      toast.error('Error', { description: message });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   if (invoicesLoading) {
     return (
       <div className="space-y-6">
@@ -152,10 +223,75 @@ export default function AdminBilling() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-semibold text-foreground">Billing Administration</h1>
-        <p className="text-muted-foreground">Manage invoices for all businesses</p>
+      {/* Header with Generate Button */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold text-foreground">Billing Administration</h1>
+          <p className="text-muted-foreground">Manage invoices for all businesses</p>
+        </div>
+        
+        <Dialog open={showGenerateDialog} onOpenChange={setShowGenerateDialog}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Generate Invoices
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Generate Monthly Invoices</DialogTitle>
+              <DialogDescription>
+                Create invoices from uninvoiced billable events within the selected period.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="period-start">Period Start</Label>
+                  <Input
+                    id="period-start"
+                    type="date"
+                    value={periodStart}
+                    onChange={(e) => setPeriodStart(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="period-end">Period End</Label>
+                  <Input
+                    id="period-end"
+                    type="date"
+                    value={periodEnd}
+                    onChange={(e) => setPeriodEnd(e.target.value)}
+                  />
+                </div>
+              </div>
+              
+              <p className="text-sm text-muted-foreground">
+                This will find all billable events confirmed between these dates that haven't been invoiced yet,
+                group them by business, and create invoices.
+              </p>
+            </div>
+            
+            <DialogFooter className="flex flex-col sm:flex-row gap-2">
+              <Button
+                variant="outline"
+                onClick={() => handleGenerateInvoices(true)}
+                disabled={isGenerating}
+              >
+                {isGenerating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+                Preview (Dry Run)
+              </Button>
+              <Button
+                onClick={() => handleGenerateInvoices(false)}
+                disabled={isGenerating}
+              >
+                {isGenerating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+                Generate Invoices
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Stats Cards */}
