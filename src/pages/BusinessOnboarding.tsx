@@ -62,7 +62,8 @@ export default function BusinessOnboarding() {
   // Declarations
   const [authorised, setAuthorised] = useState(false);
   const [feeAcknowledged, setFeeAcknowledged] = useState(false);
-  const [cancellationAccepted, setCancellationAccepted] = useState(false);
+  const [paymentMethodConfirmed, setPaymentMethodConfirmed] = useState(false);
+  const [feeTimingUnderstood, setFeeTimingUnderstood] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
 
   // Modal states
@@ -127,7 +128,8 @@ export default function BusinessOnboarding() {
       addressData.addressLine1.trim() !== '' &&
       authorised &&
       feeAcknowledged &&
-      cancellationAccepted &&
+      paymentMethodConfirmed &&
+      feeTimingUnderstood &&
       termsAccepted
     );
   };
@@ -181,7 +183,7 @@ export default function BusinessOnboarding() {
           contact_name: user.email || 'Business Contact',
           terms_accepted: termsAccepted,
           fee_acknowledged: feeAcknowledged,
-          cancellation_policy_accepted: cancellationAccepted,
+          cancellation_policy_accepted: true,
         })
         .select('id')
         .single();
@@ -355,7 +357,7 @@ export default function BusinessOnboarding() {
                     onCheckedChange={(checked) => setAuthorised(checked === true)}
                   />
                   <Label htmlFor="authorised" className="cursor-pointer text-sm">
-                    I confirm I am authorised to act for this business *
+                    I confirm I am authorised to act on behalf of this business *
                   </Label>
                 </div>
 
@@ -366,13 +368,13 @@ export default function BusinessOnboarding() {
                     onCheckedChange={(checked) => setFeeAcknowledged(checked === true)}
                   />
                   <Label htmlFor="feeAcknowledged" className="cursor-pointer text-sm">
-                    I agree to{' '}
+                    I understand and accept the{' '}
                     <button
                       type="button"
                       className="text-primary underline underline-offset-2"
                       onClick={() => setActiveModal('fee')}
                     >
-                      $8.99 per confirmed booking billed monthly on the 20th
+                      Findastay booking administration fee
                     </button>{' '}
                     *
                   </Label>
@@ -380,20 +382,23 @@ export default function BusinessOnboarding() {
 
                 <div className="flex items-start gap-3">
                   <Checkbox
-                    id="cancellationAccepted"
-                    checked={cancellationAccepted}
-                    onCheckedChange={(checked) => setCancellationAccepted(checked === true)}
+                    id="paymentMethodConfirmed"
+                    checked={paymentMethodConfirmed}
+                    onCheckedChange={(checked) => setPaymentMethodConfirmed(checked === true)}
                   />
-                  <Label htmlFor="cancellationAccepted" className="cursor-pointer text-sm">
-                    I accept the{' '}
-                    <button
-                      type="button"
-                      className="text-primary underline underline-offset-2"
-                      onClick={() => setActiveModal('cancellation')}
-                    >
-                      non-refundable booking policy
-                    </button>{' '}
-                    *
+                  <Label htmlFor="paymentMethodConfirmed" className="cursor-pointer text-sm">
+                    I confirm my selected payment collection method ({paymentMethod === 'pay_upfront' ? 'guest pays online' : 'pay at property'}) *
+                  </Label>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <Checkbox
+                    id="feeTimingUnderstood"
+                    checked={feeTimingUnderstood}
+                    onCheckedChange={(checked) => setFeeTimingUnderstood(checked === true)}
+                  />
+                  <Label htmlFor="feeTimingUnderstood" className="cursor-pointer text-sm">
+                    I understand when and how booking fees are charged *
                   </Label>
                 </div>
 
@@ -521,43 +526,66 @@ export default function BusinessOnboarding() {
         )}
       </div>
 
-      {/* Policy Modals */}
+      {/* Booking Fee Policy Modal */}
       <Dialog open={activeModal === 'fee'} onOpenChange={() => setActiveModal(null)}>
-        <DialogContent>
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Booking Fee Policy</DialogTitle>
             <DialogDescription>Our simple, transparent pricing model.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 text-sm text-muted-foreground">
             <p>
-              A fee of <strong>$8.99 NZD</strong> (or <strong>$12.00 AUD</strong> for Australian
-              properties) is charged per confirmed booking.
+              Findastay charges a small booking administration fee when a guest's offer is accepted.
             </p>
+            
+            <ul className="list-disc list-inside space-y-1">
+              <li><strong>NZ properties:</strong> NZD $8.99 per confirmed booking</li>
+              <li><strong>AU properties:</strong> AUD $12.00 per confirmed booking</li>
+            </ul>
+            
             <p>
-              Fees are billed monthly on the 20th and cover only bookings confirmed during that
-              billing period.
+              This fee confirms the booking and helps reduce no-shows. There are no setup fees, no monthly minimums, and no hidden charges.
             </p>
-            <p>No setup fees, no monthly minimums, and no hidden charges.</p>
+            
+            <div className="pt-2 border-t border-border">
+              <p className="font-medium text-foreground mb-2">Payment models (you choose one):</p>
+              
+              <div className="space-y-3">
+                <div>
+                  <p className="font-medium text-foreground">1. Guest pays online at acceptance</p>
+                  <p>
+                    When a guest accepts your offer, they pay the full accommodation amount online. Findastay processes the payment securely and deducts the booking administration fee. The remaining amount is paid to you according to your payout settings.
+                  </p>
+                </div>
+                
+                <div>
+                  <p className="font-medium text-foreground">2. Guest pays at property</p>
+                  <p>
+                    When a guest accepts your offer, they only pay the booking administration fee online. You collect the full accommodation payment directly from the guest on arrival. Findastay keeps the booking administration fee and does not invoice you monthly.
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="pt-2 border-t border-border">
+              <p className="font-medium text-foreground">Non-refundable policy</p>
+              <p>
+                The booking administration fee is non-refundable. Your own accommodation cancellation policy applies separately and is communicated to the guest after acceptance.
+              </p>
+            </div>
           </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={activeModal === 'cancellation'} onOpenChange={() => setActiveModal(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Non-Refundable Booking Policy</DialogTitle>
-            <DialogDescription>Understanding our cancellation terms.</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 text-sm text-muted-foreground">
-            <p>
-              Bookings confirmed through findastay are <strong>non-refundable</strong> unless the
-              property agrees otherwise.
-            </p>
-            <p>
-              This policy helps protect both guests and properties by ensuring commitment from all
-              parties.
-            </p>
-            <p>Properties may offer their own cancellation policies in addition to this baseline.</p>
+          
+          <div className="pt-4">
+            <Button 
+              className="w-full" 
+              onClick={() => {
+                setFeeAcknowledged(true);
+                setFeeTimingUnderstood(true);
+                setActiveModal(null);
+              }}
+            >
+              Read & Accept
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
