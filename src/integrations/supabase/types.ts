@@ -14,6 +14,21 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_users: {
+        Row: {
+          created_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       billable_events: {
         Row: {
           amount: number
@@ -187,6 +202,67 @@ export type Database = {
             columns: ["offer_id"]
             isOneToOne: true
             referencedRelation: "offers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoice_line_items: {
+        Row: {
+          admin_fee_amount: number
+          booking_confirmed_at: string
+          check_in_date: string
+          check_out_date: string
+          created_at: string
+          description: string
+          id: string
+          invoice_id: string
+          offer_id: string
+          property_id: string
+        }
+        Insert: {
+          admin_fee_amount: number
+          booking_confirmed_at: string
+          check_in_date: string
+          check_out_date: string
+          created_at?: string
+          description?: string
+          id?: string
+          invoice_id: string
+          offer_id: string
+          property_id: string
+        }
+        Update: {
+          admin_fee_amount?: number
+          booking_confirmed_at?: string
+          check_in_date?: string
+          check_out_date?: string
+          created_at?: string
+          description?: string
+          id?: string
+          invoice_id?: string
+          offer_id?: string
+          property_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_line_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_line_items_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "offers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_line_items_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
             referencedColumns: ["id"]
           },
         ]
@@ -619,6 +695,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_admin: { Args: never; Returns: boolean }
     }
     Enums: {
       app_role: "guest" | "business"
