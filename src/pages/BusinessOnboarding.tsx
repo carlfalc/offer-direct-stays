@@ -50,6 +50,8 @@ export default function BusinessOnboarding() {
   const [businessPhone, setBusinessPhone] = useState('');
   const [businessEmail, setBusinessEmail] = useState('');
   const [billingEmail, setBillingEmail] = useState('');
+  const [taxIdentifier, setTaxIdentifier] = useState('');
+  const [nzbn, setNzbn] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('pay_at_property');
   const [addressData, setAddressData] = useState<AddressData>({
     addressLine1: '',
@@ -184,6 +186,8 @@ export default function BusinessOnboarding() {
           terms_accepted: termsAccepted,
           fee_acknowledged: feeAcknowledged,
           cancellation_policy_accepted: true,
+          tax_identifier: taxIdentifier || null,
+          nzbn: nzbn || null,
         })
         .select('id')
         .single();
@@ -330,6 +334,46 @@ export default function BusinessOnboarding() {
                     placeholder="billing@business.com"
                   />
                 </div>
+              </div>
+
+              {/* Tax Registration Details */}
+              <div className="space-y-4 pt-2 border-t border-border">
+                <div className="space-y-2">
+                  <Label htmlFor="taxIdentifier">
+                    {normalizeCountryCode(addressData.country) === 'AU' 
+                      ? 'ABN (optional)' 
+                      : 'GST Number (optional)'}
+                  </Label>
+                  <Input
+                    id="taxIdentifier"
+                    value={taxIdentifier}
+                    onChange={(e) => setTaxIdentifier(e.target.value)}
+                    placeholder={normalizeCountryCode(addressData.country) === 'AU' 
+                      ? 'e.g. 12 345 678 901' 
+                      : 'e.g. 123-456-789'}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Required for tax-compliant invoices if registered
+                  </p>
+                  <p className="text-xs text-muted-foreground/70 italic">
+                    If you're not registered for {normalizeCountryCode(addressData.country) === 'AU' ? 'ABN' : 'GST'}, leave this blank.
+                  </p>
+                </div>
+
+                {normalizeCountryCode(addressData.country) !== 'AU' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="nzbn">NZBN (optional)</Label>
+                    <Input
+                      id="nzbn"
+                      value={nzbn}
+                      onChange={(e) => setNzbn(e.target.value)}
+                      placeholder="e.g. 9429012345678"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      New Zealand Business Number for business verification
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Payment Method */}
