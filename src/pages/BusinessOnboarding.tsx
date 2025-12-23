@@ -398,13 +398,17 @@ export default function BusinessOnboarding() {
                         )}
                       </div>
                       <div className="flex-1">
-                        <p className="font-medium text-foreground">Guest pays admin fee on acceptance</p>
+                        <p className="font-medium text-foreground">Guest pays admin fee on acceptance (Pay at Property)</p>
                         <div className="mt-2 text-sm text-muted-foreground space-y-1">
-                          <p>• Guest pays the booking admin fee ({normalizeCountryCode(addressData.country) === 'AU' ? 'AUD $12.00' : 'NZD $8.99'}) at the time the offer is accepted</p>
-                          <p>• Guest pays accommodation directly to the property on arrival</p>
-                          <p>• This admin fee is collected by FindAStay via Stripe</p>
-                          <p className="text-xs italic text-muted-foreground/70">These bookings are excluded from monthly business invoices</p>
+                          <p>• Guest pays the booking admin fee ({normalizeCountryCode(addressData.country) === 'AU' ? 'AUD $12.00' : 'NZD $8.99'}) when the offer is accepted</p>
+                          <p>• This fee is deducted from the agreed offer and the balance is paid at the property on arrival</p>
+                          <p>• You will NOT be invoiced monthly for these bookings</p>
                         </div>
+                        {paymentMethod === 'guest_admin_fee' && (
+                          <div className="mt-3 p-2 bg-muted/50 rounded text-xs text-muted-foreground">
+                            <strong>Example:</strong> If the agreed rate is {normalizeCountryCode(addressData.country) === 'AU' ? 'AUD $200/night' : 'NZD $200/night'}, the guest pays {normalizeCountryCode(addressData.country) === 'AU' ? 'AUD $12.00' : 'NZD $8.99'} now and {normalizeCountryCode(addressData.country) === 'AU' ? 'AUD $188.00/night' : 'NZD $191.01/night'} at the property.
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -429,10 +433,10 @@ export default function BusinessOnboarding() {
                       <div className="flex-1">
                         <p className="font-medium text-foreground">Invoice me monthly for confirmed bookings</p>
                         <div className="mt-2 text-sm text-muted-foreground space-y-1">
-                          <p>• Guest does not pay any admin fee</p>
+                          <p>• Guest pays no admin fee</p>
+                          <p>• Guest pays the agreed accommodation amount at the property</p>
                           <p>• Business is billed monthly (on the 20th) for each confirmed booking</p>
                           <p>• Fee is {normalizeCountryCode(addressData.country) === 'AU' ? 'AUD $12.00' : 'NZD $8.99'} per confirmed booking</p>
-                          <p className="text-xs italic text-muted-foreground/70">These bookings are included in the monthly invoice</p>
                         </div>
                       </div>
                     </div>
@@ -462,13 +466,13 @@ export default function BusinessOnboarding() {
                     onCheckedChange={(checked) => setFeeAcknowledged(checked === true)}
                   />
                   <Label htmlFor="feeAcknowledged" className="cursor-pointer text-sm">
-                    I understand and accept the{' '}
+                    I understand{' '}
                     <button
                       type="button"
                       className="text-primary underline underline-offset-2"
                       onClick={() => setActiveModal('fee')}
                     >
-                      Findastay booking administration fee
+                      how the booking admin fee works
                     </button>{' '}
                     *
                   </Label>
@@ -481,7 +485,7 @@ export default function BusinessOnboarding() {
                     onCheckedChange={(checked) => setPaymentMethodConfirmed(checked === true)}
                   />
                   <Label htmlFor="paymentMethodConfirmed" className="cursor-pointer text-sm">
-                    I confirm my selected fee collection method ({paymentMethod === 'guest_admin_fee' ? 'guest pays admin fee on acceptance' : 'invoice me monthly'}) *
+                    I confirm my selected fee collection method: <strong>{paymentMethod === 'guest_admin_fee' ? 'Pay at Property (guest pays admin fee on acceptance)' : 'Invoice monthly for confirmed bookings'}</strong> *
                   </Label>
                 </div>
 
@@ -629,7 +633,7 @@ export default function BusinessOnboarding() {
           </DialogHeader>
           <div className="space-y-4 text-sm text-muted-foreground">
             <p>
-              Findastay charges a small booking administration fee when a guest's offer is accepted.
+              FindAStay charges a small booking administration fee for each confirmed booking:
             </p>
             
             <ul className="list-disc list-inside space-y-1">
@@ -642,21 +646,29 @@ export default function BusinessOnboarding() {
             </p>
             
             <div className="pt-2 border-t border-border">
-              <p className="font-medium text-foreground mb-2">Payment models (you choose one):</p>
+              <p className="font-medium text-foreground mb-2">Settlement options (you choose one):</p>
               
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <div>
-                  <p className="font-medium text-foreground">1. Guest pays online at acceptance</p>
-                  <p>
-                    When a guest accepts your offer, they pay the full accommodation amount online. Findastay processes the payment securely and deducts the booking administration fee. The remaining amount is paid to you according to your payout settings.
+                  <p className="font-medium text-foreground">1. Guest pays admin fee on acceptance (Pay at Property)</p>
+                  <ul className="list-disc list-inside space-y-1 mt-1">
+                    <li>Guest pays the booking admin fee only at acceptance</li>
+                    <li>Guest pays the accommodation balance at the property on arrival</li>
+                    <li>This admin fee is deducted from the agreed offer to calculate the balance paid at the property</li>
+                    <li>You will NOT be invoiced monthly for these bookings</li>
+                  </ul>
+                  <p className="mt-2 text-xs bg-muted/50 p-2 rounded">
+                    <strong>Example:</strong> Agreed rate = $200/night; admin fee = $8.99 → guest pays $8.99 online at acceptance and $191.01/night at the property.
                   </p>
                 </div>
                 
                 <div>
-                  <p className="font-medium text-foreground">2. Guest pays at property</p>
-                  <p>
-                    When a guest accepts your offer, they only pay the booking administration fee online. You collect the full accommodation payment directly from the guest on arrival. Findastay keeps the booking administration fee and does not invoice you monthly.
-                  </p>
+                  <p className="font-medium text-foreground">2. Invoice me monthly for confirmed bookings</p>
+                  <ul className="list-disc list-inside space-y-1 mt-1">
+                    <li>Guest pays no admin fee</li>
+                    <li>Guest pays the agreed accommodation amount at the property (same as today)</li>
+                    <li>FindAStay invoices you monthly on the 20th for the admin fee per confirmed booking</li>
+                  </ul>
                 </div>
               </div>
             </div>
@@ -664,7 +676,7 @@ export default function BusinessOnboarding() {
             <div className="pt-2 border-t border-border">
               <p className="font-medium text-foreground">Non-refundable policy</p>
               <p>
-                The booking administration fee is non-refundable. Your own accommodation cancellation policy applies separately and is communicated to the guest after acceptance.
+                The booking administration fee is non-refundable once a booking is confirmed. Your own accommodation cancellation policy applies separately and is communicated to the guest after acceptance.
               </p>
             </div>
           </div>
