@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Loader2, Building2, Settings, Link2, Check, AlertTriangle } from 'lucide-react';
+import { Loader2, Building2, Settings, Check } from 'lucide-react';
 import { AddressAutocomplete, AddressData, normalizeCountryCode, SUPPORTED_COUNTRIES } from '@/components/AddressAutocomplete';
 
 // Mapbox public token - can be stored in code as it's publishable
@@ -392,7 +392,6 @@ export default function BusinessSettings() {
   if (!user) return null;
 
   const myProperties = properties.filter((p) => p.business_id === business?.id);
-  const availableProperties = properties.filter((p) => !p.is_claimed);
 
   return (
     <div className="min-h-full bg-background">
@@ -404,12 +403,8 @@ export default function BusinessSettings() {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-foreground">Business Settings</h1>
-            <p className="text-muted-foreground">Testing Mode — Manage your business and claim properties</p>
+            <p className="text-muted-foreground">Manage your business profile and properties</p>
           </div>
-          <Badge variant="outline" className="ml-auto border-warning text-warning">
-            <AlertTriangle className="h-3 w-3 mr-1" />
-            Dev Mode
-          </Badge>
         </div>
 
         {/* Business Profile Card */}
@@ -556,55 +551,6 @@ export default function BusinessSettings() {
           </Card>
         )}
 
-        {/* Available Properties to Claim */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Link2 className="h-5 w-5" />
-              Claim Properties
-            </CardTitle>
-            <CardDescription>
-              {business
-                ? 'Select properties to link to your business for testing'
-                : 'Create a business profile first to claim properties'}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {availableProperties.length === 0 ? (
-              <p className="text-muted-foreground text-center py-8">
-                No unclaimed properties available.
-              </p>
-            ) : (
-              <div className="space-y-2 max-h-96 overflow-y-auto">
-                {availableProperties.map((property) => (
-                  <div
-                    key={property.id}
-                    className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
-                  >
-                    <div>
-                      <p className="font-medium text-foreground">{property.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {property.city}, {property.country}
-                      </p>
-                    </div>
-                    <Button
-                      size="sm"
-                      onClick={() => handleClaimProperty(property.id)}
-                      disabled={!business || claimingPropertyId === property.id}
-                    >
-                      {claimingPropertyId === property.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        'Claim'
-                      )}
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
         {/* Quick Links */}
         {business && (
           <Card>
@@ -614,7 +560,7 @@ export default function BusinessSettings() {
             </CardHeader>
             <CardContent className="flex flex-wrap gap-3">
               <Button variant="outline" onClick={() => navigate('/business/dashboard')}>
-                View Offer Inbox
+                View Dashboard
               </Button>
               <Button variant="outline" onClick={() => navigate('/explore')}>
                 Browse as Guest

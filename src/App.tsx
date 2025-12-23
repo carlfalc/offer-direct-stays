@@ -13,6 +13,7 @@ import Explore from "./pages/Explore";
 import OfferPayment from "./pages/OfferPayment";
 import OfferConfirmed from "./pages/OfferConfirmed";
 import BusinessClaim from "./pages/BusinessClaim";
+import BusinessOnboarding from "./pages/BusinessOnboarding";
 import BusinessOfferResponse from "./pages/BusinessOfferResponse";
 import BusinessSettings from "./pages/BusinessSettings";
 import GuestOffers from "./pages/GuestOffers";
@@ -82,6 +83,11 @@ const App = () => (
               } />
               
               {/* Business routes */}
+              <Route path="/business/onboarding" element={
+                <AuthenticatedLayout>
+                  <BusinessOnboarding />
+                </AuthenticatedLayout>
+              } />
               <Route path="/business/claim" element={
                 <AuthenticatedLayout>
                   <BusinessClaim />
