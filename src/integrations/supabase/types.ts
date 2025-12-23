@@ -31,28 +31,52 @@ export type Database = {
       }
       billable_events: {
         Row: {
+          admin_fee_amount: number | null
           amount: number
+          billing_model: string | null
+          booking_confirmed_at: string | null
           business_id: string
+          check_in_date: string | null
+          check_out_date: string | null
           created_at: string
+          currency: string | null
           description: string | null
           id: string
+          invoiced_invoice_id: string | null
           offer_id: string | null
+          property_id: string | null
         }
         Insert: {
+          admin_fee_amount?: number | null
           amount?: number
+          billing_model?: string | null
+          booking_confirmed_at?: string | null
           business_id: string
+          check_in_date?: string | null
+          check_out_date?: string | null
           created_at?: string
+          currency?: string | null
           description?: string | null
           id?: string
+          invoiced_invoice_id?: string | null
           offer_id?: string | null
+          property_id?: string | null
         }
         Update: {
+          admin_fee_amount?: number | null
           amount?: number
+          billing_model?: string | null
+          booking_confirmed_at?: string | null
           business_id?: string
+          check_in_date?: string | null
+          check_out_date?: string | null
           created_at?: string
+          currency?: string | null
           description?: string | null
           id?: string
+          invoiced_invoice_id?: string | null
           offer_id?: string | null
+          property_id?: string | null
         }
         Relationships: [
           {
@@ -67,6 +91,20 @@ export type Database = {
             columns: ["offer_id"]
             isOneToOne: false
             referencedRelation: "offers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_billable_events_invoice"
+            columns: ["invoiced_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_billable_events_property"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
             referencedColumns: ["id"]
           },
         ]
