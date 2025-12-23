@@ -88,26 +88,78 @@ serve(async (req) => {
     if (updateError) throw new Error(`Error updating offer: ${updateError.message}`);
     logStep("Offer updated to confirmed", { offer_id });
 
-    // Fetch offer with property and business details
+    // Fetch offer with property and business details (including billing preference)
     const { data: offer } = await supabaseClient
       .from("offers")
-      .select("guest_user_id, property_id, properties:property_id(business_id, businesses:business_id(user_id))")
+      .select(`
+        guest_user_id, 
+        property_id, 
+        check_in_date,
+        check_out_date,
+        confirmed_at,
+        properties:property_id(
+          business_id, 
+          businesses:business_id(user_id, payment_collection_method)
+        )
+      `)
       .eq("id", offer_id)
       .single();
 
     const businessId = (offer?.properties as any)?.business_id;
     const businessUserId = (offer?.properties as any)?.businesses?.user_id;
+    const paymentCollectionMethod = (offer?.properties as any)?.businesses?.payment_collection_method || 'pay_at_property';
     const guestUserId = offer?.guest_user_id;
+    const propertyId = offer?.property_id;
+    const checkInDate = offer?.check_in_date;
+    const checkOutDate = offer?.check_out_date;
+    const confirmedAt = offer?.confirmed_at || new Date().toISOString();
 
-    if (businessId) {
-      const bcfAmount = parseFloat(session.metadata?.bcf_amount || "8.99");
-      await supabaseClient.from("billable_events").insert({
-        business_id: businessId,
-        offer_id: offer_id,
-        amount: bcfAmount,
-        description: `Booking Commitment Fee - ${session.metadata?.bcf_currency || "NZD"}`,
-      });
-      logStep("Billable event created", { business_id: businessId });
+    logStep("Business billing preference", { 
+      business_id: businessId, 
+      payment_collection_method: paymentCollectionMethod 
+    });
+
+    // Only create billable event if billing model is invoice_monthly (business_invoice)
+    // Do NOT create billable event for pay_at_property (guest pays BCF directly)
+    if (businessId && paymentCollectionMethod === 'business_invoice') {
+      // Check if billable event already exists for this offer (idempotency)
+      const { data: existingEvent } = await supabaseClient
+        .from("billable_events")
+        .select("id")
+        .eq("offer_id", offer_id)
+        .maybeSingle();
+
+      if (!existingEvent) {
+        const { error: billableError } = await supabaseClient.from("billable_events").insert({
+          business_id: businessId,
+          offer_id: offer_id,
+          property_id: propertyId,
+          booking_confirmed_at: confirmedAt,
+          check_in_date: checkInDate,
+          check_out_date: checkOutDate,
+          admin_fee_amount: bcfAmount,
+          amount: bcfAmount, // Keep for backward compatibility
+          currency: bcfCurrency,
+          billing_model: 'invoice_monthly',
+          invoiced_invoice_id: null,
+          description: `Booking Confirmation Fee`,
+        });
+
+        if (billableError) {
+          logStep("Warning: Could not create billable event", { error: billableError.message });
+        } else {
+          logStep("Billable event created for invoice_monthly business", { 
+            business_id: businessId,
+            offer_id: offer_id,
+            amount: bcfAmount,
+            currency: bcfCurrency
+          });
+        }
+      } else {
+        logStep("Billable event already exists, skipping", { offer_id });
+      }
+    } else if (businessId) {
+      logStep("Skipping billable event - pay_at_property model", { business_id: businessId });
     }
 
     // Create or update conversation for two-way chat
