@@ -58,6 +58,7 @@ export type Database = {
       }
       businesses: {
         Row: {
+          address_line1: string | null
           billing_country: string | null
           billing_email: string
           business_email: string
@@ -65,19 +66,25 @@ export type Database = {
           business_number: string | null
           business_phone: string | null
           cancellation_policy_accepted: boolean
+          city: string | null
           contact_name: string
           contact_role: string | null
           country: string
           created_at: string
           fee_acknowledged: boolean
           id: string
+          lat: number | null
+          lng: number | null
           payment_collection_method: string
           physical_address: string
+          postcode: string | null
+          region: string | null
           terms_accepted: boolean
           updated_at: string
           user_id: string
         }
         Insert: {
+          address_line1?: string | null
           billing_country?: string | null
           billing_email: string
           business_email: string
@@ -85,19 +92,25 @@ export type Database = {
           business_number?: string | null
           business_phone?: string | null
           cancellation_policy_accepted?: boolean
+          city?: string | null
           contact_name: string
           contact_role?: string | null
           country: string
           created_at?: string
           fee_acknowledged?: boolean
           id?: string
+          lat?: number | null
+          lng?: number | null
           payment_collection_method?: string
           physical_address: string
+          postcode?: string | null
+          region?: string | null
           terms_accepted?: boolean
           updated_at?: string
           user_id: string
         }
         Update: {
+          address_line1?: string | null
           billing_country?: string | null
           billing_email?: string
           business_email?: string
@@ -105,14 +118,19 @@ export type Database = {
           business_number?: string | null
           business_phone?: string | null
           cancellation_policy_accepted?: boolean
+          city?: string | null
           contact_name?: string
           contact_role?: string | null
           country?: string
           created_at?: string
           fee_acknowledged?: boolean
           id?: string
+          lat?: number | null
+          lng?: number | null
           payment_collection_method?: string
           physical_address?: string
+          postcode?: string | null
+          region?: string | null
           terms_accepted?: boolean
           updated_at?: string
           user_id?: string

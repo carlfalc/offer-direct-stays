@@ -17,6 +17,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Loader2, Building2, Settings, Link2, Check, AlertTriangle } from 'lucide-react';
+import { AddressAutocomplete, AddressData } from '@/components/AddressAutocomplete';
+
+// Mapbox public token - can be stored in code as it's publishable
+const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || '';
 
 interface BusinessProfile {
   id: string;
@@ -26,6 +30,12 @@ interface BusinessProfile {
   billing_email: string;
   business_phone: string | null;
   payment_collection_method: string;
+  address_line1?: string | null;
+  city?: string | null;
+  region?: string | null;
+  postcode?: string | null;
+  lat?: number | null;
+  lng?: number | null;
 }
 
 interface Property {
@@ -59,6 +69,15 @@ export default function BusinessSettings() {
     paymentMethod: 'pay_at_property',
   });
 
+  // Address state
+  const [addressData, setAddressData] = useState<AddressData>({
+    addressLine1: '',
+    city: '',
+    region: '',
+    postcode: '',
+    country: '',
+  });
+
   useEffect(() => {
     if (!authLoading && !user) {
       navigate('/auth?redirect=/business/settings');
@@ -87,7 +106,7 @@ export default function BusinessSettings() {
       // Load existing business profile
       const { data: businessData, error: businessError } = await supabase
         .from('businesses')
-        .select('id, business_name, country, business_email, billing_email, business_phone, payment_collection_method')
+        .select('id, business_name, country, business_email, billing_email, business_phone, payment_collection_method, address_line1, city, region, postcode, lat, lng')
         .eq('user_id', user.id)
         .maybeSingle();
 
@@ -102,6 +121,16 @@ export default function BusinessSettings() {
           billingEmail: businessData.billing_email,
           businessPhone: businessData.business_phone || '',
           paymentMethod: businessData.payment_collection_method,
+        });
+        // Load saved address data
+        setAddressData({
+          addressLine1: businessData.address_line1 || '',
+          city: businessData.city || '',
+          region: businessData.region || '',
+          postcode: businessData.postcode || '',
+          country: businessData.country || '',
+          lat: businessData.lat ?? undefined,
+          lng: businessData.lng ?? undefined,
         });
       }
 
@@ -130,8 +159,9 @@ export default function BusinessSettings() {
   const handleSaveBusiness = async () => {
     if (!user) return;
 
-    const { businessName, country, businessEmail, billingEmail, paymentMethod } = formData;
+    const { businessName, businessEmail, billingEmail, paymentMethod } = formData;
     
+    // Validate required fields including address
     if (!businessName.trim() || !businessEmail.trim() || !billingEmail.trim()) {
       toast({
         title: 'Missing fields',
@@ -141,20 +171,39 @@ export default function BusinessSettings() {
       return;
     }
 
+    if (!addressData.addressLine1.trim()) {
+      toast({
+        title: 'Address required',
+        description: 'Please enter your business address.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setSaving(true);
 
     try {
+      // Use address country if available, otherwise form country
+      const finalCountry = addressData.country || formData.country;
+
       if (business) {
         // Update existing business
         const { error } = await supabase
           .from('businesses')
           .update({
             business_name: businessName,
-            country,
+            country: finalCountry,
             business_email: businessEmail,
             billing_email: billingEmail,
             business_phone: formData.businessPhone || null,
             payment_collection_method: paymentMethod,
+            address_line1: addressData.addressLine1,
+            city: addressData.city || null,
+            region: addressData.region || null,
+            postcode: addressData.postcode || null,
+            physical_address: addressData.addressLine1, // Keep legacy field in sync
+            lat: addressData.lat ?? null,
+            lng: addressData.lng ?? null,
           })
           .eq('id', business.id);
 
@@ -163,11 +212,17 @@ export default function BusinessSettings() {
         setBusiness((prev) => prev ? {
           ...prev,
           business_name: businessName,
-          country,
+          country: finalCountry,
           business_email: businessEmail,
           billing_email: billingEmail,
           business_phone: formData.businessPhone || null,
           payment_collection_method: paymentMethod,
+          address_line1: addressData.addressLine1,
+          city: addressData.city,
+          region: addressData.region,
+          postcode: addressData.postcode,
+          lat: addressData.lat,
+          lng: addressData.lng,
         } : null);
 
         toast({
@@ -175,24 +230,33 @@ export default function BusinessSettings() {
           description: 'Your business profile has been updated.',
         });
       } else {
+        // Use address country if available, otherwise form country
+        const finalCountry = addressData.country || formData.country;
+        
         // Create new business
         const { data, error } = await supabase
           .from('businesses')
           .insert({
             user_id: user.id,
             business_name: businessName,
-            country,
+            country: finalCountry,
             business_email: businessEmail,
             billing_email: billingEmail,
             business_phone: formData.businessPhone || null,
             payment_collection_method: paymentMethod,
-            physical_address: 'Testing Address', // Required field, placeholder for testing
-            contact_name: user.email || 'Test Contact', // Required field
+            physical_address: addressData.addressLine1 || 'Address pending',
+            address_line1: addressData.addressLine1,
+            city: addressData.city || null,
+            region: addressData.region || null,
+            postcode: addressData.postcode || null,
+            lat: addressData.lat ?? null,
+            lng: addressData.lng ?? null,
+            contact_name: user.email || 'Business Contact',
             terms_accepted: true,
             fee_acknowledged: true,
             cancellation_policy_accepted: true,
           })
-          .select('id, business_name, country, business_email, billing_email, business_phone, payment_collection_method')
+          .select('id, business_name, country, business_email, billing_email, business_phone, payment_collection_method, address_line1, city, region, postcode, lat, lng')
           .single();
 
         if (error) throw error;
@@ -344,7 +408,7 @@ export default function BusinessSettings() {
               {business ? 'Update your business details' : 'Create a business profile to start receiving offers'}
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="businessName">Business Name *</Label>
@@ -357,20 +421,27 @@ export default function BusinessSettings() {
               </div>
 
               <div className="space-y-2">
-                <Label>Country *</Label>
-                <Select
-                  value={formData.country}
-                  onValueChange={(v) => handleInputChange('country', v)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="NZ">New Zealand</SelectItem>
-                    <SelectItem value="AU">Australia</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="businessPhone">Phone</Label>
+                <Input
+                  id="businessPhone"
+                  type="tel"
+                  value={formData.businessPhone}
+                  onChange={(e) => handleInputChange('businessPhone', e.target.value)}
+                  placeholder="+64 21 123 4567"
+                />
               </div>
+            </div>
+
+            {/* Address Section */}
+            <div className="pt-2 border-t border-border">
+              <AddressAutocomplete
+                value={addressData}
+                onChange={setAddressData}
+                mapboxToken={MAPBOX_TOKEN}
+              />
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2 pt-2 border-t border-border">
 
               <div className="space-y-2">
                 <Label htmlFor="businessEmail">Business Email *</Label>
@@ -391,17 +462,6 @@ export default function BusinessSettings() {
                   value={formData.billingEmail}
                   onChange={(e) => handleInputChange('billingEmail', e.target.value)}
                   placeholder="billing@business.com"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="businessPhone">Phone</Label>
-                <Input
-                  id="businessPhone"
-                  type="tel"
-                  value={formData.businessPhone}
-                  onChange={(e) => handleInputChange('businessPhone', e.target.value)}
-                  placeholder="+64 21 123 4567"
                 />
               </div>
 
