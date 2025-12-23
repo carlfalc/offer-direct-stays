@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { TripProvider } from "@/contexts/TripContext";
+import { BusinessProvider } from "@/contexts/BusinessContext";
 import AuthenticatedLayout from "@/components/layout/AuthenticatedLayout";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -27,8 +28,9 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <TripProvider>
-        <TooltipProvider>
+      <BusinessProvider>
+        <TripProvider>
+          <TooltipProvider>
           <Toaster />
           <Sonner />
           <BrowserRouter>
@@ -107,6 +109,7 @@ const App = () => (
           </BrowserRouter>
         </TooltipProvider>
       </TripProvider>
+      </BusinessProvider>
     </AuthProvider>
   </QueryClientProvider>
 );
