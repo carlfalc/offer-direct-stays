@@ -12,7 +12,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { FileText, DollarSign, Clock, CheckCircle, Search, ChevronDown, Loader2, Plus } from 'lucide-react';
+import { FileText, DollarSign, Clock, CheckCircle, Search, ChevronDown, Loader2, Plus, MoreHorizontal, Ban } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 
 type InvoiceStatus = 'pending' | 'paid' | 'void' | 'draft';
@@ -135,6 +136,36 @@ export default function AdminBilling() {
   // Get line items for a specific invoice
   const getLineItemsForInvoice = (invoiceId: string) => {
     return lineItems?.filter(item => item.invoice_id === invoiceId) || [];
+  };
+
+  const [updatingInvoiceId, setUpdatingInvoiceId] = useState<string | null>(null);
+
+  const handleUpdateStatus = async (invoiceId: string, newStatus: 'paid' | 'void') => {
+    setUpdatingInvoiceId(invoiceId);
+    try {
+      const updateData: { status: string; paid_at?: string | null } = { status: newStatus };
+      
+      if (newStatus === 'paid') {
+        updateData.paid_at = new Date().toISOString();
+      } else if (newStatus === 'void') {
+        updateData.paid_at = null;
+      }
+
+      const { error } = await supabase
+        .from('invoices')
+        .update(updateData)
+        .eq('id', invoiceId);
+
+      if (error) throw error;
+
+      toast.success(`Invoice marked as ${newStatus}`);
+      queryClient.invalidateQueries({ queryKey: ['admin-invoices'] });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to update invoice';
+      toast.error('Error', { description: message });
+    } finally {
+      setUpdatingInvoiceId(null);
+    }
   };
 
   const handleGenerateInvoices = async (dryRun: boolean = false) => {
@@ -395,6 +426,7 @@ export default function AdminBilling() {
                     <TableHead className="text-right">Subtotal</TableHead>
                     <TableHead className="text-right">GST</TableHead>
                     <TableHead className="text-right">Total</TableHead>
+                    <TableHead className="w-12"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -429,9 +461,36 @@ export default function AdminBilling() {
                           <TableCell className="text-right">{formatCurrency(subtotal)}</TableCell>
                           <TableCell className="text-right">{formatCurrency(invoice.gst_amount || 0)}</TableCell>
                           <TableCell className="text-right font-semibold">{formatCurrency(invoice.total_amount)}</TableCell>
+                          <TableCell>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" disabled={updatingInvoiceId === invoice.id}>
+                                  {updatingInvoiceId === invoice.id ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  )}
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                {invoice.status !== 'paid' && (
+                                  <DropdownMenuItem onClick={() => handleUpdateStatus(invoice.id, 'paid')}>
+                                    <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
+                                    Mark as Paid
+                                  </DropdownMenuItem>
+                                )}
+                                {invoice.status !== 'void' && (
+                                  <DropdownMenuItem onClick={() => handleUpdateStatus(invoice.id, 'void')}>
+                                    <Ban className="h-4 w-4 mr-2 text-destructive" />
+                                    Mark as Void
+                                  </DropdownMenuItem>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
                         </TableRow>
                         <TableRow>
-                          <TableCell colSpan={8} className="p-0 border-0">
+                          <TableCell colSpan={9} className="p-0 border-0">
                             <AccordionContent className="pb-0">
                               <div className="bg-muted/30 p-4 border-t">
                                 <h4 className="text-sm font-medium mb-3">Line Items ({invoiceLineItems.length})</h4>
