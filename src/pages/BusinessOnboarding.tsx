@@ -52,7 +52,7 @@ export default function BusinessOnboarding() {
   const [billingEmail, setBillingEmail] = useState('');
   const [taxIdentifier, setTaxIdentifier] = useState('');
   const [nzbn, setNzbn] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState('pay_at_property');
+  const [paymentMethod, setPaymentMethod] = useState('guest_admin_fee');
   const [addressData, setAddressData] = useState<AddressData>({
     addressLine1: '',
     city: '',
@@ -377,17 +377,67 @@ export default function BusinessOnboarding() {
               </div>
 
               {/* Payment Method */}
-              <div className="space-y-2">
-                <Label>Payment collection method *</Label>
-                <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pay_at_property">Pay at Property</SelectItem>
-                    <SelectItem value="pay_upfront">Pay Upfront</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="space-y-3">
+                <Label>How should booking admin fees be handled? *</Label>
+                <div className="space-y-3">
+                  {/* Option 1: Guest pays admin fee on acceptance */}
+                  <div
+                    className={`relative p-4 border rounded-lg cursor-pointer transition-colors ${
+                      paymentMethod === 'guest_admin_fee'
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border hover:border-muted-foreground/50'
+                    }`}
+                    onClick={() => setPaymentMethod('guest_admin_fee')}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className={`mt-0.5 w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                        paymentMethod === 'guest_admin_fee' ? 'border-primary' : 'border-muted-foreground/50'
+                      }`}>
+                        {paymentMethod === 'guest_admin_fee' && (
+                          <div className="w-2 h-2 rounded-full bg-primary" />
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium text-foreground">Guest pays admin fee on acceptance</p>
+                        <div className="mt-2 text-sm text-muted-foreground space-y-1">
+                          <p>• Guest pays the booking admin fee ({normalizeCountryCode(addressData.country) === 'AU' ? 'AUD $12.00' : 'NZD $8.99'}) at the time the offer is accepted</p>
+                          <p>• Guest pays accommodation directly to the property on arrival</p>
+                          <p>• This admin fee is collected by FindAStay via Stripe</p>
+                          <p className="text-xs italic text-muted-foreground/70">These bookings are excluded from monthly business invoices</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Option 2: Invoice business monthly */}
+                  <div
+                    className={`relative p-4 border rounded-lg cursor-pointer transition-colors ${
+                      paymentMethod === 'business_invoice'
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border hover:border-muted-foreground/50'
+                    }`}
+                    onClick={() => setPaymentMethod('business_invoice')}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className={`mt-0.5 w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                        paymentMethod === 'business_invoice' ? 'border-primary' : 'border-muted-foreground/50'
+                      }`}>
+                        {paymentMethod === 'business_invoice' && (
+                          <div className="w-2 h-2 rounded-full bg-primary" />
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium text-foreground">Invoice me monthly for confirmed bookings</p>
+                        <div className="mt-2 text-sm text-muted-foreground space-y-1">
+                          <p>• Guest does not pay any admin fee</p>
+                          <p>• Business is billed monthly (on the 20th) for each confirmed booking</p>
+                          <p>• Fee is {normalizeCountryCode(addressData.country) === 'AU' ? 'AUD $12.00' : 'NZD $8.99'} per confirmed booking</p>
+                          <p className="text-xs italic text-muted-foreground/70">These bookings are included in the monthly invoice</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* Declarations */}
@@ -431,7 +481,7 @@ export default function BusinessOnboarding() {
                     onCheckedChange={(checked) => setPaymentMethodConfirmed(checked === true)}
                   />
                   <Label htmlFor="paymentMethodConfirmed" className="cursor-pointer text-sm">
-                    I confirm my selected payment collection method ({paymentMethod === 'pay_upfront' ? 'guest pays online' : 'pay at property'}) *
+                    I confirm my selected fee collection method ({paymentMethod === 'guest_admin_fee' ? 'guest pays admin fee on acceptance' : 'invoice me monthly'}) *
                   </Label>
                 </div>
 

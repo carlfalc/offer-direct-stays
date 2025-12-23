@@ -9,13 +9,6 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Loader2, Building2, Settings, Check } from 'lucide-react';
 import { AddressAutocomplete, AddressData, normalizeCountryCode, SUPPORTED_COUNTRIES } from '@/components/AddressAutocomplete';
 
@@ -66,7 +59,7 @@ export default function BusinessSettings() {
     businessEmail: '',
     billingEmail: '',
     businessPhone: '',
-    paymentMethod: 'pay_at_property',
+    paymentMethod: 'guest_admin_fee',
   });
 
   // Address state
@@ -475,20 +468,61 @@ export default function BusinessSettings() {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label>Payment Collection Method *</Label>
-                <Select
-                  value={formData.paymentMethod}
-                  onValueChange={(v) => handleInputChange('paymentMethod', v)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pay_at_property">Pay at Property</SelectItem>
-                    <SelectItem value="pay_upfront">Pay Upfront</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="sm:col-span-2 space-y-2">
+                <Label>How should booking admin fees be handled? *</Label>
+                <div className="space-y-3">
+                  {/* Option 1: Guest pays admin fee on acceptance */}
+                  <div
+                    className={`relative p-4 border rounded-lg cursor-pointer transition-colors ${
+                      formData.paymentMethod === 'guest_admin_fee'
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border hover:border-muted-foreground/50'
+                    }`}
+                    onClick={() => handleInputChange('paymentMethod', 'guest_admin_fee')}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className={`mt-0.5 w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                        formData.paymentMethod === 'guest_admin_fee' ? 'border-primary' : 'border-muted-foreground/50'
+                      }`}>
+                        {formData.paymentMethod === 'guest_admin_fee' && (
+                          <div className="w-2 h-2 rounded-full bg-primary" />
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium text-foreground">Guest pays admin fee on acceptance</p>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          Guest pays {normalizeCountryCode(addressData.country) === 'AU' ? 'AUD $12.00' : 'NZD $8.99'} when offer is accepted. Not included in monthly invoice.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Option 2: Invoice business monthly */}
+                  <div
+                    className={`relative p-4 border rounded-lg cursor-pointer transition-colors ${
+                      formData.paymentMethod === 'business_invoice'
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border hover:border-muted-foreground/50'
+                    }`}
+                    onClick={() => handleInputChange('paymentMethod', 'business_invoice')}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className={`mt-0.5 w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                        formData.paymentMethod === 'business_invoice' ? 'border-primary' : 'border-muted-foreground/50'
+                      }`}>
+                        {formData.paymentMethod === 'business_invoice' && (
+                          <div className="w-2 h-2 rounded-full bg-primary" />
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium text-foreground">Invoice me monthly</p>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {normalizeCountryCode(addressData.country) === 'AU' ? 'AUD $12.00' : 'NZD $8.99'} per confirmed booking, invoiced on the 20th.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
