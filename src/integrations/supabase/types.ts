@@ -75,10 +75,12 @@ export type Database = {
           id: string
           lat: number | null
           lng: number | null
+          nzbn: string | null
           payment_collection_method: string
           physical_address: string
           postcode: string | null
           region: string | null
+          tax_identifier: string | null
           terms_accepted: boolean
           updated_at: string
           user_id: string
@@ -101,10 +103,12 @@ export type Database = {
           id?: string
           lat?: number | null
           lng?: number | null
+          nzbn?: string | null
           payment_collection_method?: string
           physical_address: string
           postcode?: string | null
           region?: string | null
+          tax_identifier?: string | null
           terms_accepted?: boolean
           updated_at?: string
           user_id: string
@@ -127,10 +131,12 @@ export type Database = {
           id?: string
           lat?: number | null
           lng?: number | null
+          nzbn?: string | null
           payment_collection_method?: string
           physical_address?: string
           postcode?: string | null
           region?: string | null
+          tax_identifier?: string | null
           terms_accepted?: boolean
           updated_at?: string
           user_id?: string
