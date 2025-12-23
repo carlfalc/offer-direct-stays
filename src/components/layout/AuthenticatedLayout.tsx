@@ -40,22 +40,23 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
     checkBusiness();
   }, [user]);
 
-  // Route guard for /business/* pages
+  // Route guard for /business/* pages (except onboarding)
   const isBusinessRoute = location.pathname.startsWith('/business');
+  const isOnboardingRoute = location.pathname === '/business/onboarding';
   
   useEffect(() => {
     // Only run guard after we know hasBusiness status and user is loaded
     if (hasBusiness === null || authLoading) return;
     
-    // If on business route but no business record, redirect to settings
-    if (isBusinessRoute && hasBusiness === false && location.pathname !== '/business/settings') {
+    // If on business route (except onboarding) but no business record, redirect to onboarding
+    if (isBusinessRoute && !isOnboardingRoute && hasBusiness === false) {
       toast({
-        title: 'Business Profile Required',
-        description: 'Create your business profile to access the Business Portal.',
+        title: 'Complete Your Setup',
+        description: 'Let\'s finish setting up your business profile.',
       });
-      navigate('/business/settings');
+      navigate('/business/onboarding');
     }
-  }, [hasBusiness, isBusinessRoute, location.pathname, authLoading, navigate, toast]);
+  }, [hasBusiness, isBusinessRoute, isOnboardingRoute, location.pathname, authLoading, navigate, toast]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -80,8 +81,8 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
     { label: 'Messages', path: '/messages', icon: MessageSquare },
   ];
 
-  // Show business nav only if on business route AND has business record
-  const navItems = (isBusinessRoute && hasBusiness === true) ? businessNavItems : guestNavItems;
+  // Show business nav only if on business route (except onboarding) AND has business record
+  const navItems = (isBusinessRoute && !isOnboardingRoute && hasBusiness === true) ? businessNavItems : guestNavItems;
 
   if (authLoading) {
     return (

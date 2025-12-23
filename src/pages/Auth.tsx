@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -33,10 +34,14 @@ export default function Auth() {
     setSignupIntent(intent);
   }, []);
 
-  const getRedirectPath = () => {
+  const getRedirectPath = async () => {
     const intent = localStorage.getItem('signup_intent');
-    localStorage.removeItem('signup_intent');
-    return intent === 'business' ? '/business/settings' : '/explore';
+    // Don't remove yet - let the destination page handle it
+    
+    if (intent === 'business') {
+      return '/business/onboarding';
+    }
+    return '/explore';
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -58,9 +63,9 @@ export default function Auth() {
 
     setIsLoading(true);
     const { error } = await signIn(loginEmail, loginPassword);
-    setIsLoading(false);
 
     if (error) {
+      setIsLoading(false);
       toast({
         title: 'Login Failed',
         description: error.message === 'Invalid login credentials' 
@@ -69,7 +74,27 @@ export default function Auth() {
         variant: 'destructive',
       });
     } else {
-      navigate(getRedirectPath());
+      // Check if user has a business record
+      const intent = localStorage.getItem('signup_intent');
+      if (intent === 'business') {
+        // Check if they already have a business
+        const { data: session } = await supabase.auth.getSession();
+        if (session?.session?.user) {
+          const { data: existingBusiness } = await supabase
+            .from('businesses')
+            .select('id')
+            .eq('user_id', session.session.user.id)
+            .maybeSingle();
+
+          setIsLoading(false);
+          localStorage.removeItem('signup_intent');
+          navigate(existingBusiness ? '/business/dashboard' : '/business/onboarding');
+          return;
+        }
+      }
+      setIsLoading(false);
+      const redirectPath = await getRedirectPath();
+      navigate(redirectPath);
     }
   };
 
@@ -92,9 +117,9 @@ export default function Auth() {
 
     setIsLoading(true);
     const { error } = await signUp(signupEmail, signupPassword, firstName, lastName);
-    setIsLoading(false);
 
     if (error) {
+      setIsLoading(false);
       if (error.message.includes('already registered')) {
         toast({
           title: 'Account Exists',
@@ -109,13 +134,17 @@ export default function Auth() {
         });
       }
     } else {
-      const redirectPath = getRedirectPath();
+      const intent = localStorage.getItem('signup_intent');
+      const redirectPath = intent === 'business' ? '/business/onboarding' : '/explore';
+      localStorage.removeItem('signup_intent');
+      
       toast({
         title: 'Account Created',
-        description: redirectPath === '/business/settings' 
+        description: redirectPath === '/business/onboarding' 
           ? 'Welcome! Let\'s set up your business profile.'
           : 'Welcome to findastay! You can now start exploring.',
       });
+      setIsLoading(false);
       navigate(redirectPath);
     }
   };
