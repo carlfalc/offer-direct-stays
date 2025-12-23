@@ -276,11 +276,17 @@ export default function BusinessSettings() {
           description: 'Your business profile has been created.',
         });
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error saving business:', err);
+      console.error('Error details:', {
+        message: err?.message,
+        details: err?.details,
+        hint: err?.hint,
+        code: err?.code,
+      });
       toast({
         title: 'Error',
-        description: 'Failed to save business profile.',
+        description: err?.message || 'Failed to save business profile.',
         variant: 'destructive',
       });
     } finally {
