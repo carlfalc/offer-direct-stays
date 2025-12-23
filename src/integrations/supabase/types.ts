@@ -286,12 +286,18 @@ export type Database = {
           check_in_date: string
           check_out_date: string
           children: number
+          confirmed_at: string | null
           counter_amount: number | null
           created_at: string
           currency: string | null
+          fee_amount: number | null
+          fee_currency: string | null
+          fee_payment_status: string | null
+          fee_settled_via: string | null
           guest_notes: string | null
           guest_user_id: string
           id: string
+          invoice_id: string | null
           offer_amount: number
           payment_confirmed: boolean | null
           property_id: string
@@ -313,12 +319,18 @@ export type Database = {
           check_in_date: string
           check_out_date: string
           children?: number
+          confirmed_at?: string | null
           counter_amount?: number | null
           created_at?: string
           currency?: string | null
+          fee_amount?: number | null
+          fee_currency?: string | null
+          fee_payment_status?: string | null
+          fee_settled_via?: string | null
           guest_notes?: string | null
           guest_user_id: string
           id?: string
+          invoice_id?: string | null
           offer_amount: number
           payment_confirmed?: boolean | null
           property_id: string
@@ -340,12 +352,18 @@ export type Database = {
           check_in_date?: string
           check_out_date?: string
           children?: number
+          confirmed_at?: string | null
           counter_amount?: number | null
           created_at?: string
           currency?: string | null
+          fee_amount?: number | null
+          fee_currency?: string | null
+          fee_payment_status?: string | null
+          fee_settled_via?: string | null
           guest_notes?: string | null
           guest_user_id?: string
           id?: string
+          invoice_id?: string | null
           offer_amount?: number
           payment_confirmed?: boolean | null
           property_id?: string

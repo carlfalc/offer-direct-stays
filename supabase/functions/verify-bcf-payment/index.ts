@@ -62,16 +62,25 @@ serve(async (req) => {
       throw new Error("Session does not match offer");
     }
 
-    // Update the offer with payment details
+    // Update the offer with payment details and fee settlement info
+    const bcfAmount = parseFloat(session.metadata?.bcf_amount || "0");
+    const bcfCurrency = session.metadata?.bcf_currency || "NZD";
+    
     const { error: updateError } = await supabaseClient
       .from("offers")
       .update({
         bcf_payment_status: "paid",
         bcf_stripe_payment_id: session.payment_intent as string,
         bcf_paid_at: new Date().toISOString(),
-        bcf_amount: parseFloat(session.metadata?.bcf_amount || "0"),
-        bcf_currency: session.metadata?.bcf_currency || "NZD",
+        bcf_amount: bcfAmount,
+        bcf_currency: bcfCurrency,
         status: "confirmed",
+        // New fee settlement fields
+        fee_amount: bcfAmount,
+        fee_currency: bcfCurrency,
+        fee_settled_via: "guest_admin_fee",
+        fee_payment_status: "paid",
+        confirmed_at: new Date().toISOString(),
       })
       .eq("id", offer_id)
       .eq("guest_user_id", user.id);
