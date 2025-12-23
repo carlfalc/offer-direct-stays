@@ -413,7 +413,7 @@ export default function BusinessOnboarding() {
                     </div>
                   </div>
 
-                  {/* Option 2: Invoice business monthly */}
+                  {/* Option 2: Pay Now - Guest pays in full on approval */}
                   <div
                     className={`relative p-4 border rounded-lg cursor-pointer transition-colors ${
                       paymentMethod === 'business_invoice'
@@ -431,12 +431,11 @@ export default function BusinessOnboarding() {
                         )}
                       </div>
                       <div className="flex-1">
-                        <p className="font-medium text-foreground">Invoice me monthly for confirmed bookings</p>
+                        <p className="font-medium text-foreground">PAY NOW – Guest pays in full on approval (non-refundable)</p>
                         <div className="mt-2 text-sm text-muted-foreground space-y-1">
-                          <p>• Guest pays no admin fee</p>
-                          <p>• Guest pays the agreed accommodation amount at the property</p>
-                          <p>• Business is billed monthly (on the 20th) for each confirmed booking</p>
-                          <p>• Fee is {normalizeCountryCode(addressData.country) === 'AU' ? 'AUD $12.00' : 'NZD $8.99'} per confirmed booking</p>
+                          <p>• Guest pays the full accommodation amount immediately on acceptance</p>
+                          <p>• Payment is non-refundable</p>
+                          <p>• Business is invoiced monthly (on the 20th) for the admin fee only ({normalizeCountryCode(addressData.country) === 'AU' ? 'AUD $12.00' : 'NZD $8.99'} per confirmed booking)</p>
                         </div>
                       </div>
                     </div>
@@ -485,7 +484,7 @@ export default function BusinessOnboarding() {
                     onCheckedChange={(checked) => setPaymentMethodConfirmed(checked === true)}
                   />
                   <Label htmlFor="paymentMethodConfirmed" className="cursor-pointer text-sm">
-                    I confirm my selected fee collection method: <strong>{paymentMethod === 'guest_admin_fee' ? 'Pay at Property (guest pays admin fee on acceptance)' : 'Invoice monthly for confirmed bookings'}</strong> *
+                    I confirm my selected fee collection method: <strong>{paymentMethod === 'guest_admin_fee' ? 'Pay at Property (guest pays admin fee on acceptance)' : 'PAY NOW – Guest pays in full on approval (non-refundable)'}</strong> *
                   </Label>
                 </div>
 
@@ -663,11 +662,11 @@ export default function BusinessOnboarding() {
                 </div>
                 
                 <div>
-                  <p className="font-medium text-foreground">2. Invoice me monthly for confirmed bookings</p>
+                  <p className="font-medium text-foreground">2. PAY NOW – Guest pays in full on approval (non-refundable)</p>
                   <ul className="list-disc list-inside space-y-1 mt-1">
-                    <li>Guest pays no admin fee</li>
-                    <li>Guest pays the agreed accommodation amount at the property (same as today)</li>
-                    <li>FindAStay invoices you monthly on the 20th for the admin fee per confirmed booking</li>
+                    <li>Guest pays the full accommodation amount immediately on acceptance</li>
+                    <li>Payment is non-refundable</li>
+                    <li>Business is invoiced monthly (on the 20th) for the admin fee only</li>
                   </ul>
                 </div>
               </div>
