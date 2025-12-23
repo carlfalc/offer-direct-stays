@@ -7,9 +7,11 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { TripProvider } from "@/contexts/TripContext";
 import { BusinessProvider } from "@/contexts/BusinessContext";
 import AuthenticatedLayout from "@/components/layout/AuthenticatedLayout";
+import AdminLayout from "@/components/layout/AdminLayout";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Explore from "./pages/Explore";
+import AdminBilling from "./pages/AdminBilling";
 import OfferPayment from "./pages/OfferPayment";
 import OfferConfirmed from "./pages/OfferConfirmed";
 import BusinessClaim from "./pages/BusinessClaim";
@@ -107,6 +109,13 @@ const App = () => (
                 <AuthenticatedLayout>
                   <BusinessSettings />
                 </AuthenticatedLayout>
+              } />
+              
+              {/* Admin routes */}
+              <Route path="/admin/billing" element={
+                <AdminLayout>
+                  <AdminBilling />
+                </AdminLayout>
               } />
               
               {/* Catch-all */}
