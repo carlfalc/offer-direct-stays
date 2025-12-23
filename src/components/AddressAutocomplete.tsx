@@ -1,7 +1,29 @@
 import { useState, useEffect, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Loader2, MapPin } from 'lucide-react';
+
+const SUPPORTED_COUNTRIES = [
+  { code: 'NZ', label: 'New Zealand' },
+  { code: 'AU', label: 'Australia' },
+] as const;
+
+type CountryCode = 'NZ' | 'AU';
+
+// Map various country formats to our standardized codes
+const normalizeCountryCode = (country: string): CountryCode | '' => {
+  const upper = country.toUpperCase().trim();
+  if (upper === 'NZ' || upper === 'NEW ZEALAND') return 'NZ';
+  if (upper === 'AU' || upper === 'AUSTRALIA') return 'AU';
+  return '';
+};
 
 export interface AddressData {
   addressLine1: string;
@@ -108,8 +130,7 @@ export function AddressAutocomplete({ value, onChange, mapboxToken }: AddressAut
     let city = '';
     let region = '';
     let postcode = '';
-    let country = '';
-    let countryCode = '';
+    let rawCountry = '';
 
     for (const ctx of context) {
       if (ctx.id.startsWith('place')) {
@@ -121,10 +142,12 @@ export function AddressAutocomplete({ value, onChange, mapboxToken }: AddressAut
       } else if (ctx.id.startsWith('postcode')) {
         postcode = ctx.text;
       } else if (ctx.id.startsWith('country')) {
-        country = ctx.short_code?.toUpperCase() || ctx.text;
-        countryCode = ctx.short_code?.toUpperCase() || '';
+        rawCountry = ctx.short_code?.toUpperCase() || ctx.text;
       }
     }
+
+    // Normalize country to NZ or AU
+    const normalizedCountry = normalizeCountryCode(rawCountry);
 
     // Build address line from street number + street name
     const streetNumber = feature.address || feature.properties?.address || '';
@@ -136,7 +159,7 @@ export function AddressAutocomplete({ value, onChange, mapboxToken }: AddressAut
       city,
       region,
       postcode,
-      country: countryCode || country,
+      country: normalizedCountry,
       lat: feature.center[1],
       lng: feature.center[0],
     };
@@ -204,12 +227,21 @@ export function AddressAutocomplete({ value, onChange, mapboxToken }: AddressAut
           
           <div className="space-y-2">
             <Label htmlFor="country">Country *</Label>
-            <Input
-              id="country"
-              value={value.country}
-              onChange={(e) => handleManualFieldChange('country', e.target.value)}
-              placeholder="e.g., NZ"
-            />
+            <Select
+              value={value.country || ''}
+              onValueChange={(v) => handleManualFieldChange('country', v)}
+            >
+              <SelectTrigger id="country">
+                <SelectValue placeholder="Select country" />
+              </SelectTrigger>
+              <SelectContent>
+                {SUPPORTED_COUNTRIES.map((c) => (
+                  <SelectItem key={c.code} value={c.code}>
+                    {c.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </div>
@@ -297,10 +329,10 @@ export function AddressAutocomplete({ value, onChange, mapboxToken }: AddressAut
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="country">Country</Label>
+          <Label htmlFor="countryDisplay">Country</Label>
           <Input
-            id="country"
-            value={value.country}
+            id="countryDisplay"
+            value={value.country ? SUPPORTED_COUNTRIES.find(c => c.code === value.country)?.label || value.country : ''}
             readOnly
             className="bg-muted/50"
             placeholder="Auto-filled from address"
@@ -310,3 +342,5 @@ export function AddressAutocomplete({ value, onChange, mapboxToken }: AddressAut
     </div>
   );
 }
+
+export { normalizeCountryCode, SUPPORTED_COUNTRIES };

@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Loader2, Building2, Settings, Link2, Check, AlertTriangle } from 'lucide-react';
-import { AddressAutocomplete, AddressData } from '@/components/AddressAutocomplete';
+import { AddressAutocomplete, AddressData, normalizeCountryCode, SUPPORTED_COUNTRIES } from '@/components/AddressAutocomplete';
 
 // Mapbox public token - can be stored in code as it's publishable
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || '';
@@ -114,21 +114,23 @@ export default function BusinessSettings() {
         console.error('Error loading business:', businessError);
       } else if (businessData) {
         setBusiness(businessData);
+        // Normalize country to NZ/AU
+        const normalizedCountry = normalizeCountryCode(businessData.country) || 'NZ';
         setFormData({
           businessName: businessData.business_name,
-          country: businessData.country,
+          country: normalizedCountry,
           businessEmail: businessData.business_email,
           billingEmail: businessData.billing_email,
           businessPhone: businessData.business_phone || '',
           paymentMethod: businessData.payment_collection_method,
         });
-        // Load saved address data
+        // Load saved address data with normalized country
         setAddressData({
           addressLine1: businessData.address_line1 || '',
           city: businessData.city || '',
           region: businessData.region || '',
           postcode: businessData.postcode || '',
-          country: businessData.country || '',
+          country: normalizedCountry,
           lat: businessData.lat ?? undefined,
           lng: businessData.lng ?? undefined,
         });
@@ -183,8 +185,17 @@ export default function BusinessSettings() {
     setSaving(true);
 
     try {
-      // Use address country if available, otherwise form country
-      const finalCountry = addressData.country || formData.country;
+      // Normalize and validate country - must be NZ or AU
+      const normalizedCountry = normalizeCountryCode(addressData.country || formData.country);
+      if (!normalizedCountry) {
+        toast({
+          title: 'Invalid country',
+          description: 'Please select New Zealand or Australia as your country.',
+          variant: 'destructive',
+        });
+        setSaving(false);
+        return;
+      }
 
       if (business) {
         // Update existing business
@@ -192,7 +203,7 @@ export default function BusinessSettings() {
           .from('businesses')
           .update({
             business_name: businessName,
-            country: finalCountry,
+            country: normalizedCountry,
             business_email: businessEmail,
             billing_email: billingEmail,
             business_phone: formData.businessPhone || null,
@@ -209,10 +220,11 @@ export default function BusinessSettings() {
 
         if (error) throw error;
 
+
         setBusiness((prev) => prev ? {
           ...prev,
           business_name: businessName,
-          country: finalCountry,
+          country: normalizedCountry,
           business_email: businessEmail,
           billing_email: billingEmail,
           business_phone: formData.businessPhone || null,
@@ -230,16 +242,13 @@ export default function BusinessSettings() {
           description: 'Your business profile has been updated.',
         });
       } else {
-        // Use address country if available, otherwise form country
-        const finalCountry = addressData.country || formData.country;
-        
         // Create new business
         const { data, error } = await supabase
           .from('businesses')
           .insert({
             user_id: user.id,
             business_name: businessName,
-            country: finalCountry,
+            country: normalizedCountry,
             business_email: businessEmail,
             billing_email: billingEmail,
             business_phone: formData.businessPhone || null,
