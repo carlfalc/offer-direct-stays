@@ -27,6 +27,9 @@ export interface Room {
   max_children: number;
   bed_configuration: string | null;
   amenities: string[] | null;
+  avg_rate?: number | null;
+  actual_rate?: number | null;
+  currency?: string | null;
   created_at: string;
   updated_at: string;
 }

@@ -31,6 +31,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Stepper } from '@/components/ui/stepper';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
 import { MapPin, Users, Info, AlertCircle, Loader2 } from 'lucide-react';
 
 interface OfferModalProps {
@@ -61,6 +63,7 @@ export default function OfferModal({
   const [children, setChildren] = useState(initialChildren);
   const [requirements, setRequirements] = useState('');
   const [offerAmount, setOfferAmount] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState<'pay_at_property' | 'pay_now'>('pay_at_property');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loadingRooms, setLoadingRooms] = useState(false);
@@ -77,6 +80,7 @@ export default function OfferModal({
       setChildren(initialChildren);
       setRequirements('');
       setOfferAmount('');
+      setPaymentMethod('pay_at_property');
       setError(null);
       loadRooms(property.id);
     }
@@ -146,6 +150,7 @@ export default function OfferModal({
       check_out_date: checkOutDate,
       guest_notes: requirements.trim() || null,
       status: 'submitted',
+      payment_method: paymentMethod,
       bcf_payment_status: 'pending',
       bcf_currency: currency,
       bcf_amount: bcfAmount,
@@ -157,7 +162,7 @@ export default function OfferModal({
       console.error('Error creating offer:', insertError);
       toast({
         title: 'Error',
-        description: 'Something went wrong sending your offer. Please try again.',
+        description: insertError.message || 'Something went wrong sending your offer. Please try again.',
         variant: 'destructive',
       });
       return;
@@ -308,10 +313,28 @@ export default function OfferModal({
             </div>
           ) : (
             <p className="text-xs text-muted-foreground">
-              Your offer is sent directly to the business. If accepted, you'll be asked to pay a booking
-              commitment fee to confirm.
+              Your offer is sent directly to the business. If accepted, you'll be asked to confirm payment.
             </p>
           )}
+        </div>
+
+        {/* Payment Method */}
+        <div className="space-y-2">
+          <Label className="text-sm font-medium text-foreground">How do you want to pay?</Label>
+          <RadioGroup value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as 'pay_at_property' | 'pay_now')}>
+            <div className="flex items-start gap-2">
+              <RadioGroupItem value="pay_at_property" id="pay_at_property" />
+              <Label htmlFor="pay_at_property" className="text-sm text-foreground">
+                Pay at property (you'll pay the booking commitment fee to confirm)
+              </Label>
+            </div>
+            <div className="flex items-start gap-2">
+              <RadioGroupItem value="pay_now" id="pay_now" />
+              <Label htmlFor="pay_now" className="text-sm text-foreground">
+                Pay now (full amount online once the business accepts)
+              </Label>
+            </div>
+          </RadioGroup>
         </div>
 
         {/* BCF Disclosure */}
