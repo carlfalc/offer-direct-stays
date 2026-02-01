@@ -160,13 +160,26 @@ export default function OfferModal({
 
     if (insertError) {
       console.error('Error creating offer:', insertError);
+      const isLimit = insertError.message?.toLowerCase().includes('offer limit');
       toast({
-        title: 'Error',
-        description: insertError.message || 'Something went wrong sending your offer. Please try again.',
+        title: isLimit ? 'Offer limit reached' : 'Error',
+        description: isLimit
+          ? 'You can send up to 5 active offers per city within 2 hours. Please wait and try again.'
+          : (insertError.message || 'Something went wrong sending your offer. Please try again.'),
         variant: 'destructive',
       });
       return;
     }
+
+    // Log offer event (non-blocking)
+    supabase.from('property_events').insert({
+      property_id: property.id,
+      user_id: user.id,
+      event_type: 'offer_submitted',
+      metadata: { payment_method: paymentMethod, room_id: selectedRoomId || null }
+    }).then(({ error }) => {
+      if (error) console.warn('Event log failed', error.message);
+    });
 
     toast({
       title: 'Offer sent',

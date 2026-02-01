@@ -84,6 +84,17 @@ export default function Explore() {
     }
   };
 
+  const logPropertyEvent = async (propertyId: string, eventType: string, metadata?: Record<string, any>) => {
+    if (!user) return;
+    const { error } = await supabase.from('property_events').insert({
+      property_id: propertyId,
+      user_id: user.id,
+      event_type: eventType,
+      metadata: metadata || null,
+    });
+    if (error) console.warn('Event log failed', error.message);
+  };
+
   const handleSendMessage = async (content: string) => {
     // Add user message
     const userMessage: ChatMessage = {
@@ -186,18 +197,22 @@ export default function Explore() {
     if (isAlreadyShortlisted) {
       setShortlist(prev => prev.filter(item => item.property.id !== property.id));
       toast({ description: `${property.name} removed from shortlist` });
+      logPropertyEvent(property.id, 'shortlist_remove');
     } else {
       setShortlist(prev => [...prev, { property }]);
       toast({ description: `${property.name} added to shortlist` });
+      logPropertyEvent(property.id, 'shortlist_add');
     }
     
     setSelectedPropertyId(property.id);
+    logPropertyEvent(property.id, 'property_select');
   };
 
   const handlePropertyPinClick = (property: Property) => {
     setDetailProperty(property);
     setDetailSheetOpen(true);
     setSelectedPropertyId(property.id);
+    logPropertyEvent(property.id, 'property_view', { source: 'map_pin' });
   };
 
   const handleAddToWatchlist = async (property: Property) => {
@@ -218,6 +233,7 @@ export default function Explore() {
       } else {
         setWatchlistedIds(prev => prev.filter(id => id !== property.id));
         toast({ description: `${property.name} removed from watchlist` });
+        logPropertyEvent(property.id, 'watchlist_remove');
       }
     } else {
       // Add to watchlist
@@ -230,6 +246,7 @@ export default function Explore() {
       } else {
         setWatchlistedIds(prev => [...prev, property.id]);
         toast({ description: `${property.name} added to watchlist` });
+        logPropertyEvent(property.id, 'watchlist_add');
       }
     }
   };
