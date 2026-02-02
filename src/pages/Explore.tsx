@@ -10,8 +10,9 @@ import ShortlistPanel from '@/components/explore/ShortlistPanel';
 import TripSummaryBar from '@/components/explore/TripSummaryBar';
 import PropertyDetailSheet from '@/components/explore/PropertyDetailSheet';
 import OfferModal from '@/components/explore/OfferModal';
+import { PostStayReviewModal, ReviewPayload } from '@/components/review';
 import { Button } from '@/components/ui/button';
-import { MapPin, LogOut, Menu, Heart, Plane } from 'lucide-react';
+import { MapPin, LogOut, Menu, Heart, Plane, Star } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
@@ -39,6 +40,9 @@ export default function Explore() {
   const [offerProperty, setOfferProperty] = useState<Property | null>(null);
   const [offerRoom, setOfferRoom] = useState<Room | null>(null);
   const [sentOfferIds, setSentOfferIds] = useState<string[]>([]);
+
+  // Post-stay review modal (demo trigger)
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -266,6 +270,14 @@ export default function Explore() {
     setSentOfferIds((prev) => [...prev, propertyId]);
   };
 
+  const handleReviewSubmit = (review: ReviewPayload) => {
+    console.log('Review submitted (business brain payload):', review);
+    toast({
+      title: 'Thank you!',
+      description: 'Your feedback helps us improve recommendations.',
+    });
+  };
+
   const handleSignOut = async () => {
     await signOut();
     navigate('/');
@@ -283,6 +295,15 @@ export default function Explore() {
 
   return (
     <div className="h-full flex flex-col overflow-hidden bg-background">
+      {/* Demo: Post-stay review trigger button (floating) */}
+      <button
+        onClick={() => setReviewModalOpen(true)}
+        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-2.5 rounded-full bg-gradient-to-r from-gold to-gold/80 text-charcoal font-medium shadow-lg hover:shadow-xl hover:shadow-gold/20 transition-all duration-300"
+      >
+        <Star className="w-4 h-4" />
+        <span className="hidden sm:inline">Demo Review</span>
+      </button>
+
       {/* Trip Summary Bar */}
       <TripSummaryBar />
 
@@ -345,6 +366,14 @@ export default function Explore() {
         initialAdults={trip.adults}
         initialChildren={trip.children}
         onOfferSent={handleOfferSent}
+      />
+
+      {/* Post-Stay Review Modal */}
+      <PostStayReviewModal
+        open={reviewModalOpen}
+        onOpenChange={setReviewModalOpen}
+        propertyName="The Grand Auckland"
+        onSubmit={handleReviewSubmit}
       />
     </div>
   );
