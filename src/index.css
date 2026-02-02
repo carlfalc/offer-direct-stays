@@ -1,7 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -9,102 +7,123 @@
 
 @layer base {
   :root {
-    /* findastay.ai Design System */
-    --background: 0 0% 96%;
-    --foreground: 0 0% 9%;
+    /* Premium AI Concierge Design System */
+    /* Warm White Background */
+    --background: 40 33% 96%;
+    --foreground: 220 20% 10%;
 
-    --card: 0 0% 98%;
-    --card-foreground: 0 0% 9%;
+    /* Cards: Pure warm white */
+    --card: 40 33% 98%;
+    --card-foreground: 220 20% 10%;
 
-    --popover: 0 0% 89%;
-    --popover-foreground: 0 0% 9%;
+    /* Popover */
+    --popover: 40 33% 96%;
+    --popover-foreground: 220 20% 10%;
 
-    /* Primary: Deep soft blue #1F3A5F */
-    --primary: 20 90% 48%;
-    --primary-foreground: 33 100% 96%;
+    /* Primary: Gold accent #C7A76C */
+    --primary: 40 45% 60%;
+    --primary-foreground: 220 20% 10%;
 
-    --secondary: 0 0% 32%;
-    --secondary-foreground: 0 0% 98%;
+    /* Secondary: Charcoal #111827 */
+    --secondary: 220 26% 11%;
+    --secondary-foreground: 40 33% 96%;
 
-    --muted: 0 0% 63%;
-    --muted-foreground: 0 0% 9%;
+    /* Muted */
+    --muted: 220 10% 75%;
+    --muted-foreground: 220 10% 40%;
 
-    /* Accent: Warm gold for CTAs #E3A857 */
-    --accent: 47 100% 96%;
-    --accent-foreground: 37 92% 50%;
+    /* Accent: Teal highlight #1F7A8C */
+    --accent: 190 64% 34%;
+    --accent-foreground: 40 33% 98%;
 
-    /* Success: Soft sage green #6E8F7D */
+    /* Success: Soft sage */
     --success: 150 14% 50%;
     --success-foreground: 0 0% 100%;
 
     --destructive: 0 72% 50%;
     --destructive-foreground: 0 85% 97%;
 
-    --border: 0 0% 83%;
-    --input: 0 0% 83%;
-    --ring: 20 90% 48%;
+    --border: 40 20% 88%;
+    --input: 40 20% 88%;
+    --ring: 40 45% 60%;
 
     --radius: 0.75rem;
 
     /* Chat specific */
-    --chat-user: 220 14% 94%;
-    --chat-assistant: 0 0% 100%;
+    --chat-user: 220 26% 11%;
+    --chat-assistant: 40 33% 98%;
 
     /* Map pin colors */
-    --pin-default: 215 50% 25%;
-    --pin-selected: 38 72% 62%;
-    --pin-shortlisted: 150 14% 50%;
+    --pin-default: 220 26% 11%;
+    --pin-selected: 40 45% 60%;
+    --pin-shortlisted: 190 64% 34%;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 0 0% 9%;
-    --sidebar-primary: 20 90% 48%;
-    --sidebar-primary-foreground: 33 100% 96%;
-    --sidebar-accent: 0 0% 32%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 0 0% 83%;
-    --sidebar-ring: 20 90% 48%;
-    --chart-1: 27 95% 60%;
-    --chart-2: 43 96% 56%;
-    --chart-3: 47 95% 53%;
-    --chart-4: 24 94% 53%;
-    --chart-5: 0 0% 45%;
-    --sidebar: 0 0% 98%;
-    --font-sans: 'Roboto', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
-    --font-serif: 'Libre Caslon Text', ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
-    --font-mono: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
-    --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-    --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-    --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-    --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-    --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
-    --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
-    --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
-    --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
+    /* Sidebar */
+    --sidebar-background: 220 26% 11%;
+    --sidebar-foreground: 40 33% 96%;
+    --sidebar-primary: 40 45% 60%;
+    --sidebar-primary-foreground: 220 20% 10%;
+    --sidebar-accent: 190 64% 34%;
+    --sidebar-accent-foreground: 40 33% 98%;
+    --sidebar-border: 220 20% 20%;
+    --sidebar-ring: 40 45% 60%;
+    --sidebar: 220 26% 11%;
+
+    /* Charts */
+    --chart-1: 40 45% 60%;
+    --chart-2: 190 64% 34%;
+    --chart-3: 40 45% 70%;
+    --chart-4: 190 64% 44%;
+    --chart-5: 220 10% 50%;
+
+    /* Typography */
+    --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+    --font-serif: 'Playfair Display', ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
+    --font-mono: 'SF Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+
+    /* Shadows */
+    --shadow-2xs: 0 1px 2px 0 hsl(220 26% 11% / 0.03);
+    --shadow-xs: 0 1px 3px 0 hsl(220 26% 11% / 0.04);
+    --shadow-sm: 0 2px 4px 0 hsl(220 26% 11% / 0.05), 0 1px 2px -1px hsl(220 26% 11% / 0.05);
+    --shadow: 0 4px 6px -1px hsl(220 26% 11% / 0.07), 0 2px 4px -2px hsl(220 26% 11% / 0.05);
+    --shadow-md: 0 6px 10px -2px hsl(220 26% 11% / 0.08), 0 3px 6px -3px hsl(220 26% 11% / 0.06);
+    --shadow-lg: 0 10px 15px -3px hsl(220 26% 11% / 0.1), 0 4px 6px -4px hsl(220 26% 11% / 0.08);
+    --shadow-xl: 0 20px 25px -5px hsl(220 26% 11% / 0.12), 0 8px 10px -6px hsl(220 26% 11% / 0.1);
+    --shadow-2xl: 0 25px 50px -12px hsl(220 26% 11% / 0.25);
+
+    /* Gold glow for premium elements */
+    --glow-gold: 0 0 40px hsl(40 45% 60% / 0.4), 0 0 80px hsl(40 45% 60% / 0.2);
+    --glow-teal: 0 0 40px hsl(190 64% 34% / 0.3), 0 0 80px hsl(190 64% 34% / 0.15);
+
     --tracking-normal: 0em;
     --spacing: 0.25rem;
   }
 
   .dark {
-    --background: 0 0% 9%;
-    --foreground: 0 0% 98%;
+    /* Dark mode: Charcoal as background */
+    --background: 220 26% 9%;
+    --foreground: 40 33% 96%;
 
-    --card: 0 0% 14%;
-    --card-foreground: 0 0% 98%;
+    --card: 220 26% 12%;
+    --card-foreground: 40 33% 96%;
 
-    --popover: 0 0% 25%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 220 26% 14%;
+    --popover-foreground: 40 33% 96%;
 
-    --primary: 27 95% 60%;
-    --primary-foreground: 12 81% 14%;
+    /* Primary: Gold */
+    --primary: 40 50% 55%;
+    --primary-foreground: 220 26% 9%;
 
-    --secondary: 0 0% 45%;
-    --secondary-foreground: 0 0% 98%;
+    /* Secondary */
+    --secondary: 40 20% 20%;
+    --secondary-foreground: 40 33% 96%;
 
-    --muted: 0 0% 45%;
-    --muted-foreground: 0 0% 98%;
+    --muted: 220 15% 25%;
+    --muted-foreground: 40 20% 70%;
 
-    --accent: 20 91% 14%;
-    --accent-foreground: 43 96% 56%;
+    /* Accent: Teal */
+    --accent: 190 64% 40%;
+    --accent-foreground: 220 26% 9%;
 
     --success: 150 14% 45%;
     --success-foreground: 0 0% 100%;
@@ -112,35 +131,40 @@
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 85% 97%;
 
-    --border: 0 0% 32%;
-    --input: 0 0% 32%;
-    --ring: 27 95% 60%;
+    --border: 220 20% 20%;
+    --input: 220 20% 20%;
+    --ring: 40 50% 55%;
 
-    --chat-user: 215 25% 15%;
-    --chat-assistant: 215 25% 12%;
+    --chat-user: 220 26% 16%;
+    --chat-assistant: 220 26% 12%;
 
-    --sidebar-background: 215 25% 9%;
-    --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 27 95% 60%;
-    --sidebar-primary-foreground: 12 81% 14%;
-    --sidebar-accent: 43 96% 56%;
-    --sidebar-accent-foreground: 20 91% 14%;
-    --sidebar-border: 0 0% 32%;
-    --sidebar-ring: 27 95% 60%;
-    --chart-1: 30 97% 72%;
-    --chart-2: 45 96% 64%;
-    --chart-3: 48 96% 76%;
-    --chart-4: 27 95% 60%;
-    --chart-5: 0 0% 45%;
-    --sidebar: 0 0% 14%;
-    --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-    --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-    --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-    --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-    --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
-    --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
-    --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
-    --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
+    --sidebar-background: 220 26% 7%;
+    --sidebar-foreground: 40 33% 96%;
+    --sidebar-primary: 40 50% 55%;
+    --sidebar-primary-foreground: 220 26% 9%;
+    --sidebar-accent: 190 64% 40%;
+    --sidebar-accent-foreground: 220 26% 9%;
+    --sidebar-border: 220 20% 15%;
+    --sidebar-ring: 40 50% 55%;
+    --sidebar: 220 26% 9%;
+
+    --chart-1: 40 50% 55%;
+    --chart-2: 190 64% 40%;
+    --chart-3: 40 50% 65%;
+    --chart-4: 190 64% 50%;
+    --chart-5: 220 10% 50%;
+
+    --shadow-2xs: 0 1px 2px 0 hsl(0 0% 0% / 0.1);
+    --shadow-xs: 0 1px 3px 0 hsl(0 0% 0% / 0.15);
+    --shadow-sm: 0 2px 4px 0 hsl(0 0% 0% / 0.2), 0 1px 2px -1px hsl(0 0% 0% / 0.15);
+    --shadow: 0 4px 6px -1px hsl(0 0% 0% / 0.25), 0 2px 4px -2px hsl(0 0% 0% / 0.2);
+    --shadow-md: 0 6px 10px -2px hsl(0 0% 0% / 0.3), 0 3px 6px -3px hsl(0 0% 0% / 0.25);
+    --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.35), 0 4px 6px -4px hsl(0 0% 0% / 0.3);
+    --shadow-xl: 0 20px 25px -5px hsl(0 0% 0% / 0.4), 0 8px 10px -6px hsl(0 0% 0% / 0.35);
+    --shadow-2xl: 0 25px 50px -12px hsl(0 0% 0% / 0.5);
+
+    --glow-gold: 0 0 40px hsl(40 50% 55% / 0.5), 0 0 80px hsl(40 50% 55% / 0.25);
+    --glow-teal: 0 0 40px hsl(190 64% 40% / 0.4), 0 0 80px hsl(190 64% 40% / 0.2);
   }
 }
 
@@ -151,17 +175,69 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-tight;
   }
 }
 
 @layer components {
+  /* Premium chat bubbles */
   .chat-bubble-user {
-    @apply bg-[hsl(var(--chat-user))] text-foreground rounded-2xl rounded-br-md px-4 py-3;
+    @apply bg-secondary text-secondary-foreground rounded-2xl rounded-br-sm px-5 py-3 shadow-sm;
   }
 
   .chat-bubble-assistant {
-    @apply bg-[hsl(var(--chat-assistant))] text-foreground rounded-2xl rounded-bl-md px-4 py-3 shadow-sm border border-border;
+    @apply bg-card text-card-foreground rounded-2xl rounded-bl-sm px-5 py-3 shadow-md border border-border/50;
+  }
+
+  /* Premium card styling */
+  .premium-card {
+    @apply bg-card rounded-2xl border border-border/50 shadow-lg transition-all duration-300;
+  }
+
+  .premium-card:hover {
+    @apply shadow-xl border-primary/30;
+  }
+
+  /* Glowing mic button */
+  .glow-mic {
+    @apply relative;
+    box-shadow: var(--glow-gold);
+  }
+
+  .glow-mic::before {
+    content: '';
+    @apply absolute inset-0 rounded-full;
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    filter: blur(20px);
+    z-index: -1;
+  }
+
+  .glow-mic:hover::before {
+    opacity: 0.6;
+  }
+
+  /* Quick chip prompts */
+  .quick-chip {
+    @apply px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 cursor-pointer;
+    @apply bg-secondary/10 text-foreground border border-border/50;
+  }
+
+  .quick-chip:hover {
+    @apply bg-primary/10 border-primary/50 text-primary;
+  }
+
+  /* Premium input */
+  .premium-input {
+    @apply bg-card border-border/50 rounded-xl shadow-sm transition-all duration-200;
+  }
+
+  .premium-input:focus-within {
+    @apply border-primary/50 shadow-md ring-2 ring-primary/20;
   }
 }
 
@@ -183,19 +259,66 @@
     border-radius: 3px;
   }
 
-  /* Subtle pulse animation for voice input */
-  .animate-pulse-subtle {
-    animation: pulse-subtle 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  /* Glow pulse animation for voice input */
+  .animate-glow-pulse {
+    animation: glow-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
 
-  @keyframes pulse-subtle {
+  @keyframes glow-pulse {
     0%, 100% {
-      opacity: 1;
-      box-shadow: 0 0 0 0 hsl(var(--primary) / 0.4);
+      box-shadow: var(--glow-gold);
     }
     50% {
-      opacity: 0.9;
-      box-shadow: 0 0 0 8px hsl(var(--primary) / 0);
+      box-shadow: 0 0 60px hsl(40 45% 60% / 0.6), 0 0 120px hsl(40 45% 60% / 0.3);
     }
+  }
+
+  /* Subtle float animation */
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-6px);
+    }
+  }
+
+  /* Gradient text */
+  .text-gradient-gold {
+    background: linear-gradient(135deg, hsl(40 45% 60%), hsl(40 60% 70%));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-gradient-teal {
+    background: linear-gradient(135deg, hsl(190 64% 34%), hsl(190 64% 50%));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Premium border gradient */
+  .border-gradient-gold {
+    position: relative;
+    background: hsl(var(--card));
+    border-radius: var(--radius);
+  }
+
+  .border-gradient-gold::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, hsl(40 45% 60% / 0.5), hsl(190 64% 34% / 0.3));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
   }
 }

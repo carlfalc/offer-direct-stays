@@ -1,9 +1,9 @@
 import { Property } from '@/types';
-import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MapPin, Heart, Star } from 'lucide-react';
+import { MapPin, Heart, Sparkles } from 'lucide-react';
 import { useTrip, PropertyPriceEstimate } from '@/contexts/TripContext';
+import { cn } from '@/lib/utils';
 
 interface PropertyResultCardProps {
   property: Property;
@@ -33,110 +33,114 @@ export default function PropertyResultCard({
     bnb: 'B&B',
   };
 
-  // Get top 3 amenities
   const topAmenities = property.amenities?.slice(0, 3) || [];
-  
-  // Generate short highlights from property description
-  const highlights = property.description
-    ? property.description.split('.').slice(0, 2).map(s => s.trim()).filter(Boolean)
-    : [];
-
   const currencySymbol = trip.currency === 'AUD' ? 'A$' : 'NZ$';
 
   return (
-    <Card className="overflow-hidden hover:shadow-md transition-shadow">
-      <div className="flex gap-3 p-3">
+    <div className={cn(
+      "premium-card overflow-hidden group",
+      "hover:border-primary/40"
+    )}>
+      <div className="flex gap-4 p-4">
         {/* Image */}
         {property.image_url && (
-          <img
-            src={property.image_url}
-            alt={property.name}
-            className="w-20 h-20 rounded-lg object-cover flex-shrink-0"
-          />
+          <div className="relative flex-shrink-0">
+            <img
+              src={property.image_url}
+              alt={property.name}
+              className="w-24 h-24 rounded-xl object-cover"
+            />
+            {property.registration_status === 'registered' && (
+              <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-accent flex items-center justify-center">
+                <Sparkles className="w-3 h-3 text-accent-foreground" />
+              </div>
+            )}
+          </div>
         )}
         
         <div className="flex-1 min-w-0">
           {/* Header */}
-          <div className="flex items-start justify-between gap-2 mb-1">
+          <div className="flex items-start justify-between gap-2 mb-2">
             <div className="min-w-0">
-              <h4 className="font-semibold text-sm truncate">{property.name}</h4>
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <MapPin className="h-3 w-3 flex-shrink-0" />
+              <h4 className="font-semibold text-foreground truncate">{property.name}</h4>
+              <div className="flex items-center gap-1.5 text-sm text-muted-foreground mt-0.5">
+                <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
                 <span className="truncate">
                   {property.area ? `${property.area}, ` : ''}{property.city}
                 </span>
               </div>
             </div>
             
-            {/* Badges */}
-            <div className="flex gap-1 flex-shrink-0">
-              <Badge variant="secondary" className="text-xs px-1.5 py-0">
-                {propertyTypeLabels[property.property_type] || property.property_type}
-              </Badge>
-              {property.registration_status === 'registered' && (
-                <Badge variant="outline" className="text-xs px-1.5 py-0 text-success border-success">
-                  Registered
-                </Badge>
-              )}
-            </div>
+            <Badge 
+              variant="outline" 
+              className="text-xs px-2 py-0.5 border-primary/30 text-primary bg-primary/5"
+            >
+              {propertyTypeLabels[property.property_type] || property.property_type}
+            </Badge>
           </div>
 
-          {/* Price Guide Panel */}
+          {/* Price Guide */}
           {priceEstimate && (
-            <div className="bg-muted/50 rounded-md p-2 my-2 space-y-1">
-              <p className="text-xs font-medium">
-                Est. {currencySymbol}{priceEstimate.low}–{priceEstimate.high} / night
-                <span className="text-muted-foreground font-normal"> (guide for your dates)</span>
-              </p>
+            <div className="bg-secondary/5 rounded-lg p-3 my-2 border border-border/30">
+              <div className="flex items-baseline gap-1">
+                <span className="text-lg font-semibold text-foreground">
+                  {currencySymbol}{priceEstimate.low}–{priceEstimate.high}
+                </span>
+                <span className="text-sm text-muted-foreground">/night</span>
+              </div>
               {priceEstimate.sampleSize >= 50 && (
-                <p className="text-xs text-muted-foreground">
-                  Travellers like you typically book {currencySymbol}{priceEstimate.p25}–{priceEstimate.p75} / night
+                <p className="text-xs text-muted-foreground mt-1">
+                  Most book at {currencySymbol}{priceEstimate.p25}–{priceEstimate.p75}
                 </p>
               )}
             </div>
           )}
 
-          {/* Amenities chips */}
+          {/* Amenities */}
           {topAmenities.length > 0 && (
-            <div className="flex flex-wrap gap-1 mb-2">
+            <div className="flex flex-wrap gap-1.5 mb-3">
               {topAmenities.map((amenity) => (
-                <Badge key={amenity} variant="outline" className="text-xs px-1.5 py-0">
+                <span 
+                  key={amenity} 
+                  className="text-xs px-2 py-0.5 rounded-full bg-muted/50 text-muted-foreground"
+                >
                   {amenity}
-                </Badge>
-              ))}
-            </div>
-          )}
-
-          {/* Highlights */}
-          {highlights.length > 0 && (
-            <div className="text-xs text-muted-foreground mb-2 line-clamp-2">
-              {highlights.map((h, i) => (
-                <span key={i}>
-                  <Star className="inline h-3 w-3 mr-0.5 text-primary/60" />
-                  {h}
-                  {i < highlights.length - 1 && ' • '}
                 </span>
               ))}
             </div>
           )}
 
-          {/* Action buttons */}
-          <div className="flex gap-2 mt-2">
-            <Button size="sm" className="text-xs h-7 flex-1" onClick={onMakeOffer}>
+          {/* Actions */}
+          <div className="flex gap-2">
+            <Button 
+              size="sm" 
+              className={cn(
+                "flex-1 text-sm h-9 font-medium",
+                "bg-primary hover:bg-primary/90 text-primary-foreground"
+              )}
+              onClick={onMakeOffer}
+            >
               Make an offer
             </Button>
             <Button
               size="sm"
-              variant={isWatchlisted ? 'secondary' : 'outline'}
-              className={`text-xs h-7 ${isWatchlisted ? 'text-destructive' : ''}`}
+              variant="outline"
+              className={cn(
+                "h-9 px-3",
+                isWatchlisted 
+                  ? "bg-accent/10 border-accent/30 text-accent hover:bg-accent/20" 
+                  : "hover:border-primary/30 hover:bg-primary/5"
+              )}
               onClick={onAddToWatchlist}
             >
-              <Heart className={`h-3 w-3 mr-1 ${isWatchlisted ? 'fill-current' : ''}`} />
-              {isWatchlisted ? 'Saved' : 'Watchlist'}
+              <Heart className={cn(
+                "h-4 w-4",
+                isWatchlisted && "fill-current text-accent"
+              )} />
             </Button>
           </div>
         </div>
       </div>
-    </Card>
+    </div>
   );
 }

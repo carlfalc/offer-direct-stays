@@ -1,11 +1,11 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Loader2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ChatMessage, Property, Room } from '@/types';
 import PropertyResultCard from './PropertyResultCard';
-import VoiceMicButton from '@/components/VoiceMicButton';
+import HeroMicButton from './HeroMicButton';
+import QuickChips from './QuickChips';
+import PremiumChatInput from './PremiumChatInput';
 import { useTrip } from '@/contexts/TripContext';
 
 interface ChatPanelProps {
@@ -29,11 +29,10 @@ export default function ChatPanel({
   shortlistedIds,
   watchlistedIds
 }: ChatPanelProps) {
-  const [input, setInput] = useState('');
-  const [showVoiceHint, setShowVoiceHint] = useState(true);
+  const [pendingVoiceText, setPendingVoiceText] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
   const { getPropertyPriceEstimate } = useTrip();
+  const hasMessages = messages.length > 0;
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -41,57 +40,88 @@ export default function ChatPanel({
     }
   }, [messages]);
 
-  // Hide voice hint after first message
-  useEffect(() => {
-    if (messages.length > 0) {
-      setShowVoiceHint(false);
+  const handleVoiceTranscript = useCallback((text: string) => {
+    setPendingVoiceText(text);
+    // Auto-send after a brief pause for voice input
+    if (text.trim()) {
+      setTimeout(() => {
+        onSendMessage(text.trim());
+        setPendingVoiceText('');
+      }, 500);
     }
-  }, [messages]);
+  }, [onSendMessage]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (input.trim() && !isLoading) {
-      onSendMessage(input.trim());
-      setInput('');
-      setShowVoiceHint(false);
-    }
+  const handleQuickChipSelect = (prompt: string) => {
+    onSendMessage(prompt);
   };
 
-  const handleVoiceTranscript = useCallback((text: string) => {
-    setInput(text);
-    setShowVoiceHint(false);
-  }, []);
+  // Hero view (no messages yet)
+  if (!hasMessages) {
+    return (
+      <div className="flex flex-col h-full bg-background overflow-hidden">
+        <div className="flex-1 flex flex-col items-center justify-center px-6 py-8 text-center">
+          {/* Hero Header */}
+          <div className="space-y-3 mb-10 animate-fade-in-up">
+            <h1 className="text-4xl md:text-5xl font-semibold text-foreground tracking-tight">
+              Find your <span className="text-gradient-gold">perfect stay</span>
+            </h1>
+            <p className="text-lg text-muted-foreground max-w-md mx-auto">
+              Your AI-powered travel concierge. Speak or type to discover accommodation across Australia & New Zealand.
+            </p>
+          </div>
 
+          {/* Glowing Mic CTA */}
+          <div className="mb-10 animate-fade-in" style={{ animationDelay: '200ms' }}>
+            <HeroMicButton 
+              onTranscript={handleVoiceTranscript}
+              disabled={isLoading}
+            />
+          </div>
+
+          {/* Divider */}
+          <div className="flex items-center gap-4 w-full max-w-sm mb-6">
+            <div className="flex-1 h-px bg-border" />
+            <span className="text-sm text-muted-foreground">or try a suggestion</span>
+            <div className="flex-1 h-px bg-border" />
+          </div>
+
+          {/* Quick Chips */}
+          <QuickChips 
+            onSelect={handleQuickChipSelect} 
+            className="max-w-lg animate-fade-in"
+          />
+
+          {/* Secondary chat input */}
+          <div className="w-full max-w-md mt-8 animate-fade-in" style={{ animationDelay: '400ms' }}>
+            <PremiumChatInput
+              onSend={onSendMessage}
+              isLoading={isLoading}
+            />
+          </div>
+
+          {/* Trust copy */}
+          <p className="mt-6 text-xs text-muted-foreground/70 max-w-sm">
+            We only listen while the mic is active. Your searches are private and secure.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Conversation view (has messages)
   return (
-    <div className="flex flex-col h-full bg-card overflow-hidden">
+    <div className="flex flex-col h-full bg-background overflow-hidden">
       {/* Header */}
-      <div className="p-4 border-b border-border">
-        <h2 className="font-semibold text-foreground">Find your perfect stay</h2>
+      <div className="px-6 py-4 border-b border-border/50 bg-card/50 backdrop-blur-sm">
+        <h2 className="font-semibold text-foreground">Your Concierge</h2>
         <p className="text-sm text-muted-foreground">
-          Tell me where you'd like to go and I'll help you find accommodation
+          Finding the perfect accommodation for you
         </p>
       </div>
 
       {/* Messages */}
-      <ScrollArea className="flex-1 p-4" ref={scrollRef}>
+      <ScrollArea className="flex-1 px-6 py-4" ref={scrollRef}>
         <div className="space-y-4">
-          {messages.length === 0 && (
-            <div className="chat-bubble-assistant animate-fade-in">
-              <p>
-                Hello! I'm here to help you find the perfect accommodation in New Zealand or Australia. 
-              </p>
-              <p className="mt-2">
-                Where would you like to stay? You can tell me about:
-              </p>
-              <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
-                <li>• Your destination (city or region)</li>
-                <li>• Travel dates</li>
-                <li>• Number of guests</li>
-                <li>• Any special requirements</li>
-              </ul>
-            </div>
-          )}
-          
           {messages.map((message) => (
             <div
               key={message.id}
@@ -103,12 +133,12 @@ export default function ChatPanel({
                 className={
                   message.role === 'user'
                     ? 'chat-bubble-user max-w-[85%]'
-                    : 'chat-bubble-assistant'
+                    : 'chat-bubble-assistant max-w-full'
                 }
               >
                 <p className="whitespace-pre-wrap">{message.content}</p>
                 
-                {/* Property recommendations with new card design */}
+                {/* Property recommendations */}
                 {message.properties && message.properties.length > 0 && (
                   <div className="mt-4 space-y-3">
                     {message.properties.map((property) => (
@@ -129,9 +159,9 @@ export default function ChatPanel({
           
           {isLoading && (
             <div className="chat-bubble-assistant animate-fade-in">
-              <div className="flex items-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                <span className="text-muted-foreground">Thinking...</span>
+              <div className="flex items-center gap-3">
+                <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                <span className="text-muted-foreground">Finding options for you...</span>
               </div>
             </div>
           )}
@@ -139,36 +169,12 @@ export default function ChatPanel({
       </ScrollArea>
 
       {/* Input */}
-      <div className="p-4 border-t border-border space-y-2">
-        {/* Voice hint */}
-        {showVoiceHint && (
-          <p className="text-xs text-muted-foreground text-center">
-            Prefer to talk? Tap the mic and tell us what you need.
-          </p>
-        )}
-        
-        <form onSubmit={handleSubmit} className="flex gap-2">
-          <VoiceMicButton 
-            onTranscript={handleVoiceTranscript}
-            disabled={isLoading}
-          />
-          <Input
-            ref={inputRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Type your message..."
-            disabled={isLoading}
-            className="flex-1"
-          />
-          <Button 
-            type="submit" 
-            size="icon"
-            disabled={!input.trim() || isLoading}
-            className="bg-primary hover:bg-primary/90"
-          >
-            <Send className="h-4 w-4" />
-          </Button>
-        </form>
+      <div className="px-6 py-4 border-t border-border/50 bg-card/30 backdrop-blur-sm">
+        <PremiumChatInput
+          onSend={onSendMessage}
+          isLoading={isLoading}
+          placeholder="Continue the conversation..."
+        />
       </div>
     </div>
   );
