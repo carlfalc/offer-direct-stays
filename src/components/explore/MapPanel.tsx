@@ -3,7 +3,8 @@ import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Property } from '@/types';
 import { useTrip } from '@/contexts/TripContext';
-import { Lightbulb } from 'lucide-react';
+import { MapPin, Sparkles } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface MapPanelProps {
   properties: Property[];
@@ -15,6 +16,18 @@ interface MapPanelProps {
   mapboxToken: string;
   onTokenChange: (token: string) => void;
 }
+
+// Mock pricing pins for the stylized map
+const MOCK_PINS = [
+  { lat: -33.87, lng: 151.21, price: '$185', city: 'Sydney' },
+  { lat: -37.82, lng: 144.97, price: '$142', city: 'Melbourne' },
+  { lat: -27.47, lng: 153.02, price: '$168', city: 'Brisbane' },
+  { lat: -28.02, lng: 153.43, price: '$195', city: 'Gold Coast' },
+  { lat: -36.85, lng: 174.76, price: '$165', city: 'Auckland' },
+  { lat: -41.29, lng: 174.78, price: '$138', city: 'Wellington' },
+  { lat: -45.03, lng: 168.66, price: '$220', city: 'Queenstown' },
+  { lat: -43.53, lng: 172.64, price: '$125', city: 'Christchurch' },
+];
 
 export default function MapPanel({
   properties,
@@ -41,9 +54,9 @@ export default function MapPanel({
 
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/light-v11',
-        center: [172.5, -41.5], // Center of NZ
-        zoom: 4,
+        style: 'mapbox://styles/mapbox/dark-v11',
+        center: [150, -30],
+        zoom: 3.5,
       });
 
       map.current.addControl(
@@ -68,61 +81,70 @@ export default function MapPanel({
   useEffect(() => {
     if (!map.current || !isMapReady) return;
 
-    // Remove existing markers
     markers.current.forEach((marker) => marker.remove());
     markers.current = [];
 
     const currencySymbol = trip.currency === 'AUD' ? 'A$' : 'NZ$';
 
-    // Add new markers with price labels
     properties.forEach((property) => {
       if (property.latitude && property.longitude) {
         const isSelected = property.id === selectedPropertyId;
         const isShortlisted = shortlistedIds.includes(property.id);
         const isWatchlisted = watchlistedIds.includes(property.id);
 
-        // Get price estimate for pin
         const priceEstimate = getPropertyPriceEstimate(property.id);
         const displayPrice = Math.round((priceEstimate.low + priceEstimate.high) / 2);
 
-        // Create custom marker element with price label
         const el = document.createElement('div');
-        el.className = 'custom-marker-with-price';
-        el.style.cssText = `
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          cursor: pointer;
-          transition: transform 0.2s ease;
+        el.className = 'premium-map-pin';
+        el.innerHTML = `
+          <div style="
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+          ">
+            <div style="
+              background: ${isShortlisted || isWatchlisted 
+                ? 'linear-gradient(135deg, hsl(190, 64%, 34%), hsl(190, 64%, 44%))' 
+                : isSelected 
+                  ? 'linear-gradient(135deg, hsl(40, 45%, 55%), hsl(40, 55%, 65%))' 
+                  : 'linear-gradient(135deg, hsl(220, 26%, 15%), hsl(220, 26%, 25%))'};
+              color: ${isSelected || isShortlisted || isWatchlisted ? 'hsl(220, 26%, 9%)' : 'hsl(40, 33%, 96%)'};
+              font-size: 12px;
+              font-weight: 600;
+              padding: 6px 12px;
+              border-radius: 20px;
+              white-space: nowrap;
+              box-shadow: 0 4px 12px rgba(0,0,0,0.3), ${isSelected ? '0 0 20px hsla(40, 45%, 60%, 0.4)' : 'none'};
+              transform: ${isSelected ? 'scale(1.1)' : 'scale(1)'};
+            ">
+              ~${currencySymbol}${displayPrice}
+            </div>
+            <div style="
+              width: 2px;
+              height: 8px;
+              background: ${isShortlisted || isWatchlisted 
+                ? 'hsl(190, 64%, 34%)' 
+                : isSelected 
+                  ? 'hsl(40, 45%, 60%)' 
+                  : 'hsl(220, 26%, 20%)'};
+              margin-top: 2px;
+            "></div>
+            <div style="
+              width: 8px;
+              height: 8px;
+              background: ${isShortlisted || isWatchlisted 
+                ? 'hsl(190, 64%, 34%)' 
+                : isSelected 
+                  ? 'hsl(40, 45%, 60%)' 
+                  : 'hsl(220, 26%, 20%)'};
+              border-radius: 50%;
+              box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            "></div>
+          </div>
         `;
-
-        // Price label
-        const priceLabel = document.createElement('div');
-        priceLabel.textContent = `~${currencySymbol}${displayPrice}`;
-        priceLabel.style.cssText = `
-          background: ${isShortlisted || isWatchlisted ? 'hsl(150, 14%, 50%)' : isSelected ? 'hsl(38, 72%, 62%)' : 'hsl(215, 50%, 25%)'};
-          color: white;
-          font-size: 11px;
-          font-weight: 600;
-          padding: 4px 8px;
-          border-radius: 12px;
-          white-space: nowrap;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-          transform: ${isSelected ? 'scale(1.1)' : 'scale(1)'};
-        `;
-        el.appendChild(priceLabel);
-
-        // Pin dot
-        const pinDot = document.createElement('div');
-        pinDot.style.cssText = `
-          width: 8px;
-          height: 8px;
-          background: ${isShortlisted || isWatchlisted ? 'hsl(150, 14%, 50%)' : isSelected ? 'hsl(38, 72%, 62%)' : 'hsl(215, 50%, 25%)'};
-          border-radius: 50%;
-          margin-top: 2px;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        `;
-        el.appendChild(pinDot);
 
         el.addEventListener('mouseenter', () => {
           el.style.transform = 'scale(1.1)';
@@ -149,7 +171,6 @@ export default function MapPanel({
       }
     });
 
-    // Fit bounds if we have properties
     if (properties.length > 0) {
       const bounds = new mapboxgl.LngLatBounds();
       let hasValidCoords = false;
@@ -170,21 +191,85 @@ export default function MapPanel({
     }
   }, [properties, selectedPropertyId, shortlistedIds, watchlistedIds, isMapReady, onPropertySelect, onPropertyClick, getPropertyPriceEstimate, trip.currency]);
 
-  // No token state - show placeholder instead of blocking UI
+  // Stylized map placeholder when no token
   if (!mapboxToken) {
     return (
-      <div className="h-full flex flex-col items-center justify-center bg-muted/30 p-8 border-l border-border">
-        <div className="text-center space-y-3 max-w-xs">
-          <div className="w-16 h-16 mx-auto bg-muted rounded-full flex items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-            </svg>
-          </div>
-          <h3 className="font-semibold text-foreground">Map preview (coming soon)</h3>
-          <p className="text-sm text-muted-foreground">
-            Add your Mapbox token in Settings to enable the 3D map.
-          </p>
+      <div className="h-full relative overflow-hidden bg-secondary">
+        {/* Stylized gradient map background */}
+        <div className="absolute inset-0">
+          <div className="absolute inset-0 bg-gradient-to-br from-secondary via-secondary/95 to-accent/10" />
+          
+          {/* Subtle grid pattern */}
+          <div 
+            className="absolute inset-0 opacity-5"
+            style={{
+              backgroundImage: `
+                linear-gradient(hsl(var(--primary) / 0.3) 1px, transparent 1px),
+                linear-gradient(90deg, hsl(var(--primary) / 0.3) 1px, transparent 1px)
+              `,
+              backgroundSize: '50px 50px'
+            }}
+          />
+
+          {/* Stylized land masses */}
+          <svg className="absolute inset-0 w-full h-full opacity-10" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <ellipse cx="70" cy="40" rx="15" ry="20" fill="hsl(var(--primary) / 0.3)" />
+            <ellipse cx="75" cy="65" rx="8" ry="12" fill="hsl(var(--primary) / 0.25)" />
+            <ellipse cx="85" cy="70" rx="5" ry="8" fill="hsl(var(--accent) / 0.3)" />
+            <ellipse cx="90" cy="80" rx="4" ry="6" fill="hsl(var(--accent) / 0.25)" />
+          </svg>
         </div>
+
+        {/* Mock pricing pins */}
+        <div className="absolute inset-0 pointer-events-none">
+          {MOCK_PINS.map((pin, index) => (
+            <div
+              key={index}
+              className={cn(
+                "absolute transform -translate-x-1/2 -translate-y-1/2 animate-fade-in",
+                "opacity-60 hover:opacity-100 transition-opacity"
+              )}
+              style={{
+                left: `${((pin.lng + 180) / 360) * 100}%`,
+                top: `${((pin.lat * -1 + 90) / 180) * 100}%`,
+                animationDelay: `${index * 150}ms`
+              }}
+            >
+              <div className="flex flex-col items-center">
+                <div className="bg-primary/90 text-primary-foreground text-xs font-semibold px-2.5 py-1 rounded-full shadow-lg">
+                  {pin.price}
+                </div>
+                <div className="w-0.5 h-2 bg-primary/50 mt-0.5" />
+                <div className="w-2 h-2 rounded-full bg-primary/50" />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Central content */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="text-center space-y-4 p-8 max-w-md">
+            <div className="w-20 h-20 mx-auto rounded-full bg-primary/20 flex items-center justify-center border border-primary/30 animate-float">
+              <MapPin className="w-10 h-10 text-primary" />
+            </div>
+            
+            <h3 className="text-2xl font-semibold text-secondary-foreground">
+              Interactive Map
+            </h3>
+            
+            <p className="text-secondary-foreground/70 text-sm leading-relaxed">
+              Real-time pricing pins will appear here as you explore. Start by telling us where you'd like to stay.
+            </p>
+
+            <div className="flex items-center justify-center gap-2 text-xs text-primary/80">
+              <Sparkles className="w-4 h-4" />
+              <span>Powered by AI price predictions</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom gradient fade */}
+        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-secondary to-transparent" />
       </div>
     );
   }
@@ -195,10 +280,10 @@ export default function MapPanel({
       
       {/* Map tip overlay */}
       <div className="absolute top-4 left-4 right-16 z-10 pointer-events-none">
-        <div className="bg-background/90 backdrop-blur-sm rounded-lg px-3 py-2 shadow-md border border-border inline-flex items-center gap-2 max-w-md">
-          <Lightbulb className="h-4 w-4 text-primary flex-shrink-0" />
-          <p className="text-xs text-muted-foreground">
-            <span className="font-medium text-foreground">Tip:</span> Move the map to explore more stays. Tap a pin to see rooms & make an offer.
+        <div className="bg-secondary/90 backdrop-blur-sm rounded-xl px-4 py-2.5 shadow-lg border border-border/30 inline-flex items-center gap-2 max-w-md">
+          <Sparkles className="h-4 w-4 text-primary flex-shrink-0" />
+          <p className="text-xs text-secondary-foreground/80">
+            <span className="font-medium text-secondary-foreground">Explore freely</span> — tap any pin to see rooms & make an offer
           </p>
         </div>
       </div>

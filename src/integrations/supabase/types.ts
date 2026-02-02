@@ -124,6 +124,7 @@ export type Database = {
           contact_role: string | null
           country: string
           created_at: string
+          dispute_reason: string | null
           fee_acknowledged: boolean
           id: string
           lat: number | null
@@ -137,6 +138,9 @@ export type Database = {
           terms_accepted: boolean
           updated_at: string
           user_id: string
+          verification_method: string | null
+          verification_status: string | null
+          verified_at: string | null
         }
         Insert: {
           address_line1?: string | null
@@ -152,6 +156,7 @@ export type Database = {
           contact_role?: string | null
           country: string
           created_at?: string
+          dispute_reason?: string | null
           fee_acknowledged?: boolean
           id?: string
           lat?: number | null
@@ -165,6 +170,9 @@ export type Database = {
           terms_accepted?: boolean
           updated_at?: string
           user_id: string
+          verification_method?: string | null
+          verification_status?: string | null
+          verified_at?: string | null
         }
         Update: {
           address_line1?: string | null
@@ -180,6 +188,7 @@ export type Database = {
           contact_role?: string | null
           country?: string
           created_at?: string
+          dispute_reason?: string | null
           fee_acknowledged?: boolean
           id?: string
           lat?: number | null
@@ -193,6 +202,9 @@ export type Database = {
           terms_accepted?: boolean
           updated_at?: string
           user_id?: string
+          verification_method?: string | null
+          verification_status?: string | null
+          verified_at?: string | null
         }
         Relationships: []
       }
@@ -408,17 +420,21 @@ export type Database = {
           fee_currency: string | null
           fee_payment_status: string | null
           fee_settled_via: string | null
+          guest_decision_at: string | null
+          guest_decision_status: string | null
           guest_notes: string | null
           guest_user_id: string
           id: string
           invoice_id: string | null
           offer_amount: number
           payment_confirmed: boolean | null
+          payment_method: string | null
           property_id: string
           response_token: string | null
           response_token_expires_at: string | null
           room_id: string | null
           status: Database["public"]["Enums"]["offer_status"]
+          unclaimed_invite_sent: boolean | null
           updated_at: string
         }
         Insert: {
@@ -441,17 +457,21 @@ export type Database = {
           fee_currency?: string | null
           fee_payment_status?: string | null
           fee_settled_via?: string | null
+          guest_decision_at?: string | null
+          guest_decision_status?: string | null
           guest_notes?: string | null
           guest_user_id: string
           id?: string
           invoice_id?: string | null
           offer_amount: number
           payment_confirmed?: boolean | null
+          payment_method?: string | null
           property_id: string
           response_token?: string | null
           response_token_expires_at?: string | null
           room_id?: string | null
           status?: Database["public"]["Enums"]["offer_status"]
+          unclaimed_invite_sent?: boolean | null
           updated_at?: string
         }
         Update: {
@@ -474,17 +494,21 @@ export type Database = {
           fee_currency?: string | null
           fee_payment_status?: string | null
           fee_settled_via?: string | null
+          guest_decision_at?: string | null
+          guest_decision_status?: string | null
           guest_notes?: string | null
           guest_user_id?: string
           id?: string
           invoice_id?: string | null
           offer_amount?: number
           payment_confirmed?: boolean | null
+          payment_method?: string | null
           property_id?: string
           response_token?: string | null
           response_token_expires_at?: string | null
           room_id?: string | null
           status?: Database["public"]["Enums"]["offer_status"]
+          unclaimed_invite_sent?: boolean | null
           updated_at?: string
         }
         Relationships: [
@@ -605,11 +629,157 @@ export type Database = {
           },
         ]
       }
+      property_claims: {
+        Row: {
+          claimant_user_id: string
+          created_at: string
+          id: string
+          property_id: string
+          reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+        }
+        Insert: {
+          claimant_user_id: string
+          created_at?: string
+          id?: string
+          property_id: string
+          reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+        }
+        Update: {
+          claimant_user_id?: string
+          created_at?: string
+          id?: string
+          property_id?: string
+          reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_claims_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          metadata: Json | null
+          property_id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          property_id: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          property_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_events_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_scores: {
+        Row: {
+          property_id: string
+          score: number
+          signals: Json | null
+          updated_at: string
+        }
+        Insert: {
+          property_id: string
+          score?: number
+          signals?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          property_id?: string
+          score?: number
+          signals?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_scores_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: true
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      room_blocks: {
+        Row: {
+          created_at: string
+          end_date: string
+          id: string
+          room_id: string
+          start_date: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          end_date: string
+          id?: string
+          room_id: string
+          start_date: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string
+          id?: string
+          room_id?: string
+          start_date?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_blocks_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rooms: {
         Row: {
+          actual_rate: number | null
           amenities: string[] | null
+          avg_rate: number | null
           bed_configuration: string | null
           created_at: string
+          currency: string | null
           description: string | null
           id: string
           max_adults: number
@@ -619,9 +789,12 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          actual_rate?: number | null
           amenities?: string[] | null
+          avg_rate?: number | null
           bed_configuration?: string | null
           created_at?: string
+          currency?: string | null
           description?: string | null
           id?: string
           max_adults?: number
@@ -631,9 +804,12 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          actual_rate?: number | null
           amenities?: string[] | null
+          avg_rate?: number | null
           bed_configuration?: string | null
           created_at?: string
+          currency?: string | null
           description?: string | null
           id?: string
           max_adults?: number

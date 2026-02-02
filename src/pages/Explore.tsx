@@ -282,14 +282,14 @@ export default function Explore() {
   const shortlistedIds = shortlist.map(item => item.property.id);
 
   return (
-    <div className="h-full flex flex-col overflow-hidden">
+    <div className="h-full flex flex-col overflow-hidden bg-background">
       {/* Trip Summary Bar */}
       <TripSummaryBar />
 
-      {/* Main content - 2 column layout */}
+      {/* Main content - responsive layout */}
       <div className="flex-1 flex min-h-0">
-        {/* Left column: Chat panel - desktop only */}
-        <div className="hidden lg:flex lg:flex-col w-[400px] xl:w-[450px] flex-shrink-0 border-r border-border overflow-hidden">
+        {/* Left column: Chat/Hero panel */}
+        <div className="flex-1 lg:flex-none lg:w-[480px] xl:w-[520px] flex flex-col overflow-hidden border-r border-border/50">
           <div className="flex-1 min-h-0 overflow-hidden">
             <ChatPanel
               messages={messages}
@@ -312,8 +312,8 @@ export default function Explore() {
           </div>
         </div>
 
-        {/* Right column: Map panel */}
-        <div className="flex-1 relative min-w-0">
+        {/* Right column: Map panel - hidden on mobile until messages exist */}
+        <div className="hidden lg:block flex-1 relative min-w-0">
           <MapPanel
             properties={properties}
             selectedPropertyId={selectedPropertyId}
@@ -324,16 +324,6 @@ export default function Explore() {
             mapboxToken={mapboxToken}
             onTokenChange={setMapboxToken}
           />
-          
-          {/* Mobile shortlist bar */}
-          <div className="lg:hidden absolute bottom-0 left-0 right-0 z-10">
-            <ShortlistPanel
-              items={shortlist}
-              onRemove={handleRemoveFromShortlist}
-              onMakeOffer={(p) => handleMakeOffer(p)}
-              sentOfferIds={sentOfferIds}
-            />
-          </div>
         </div>
       </div>
 
