@@ -309,7 +309,7 @@ export default function Explore() {
       {/* Main content - responsive layout */}
       <div className="flex-1 flex min-h-0">
         {/* Left column: Chat/Hero panel */}
-        <div className="flex-1 lg:flex-none lg:w-[480px] xl:w-[520px] flex flex-col overflow-hidden border-r border-border/50">
+        <div className="flex-1 lg:flex-none lg:w-[520px] xl:w-[600px] 2xl:w-[640px] flex flex-col overflow-hidden border-r border-border/50">
           <div className="flex-1 min-h-0 overflow-hidden">
             <ChatPanel
               messages={messages}

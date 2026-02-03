@@ -132,8 +132,8 @@ export default function ChatPanel({
               <div
                 className={
                   message.role === 'user'
-                    ? 'chat-bubble-user max-w-[85%]'
-                    : 'chat-bubble-assistant max-w-full'
+                    ? 'chat-bubble-user max-w-[85%] lg:max-w-[70%]'
+                    : 'chat-bubble-assistant max-w-[92%] lg:max-w-[85%]'
                 }
               >
                 <p className="whitespace-pre-wrap">{message.content}</p>

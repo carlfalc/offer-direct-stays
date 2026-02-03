@@ -34,7 +34,7 @@ export default function ShortlistPanel({ items, onRemove, onMakeOffer, sentOffer
         </div>
       </div>
       
-      <ScrollArea className="max-h-48">
+      <ScrollArea className="max-h-48 lg:max-h-64 xl:max-h-72">
         <div className="p-3 space-y-2">
           {items.map((item) => {
             const hasSentOffer = sentOfferIds.includes(item.property.id);

@@ -317,7 +317,7 @@ export default function GuestOffers() {
 
   return (
     <div className="min-h-full bg-background">
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="max-w-5xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -417,7 +417,7 @@ export default function GuestOffers() {
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-4">
+          <div className="grid gap-4 lg:grid-cols-2">
             {offers.map((offer) => {
               const status = statusConfig[offer.status] || statusConfig.submitted;
               const checkIn = new Date(offer.check_in_date);
