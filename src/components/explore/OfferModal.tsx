@@ -218,7 +218,7 @@ export default function OfferModal({
             </div>
             {!property.is_claimed && (
               <p className="text-xs text-muted-foreground">
-                This property may need to claim their listing before they can respond.
+                This property may need to claim their listing before they can respond. We’ll email the owner to claim it.
               </p>
             )}
           </div>
@@ -295,7 +295,7 @@ export default function OfferModal({
             for similar stays in this area.
           </p>
           <p className="text-xs text-muted-foreground">
-            This is a guide only. Businesses may accept, counter, or decline.
+            Want help? I can suggest an average offer price — you’re always in control.
           </p>
         </div>
 

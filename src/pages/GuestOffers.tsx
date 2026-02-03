@@ -34,12 +34,22 @@ interface GuestOffer {
 
 const statusConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
   submitted: { label: 'Offer Sent', variant: 'secondary' },
-  pending: { label: 'Pending', variant: 'secondary' },
+  pending: { label: 'Offer Sent', variant: 'secondary' },
   countered: { label: 'Countered', variant: 'outline' },
   accepted: { label: 'Accepted', variant: 'default' },
   confirmed: { label: 'Confirmed', variant: 'default' },
   declined: { label: 'Declined', variant: 'destructive' },
   cancelled: { label: 'Cancelled', variant: 'destructive' },
+};
+
+const nextActionCopy: Record<string, string> = {
+  submitted: 'Waiting for the property to respond.',
+  pending: 'Waiting for the property to respond.',
+  countered: 'Review the counter offer and respond.',
+  accepted: 'Pay the booking commitment fee to confirm.',
+  confirmed: 'Booking confirmed. You can message the property.',
+  declined: 'Offer declined. You can send a new offer anytime.',
+  cancelled: 'Offer cancelled. You can send a new offer anytime.',
 };
 
 export default function GuestOffers() {
@@ -471,6 +481,9 @@ export default function GuestOffers() {
 
                         <p className="text-xs text-muted-foreground">
                           Last updated: {format(new Date(offer.updated_at), 'MMM d, yyyy h:mm a')}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {nextActionCopy[offer.status] || 'We’ll keep you posted as this updates.'}
                         </p>
                       </div>
 

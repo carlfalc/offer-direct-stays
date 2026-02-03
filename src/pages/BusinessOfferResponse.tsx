@@ -543,16 +543,20 @@ export default function BusinessOfferResponse() {
               <p className="text-foreground">
                 <strong>Next:</strong> the guest must pay the booking commitment fee to confirm.
               </p>
+              <p className="text-sm text-muted-foreground">
+                We’ll notify you once the fee is paid and the booking is confirmed.
+              </p>
               <div className="space-y-2">
                 <Label className="text-sm text-muted-foreground">Guest payment link</Label>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <Input
                     value={paymentLink}
                     readOnly
                     className="bg-muted font-mono text-sm"
                   />
-                  <Button variant="outline" size="icon" onClick={copyPaymentLink}>
+                  <Button variant="outline" onClick={copyPaymentLink} className="gap-2">
                     <Copy className="h-4 w-4" />
+                    Copy link
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground">
