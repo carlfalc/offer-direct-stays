@@ -91,6 +91,10 @@ export default function MapPanel({
         const isSelected = property.id === selectedPropertyId;
         const isShortlisted = shortlistedIds.includes(property.id);
         const isWatchlisted = watchlistedIds.includes(property.id);
+        const isEv = (property.amenities || []).some((amenity) => {
+          const value = amenity.toLowerCase().replace(/[-_]/g, ' ');
+          return value.includes('ev') && value.includes('charg');
+        });
 
         const priceEstimate = getPropertyPriceEstimate(property.id);
         const displayPrice = Math.round((priceEstimate.low + priceEstimate.high) / 2);
@@ -119,8 +123,23 @@ export default function MapPanel({
               white-space: nowrap;
               box-shadow: 0 4px 12px rgba(0,0,0,0.3), ${isSelected ? '0 0 20px hsla(40, 45%, 60%, 0.4)' : 'none'};
               transform: ${isSelected ? 'scale(1.1)' : 'scale(1)'};
+              display: flex;
+              align-items: center;
+              gap: 6px;
             ">
-              ~${currencySymbol}${displayPrice}
+              <span>~${currencySymbol}${displayPrice}</span>
+              ${isEv ? `
+                <span style="
+                  font-size: 10px;
+                  font-weight: 700;
+                  letter-spacing: 0.4px;
+                  padding: 2px 6px;
+                  border-radius: 999px;
+                  border: 1px solid hsla(190, 64%, 44%, 0.7);
+                  background: hsla(190, 64%, 34%, 0.15);
+                  color: hsl(190, 64%, 44%);
+                ">⚡ EV</span>
+              ` : ''}
             </div>
             <div style="
               width: 2px;
@@ -270,6 +289,20 @@ export default function MapPanel({
 
         {/* Bottom gradient fade */}
         <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-secondary to-transparent" />
+
+        {/* Legend */}
+        <div className="absolute bottom-6 left-6 pointer-events-none">
+          <div className="bg-secondary/90 backdrop-blur-sm rounded-xl px-3 py-2 border border-border/30 shadow-lg text-xs text-secondary-foreground/80 space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex h-2 w-2 rounded-full bg-primary/70" />
+              <span>Price pins</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center justify-center h-5 px-2 rounded-full border border-primary/40 text-[10px] font-semibold text-primary">⚡ EV</span>
+              <span>EV charging</span>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -285,6 +318,20 @@ export default function MapPanel({
           <p className="text-xs text-secondary-foreground/80">
             <span className="font-medium text-secondary-foreground">Explore freely</span> — tap any pin to see rooms & make an offer
           </p>
+        </div>
+      </div>
+
+      {/* Legend */}
+      <div className="absolute bottom-6 left-6 z-10 pointer-events-none">
+        <div className="bg-secondary/90 backdrop-blur-sm rounded-xl px-3 py-2 border border-border/30 shadow-lg text-xs text-secondary-foreground/80 space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex h-2 w-2 rounded-full bg-primary/70" />
+            <span>Price pins</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center justify-center h-5 px-2 rounded-full border border-primary/40 text-[10px] font-semibold text-primary">⚡ EV</span>
+            <span>EV charging</span>
+          </div>
         </div>
       </div>
     </div>
