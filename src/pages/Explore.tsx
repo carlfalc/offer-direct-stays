@@ -16,6 +16,11 @@ import { MapPin, LogOut, Menu, Heart, Plane, Star } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
+const aiFallbackPhrases = [
+  "Tell me your destination and dates and I’ll take it from there.",
+  "I can suggest an average offer price if you want — you’re always in control.",
+];
+
 export default function Explore() {
   const { user, signOut, loading: authLoading } = useAuth();
   const { trip, setDestination, setCheckIn, setCheckOut, getPropertyPriceEstimate } = useTrip();
@@ -110,6 +115,19 @@ export default function Explore() {
     setMessages((prev) => [...prev, userMessage]);
     setIsLoading(true);
 
+    const getAiReply = async (message: string, context: Record<string, any>) => {
+      try {
+        const { data, error } = await supabase.functions.invoke('ai-router', {
+          body: { type: 'concierge', message, context },
+        });
+        if (error || !data?.reply) return null;
+        return data.reply as string;
+      } catch (err) {
+        console.warn('AI router error', err);
+        return null;
+      }
+    };
+
     // Simple intent detection and response
     const lowerContent = content.toLowerCase();
     let response = '';
@@ -179,8 +197,22 @@ export default function Explore() {
       response = `Let’s hit the ground running.\n\nTell me:\n• **Where** are you heading?\n• **When** are you looking to travel?\n• **How many** guests?\n\nYou can say: “Gold Coast, March 22, two adults.”`;
     }
 
+    const aiContext = {
+      destination: matchedCity || null,
+      recommendedCount: recommendedProperties.length,
+      hasMap: true,
+      currency: trip.currency,
+    };
+
+    const aiReply = await getAiReply(content, aiContext);
+    if (aiReply) {
+      response = aiReply;
+    } else if (!response) {
+      response = aiFallbackPhrases.join(' ');
+    }
+
     // Simulate AI thinking delay
-    await new Promise(resolve => setTimeout(resolve, 800));
+    await new Promise(resolve => setTimeout(resolve, 600));
 
     const assistantMessage: ChatMessage = {
       id: (Date.now() + 1).toString(),
