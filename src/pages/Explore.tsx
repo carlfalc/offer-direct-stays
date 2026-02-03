@@ -149,10 +149,9 @@ export default function Explore() {
       ).slice(0, 5);
 
       if (recommendedProperties.length > 0) {
-        const currencySymbol = cityInfo.country === 'AU' ? 'A$' : 'NZ$';
-        response = `Great choice! I found ${recommendedProperties.length} properties in ${matchedCity.charAt(0).toUpperCase() + matchedCity.slice(1)}.\n\nHere are my recommendations based on your search. Click "Make an offer" to start your booking, or add to your Watchlist to save for later.`;
+        response = `Great choice — I found ${recommendedProperties.length} properties in ${matchedCity.charAt(0).toUpperCase() + matchedCity.slice(1)}.\n\nI’ll show them on the map. You can move it anytime to explore nearby options.\n\nIf you want, I can also suggest an average offer price you might consider.`;
       } else {
-        response = `I couldn't find any properties in ${matchedCity} right now. Would you like to explore other destinations?`;
+        response = `I couldn't find any properties in ${matchedCity} right now. Want to try another destination?`;
       }
     } else if (lowerContent.includes('new zealand') || lowerContent.includes('nz')) {
       setDestination({
@@ -163,7 +162,7 @@ export default function Explore() {
         radius: 500,
       });
       recommendedProperties = properties.filter(p => p.country === 'NZ').slice(0, 5);
-      response = `Here are some great options across New Zealand:\n\nClick "Make an offer" or add to your Watchlist.`;
+      response = `Here are some great options across New Zealand.\n\nYou can explore them on the map — it’s fully interactive.`;
     } else if (lowerContent.includes('australia') || lowerContent.includes('au')) {
       setDestination({
         city: 'Australia',
@@ -173,11 +172,11 @@ export default function Explore() {
         radius: 1000,
       });
       recommendedProperties = properties.filter(p => p.country === 'AU').slice(0, 5);
-      response = `Here are some great options across Australia:\n\nClick "Make an offer" or add to your Watchlist.`;
+      response = `Here are some great options across Australia.\n\nYou can explore them on the map — it’s fully interactive.`;
     } else if (lowerContent.includes('hello') || lowerContent.includes('hi') || lowerContent.includes('hey')) {
-      response = `Hello! I'm here to help you find the perfect accommodation.\n\nWhere would you like to stay? You can mention a city like Auckland, Sydney, Queenstown, or Melbourne.`;
+      response = `Hey — I’m here to make this fast, easy, and smarter than regular booking sites.\n\nWhere are you thinking of going?`;
     } else {
-      response = `I'd love to help you find accommodation! Tell me:\n\n• **Where** would you like to stay? (city or country)\n• **When** are you planning to travel?\n• **Who's** travelling? (number of guests)\n\nFor example, try saying "I'm looking for a hotel in Auckland"`;
+      response = `Let’s hit the ground running.\n\nTell me:\n• **Where** are you heading?\n• **When** are you looking to travel?\n• **How many** guests?\n\nYou can say: “Gold Coast, March 22, two adults.”`;
     }
 
     // Simulate AI thinking delay
