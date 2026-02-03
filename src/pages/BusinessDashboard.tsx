@@ -340,6 +340,7 @@ export default function BusinessDashboard() {
                     <div>
                       <p className="text-sm text-muted-foreground">Offers received</p>
                       <p className="text-2xl font-bold text-foreground">{receivedCount}</p>
+                      <p className="text-xs text-muted-foreground">Needs response</p>
                     </div>
                   </div>
                 </CardContent>
@@ -354,6 +355,7 @@ export default function BusinessDashboard() {
                     <div>
                       <p className="text-sm text-muted-foreground">Countered</p>
                       <p className="text-2xl font-bold text-foreground">{counteredCount}</p>
+                      <p className="text-xs text-muted-foreground">Awaiting guest</p>
                     </div>
                   </div>
                 </CardContent>
@@ -368,6 +370,7 @@ export default function BusinessDashboard() {
                     <div>
                       <p className="text-sm text-muted-foreground">Accepted</p>
                       <p className="text-2xl font-bold text-foreground">{acceptedCount}</p>
+                      <p className="text-xs text-muted-foreground">Guest payment pending</p>
                     </div>
                   </div>
                 </CardContent>
@@ -382,6 +385,7 @@ export default function BusinessDashboard() {
                     <div>
                       <p className="text-sm text-muted-foreground">Confirmed</p>
                       <p className="text-2xl font-bold text-foreground">{confirmedCount}</p>
+                      <p className="text-xs text-muted-foreground">Ready for check‑in</p>
                     </div>
                   </div>
                 </CardContent>
@@ -396,6 +400,7 @@ export default function BusinessDashboard() {
                     <div>
                       <p className="text-sm text-muted-foreground">Declined</p>
                       <p className="text-2xl font-bold text-foreground">{declinedCount}</p>
+                      <p className="text-xs text-muted-foreground">No action needed</p>
                     </div>
                   </div>
                 </CardContent>
@@ -418,6 +423,9 @@ export default function BusinessDashboard() {
                         <ArrowRight className="h-4 w-4 ml-1" />
                       </Button>
                     </div>
+                    <CardDescription>
+                      Review new offers quickly and respond with one click.
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
                     {recentOffers.length === 0 ? (

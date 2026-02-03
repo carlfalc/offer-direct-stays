@@ -479,12 +479,14 @@ export default function GuestOffers() {
                           )}
                         </div>
 
-                        <p className="text-xs text-muted-foreground">
-                          Last updated: {format(new Date(offer.updated_at), 'MMM d, yyyy h:mm a')}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {nextActionCopy[offer.status] || 'We’ll keep you posted as this updates.'}
-                        </p>
+                        <div className="pt-1 space-y-1">
+                          <p className="text-xs text-muted-foreground">
+                            Last updated: {format(new Date(offer.updated_at), 'MMM d, yyyy h:mm a')}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            <span className="font-medium text-foreground">Next:</span> {nextActionCopy[offer.status] || 'We’ll keep you posted as this updates.'}
+                          </p>
+                        </div>
                       </div>
 
                       <div className="flex flex-col items-end gap-3">
@@ -505,8 +507,8 @@ export default function GuestOffers() {
                         )}
 
                         {offer.status === 'confirmed' && (
-                          <Button size="sm" variant="secondary" disabled>
-                            View Booking
+                          <Button size="sm" variant="secondary" onClick={(e) => { e.stopPropagation(); navigate('/messages'); }}>
+                            Message Property
                           </Button>
                         )}
                       </div>
