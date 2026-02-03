@@ -1,11 +1,7 @@
 import { ReactNode, useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { 
-  MapPin, LogOut, Heart, Plane, MessageSquare, Send, 
-  LayoutDashboard, Settings, Building2, User, ChevronDown,
-  Menu
-} from 'lucide-react';
+import { MapPin, LogOut, Heart, Plane, MessageSquare, Send, LayoutDashboard, Settings, Building2, User, ChevronDown, Menu } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import {
   DropdownMenu,
@@ -75,6 +71,7 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
     { label: 'Watchlist', path: '/watchlist', icon: Heart },
     { label: 'Trips', path: '/trips', icon: Plane },
     { label: 'Messages', path: '/messages', icon: MessageSquare },
+    { label: 'Profile', path: '/profile', icon: User },
   ];
 
   if (hasBusiness === true) {
@@ -85,6 +82,7 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
     { label: 'Dashboard', path: '/business/dashboard', icon: LayoutDashboard },
     { label: 'Settings', path: '/business/settings', icon: Settings },
     { label: 'Messages', path: '/messages', icon: MessageSquare },
+    { label: 'Profile', path: '/profile', icon: User },
   ];
 
   const navItems = (isBusinessRoute && !isOnboardingRoute && hasBusiness === true) ? businessNavItems : guestNavItems;

@@ -2,18 +2,10 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { MapPin, Search, Sparkles, Shield, ArrowRight } from 'lucide-react';
-import { useEffect } from 'react';
 
 export default function Index() {
-  const { user, loading } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
-
-  // Redirect authenticated users to explore
-  useEffect(() => {
-    if (!loading && user) {
-      navigate('/explore');
-    }
-  }, [user, loading, navigate]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -25,12 +17,25 @@ export default function Index() {
             <span className="text-xl font-semibold text-foreground">findastay</span>
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="ghost" onClick={() => navigate('/auth')}>
-              Log In
-            </Button>
-            <Button onClick={() => navigate('/auth')} className="bg-primary hover:bg-primary/90">
-              Get Started
-            </Button>
+            {user ? (
+              <>
+                <Button variant="ghost" onClick={() => navigate('/messages')}>
+                  Messages
+                </Button>
+                <Button onClick={() => navigate('/explore')} className="bg-primary hover:bg-primary/90">
+                  Open Map
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="ghost" onClick={() => navigate('/auth')}>
+                  Log In
+                </Button>
+                <Button onClick={() => navigate('/auth')} className="bg-primary hover:bg-primary/90">
+                  Get Started
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -50,25 +55,31 @@ export default function Index() {
               <Button 
                 size="lg" 
                 onClick={() => {
+                  if (user) {
+                    navigate('/explore');
+                    return;
+                  }
                   localStorage.setItem('signup_intent', 'guest');
                   navigate('/auth');
                 }}
                 className="bg-accent text-accent-foreground hover:bg-accent/90 text-lg px-8"
               >
-                Start Exploring
+                {user ? 'Open the Map' : 'Start Exploring'}
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
-              <Button 
-                size="lg" 
-                variant="outline"
-                onClick={() => {
-                  localStorage.setItem('signup_intent', 'business');
-                  navigate('/auth');
-                }}
-                className="text-lg px-8"
-              >
-                I'm a Business
-              </Button>
+              {!user && (
+                <Button 
+                  size="lg" 
+                  variant="outline"
+                  onClick={() => {
+                    localStorage.setItem('signup_intent', 'business');
+                    navigate('/auth');
+                  }}
+                  className="text-lg px-8"
+                >
+                  I'm a Business
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -120,10 +131,10 @@ export default function Index() {
             </p>
             <Button 
               size="lg" 
-              onClick={() => navigate('/auth')}
+              onClick={() => navigate(user ? '/explore' : '/auth')}
               className="bg-primary hover:bg-primary/90 text-lg px-8"
             >
-              Get Started for Free
+              {user ? 'Open the Map' : 'Get Started for Free'}
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </div>

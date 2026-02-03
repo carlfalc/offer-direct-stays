@@ -25,6 +25,7 @@ import Conversation from "./pages/Conversation";
 import Watchlist from "./pages/Watchlist";
 import Trips from "./pages/Trips";
 import NotFound from "./pages/NotFound";
+import Profile from "./pages/Profile";
 
 const queryClient = new QueryClient();
 
@@ -61,6 +62,11 @@ const App = () => (
               <Route path="/trips" element={
                 <AuthenticatedLayout>
                   <Trips />
+                </AuthenticatedLayout>
+              } />
+              <Route path="/profile" element={
+                <AuthenticatedLayout>
+                  <Profile />
                 </AuthenticatedLayout>
               } />
               <Route path="/messages" element={
