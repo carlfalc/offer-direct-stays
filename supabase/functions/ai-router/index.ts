@@ -59,7 +59,6 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model,
-        temperature: 0.5,
         messages: [
           { role: "system", content: system },
           ...(contextNote ? [{ role: "system", content: contextNote }] : []),
