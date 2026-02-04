@@ -47,7 +47,7 @@ serve(async (req) => {
       });
     }
 
-    const model = Deno.env.get("LOVABLE_MODEL") || "google/gemini-3-flash-preview";
+    const model = "openai/gpt-5-mini";
     const system = getPrompt(type);
     const contextNote = Object.keys(context).length > 0 ? `Context (for reference): ${JSON.stringify(context)}` : "";
 
