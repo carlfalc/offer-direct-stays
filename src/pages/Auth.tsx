@@ -11,6 +11,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, MapPin, Building2 } from 'lucide-react';
 import { z } from 'zod';
+import BrandBackdrop from '@/components/brand/BrandBackdrop';
+import '@/styles/findastay-brand.css';
 
 const emailSchema = z.string().email('Please enter a valid email address');
 const passwordSchema = z.string().min(6, 'Password must be at least 6 characters');
@@ -150,15 +152,17 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+    <div className="fas-brand flex items-center justify-center p-4">
+      <BrandBackdrop />
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <MapPin className="h-8 w-8 text-primary" />
-            <span className="text-2xl font-semibold text-foreground">findastay</span>
+          <div className="flex items-center justify-center gap-2 mb-3">
+            <MapPin className="h-7 w-7 text-primary" />
+            <span className="fas-wordmark text-3xl">find<span className="a">a</span>stay</span>
           </div>
+          <p className="fas-eyebrow mb-2">A new era in accommodation pricing</p>
           <p className="text-muted-foreground">
-            Discover and book accommodation with personalized offers
+            Name your price. They'll answer.
           </p>
         </div>
 
@@ -174,9 +178,9 @@ export default function Auth() {
           </div>
         )}
 
-        <Card className="border-border shadow-lg">
+        <Card className="fas-glass border-border">
           <CardHeader className="space-y-1 pb-4">
-            <CardTitle className="text-xl text-center">Welcome</CardTitle>
+            <CardTitle className="fas-title text-2xl text-center">Welcome</CardTitle>
             <CardDescription className="text-center">
               {signupIntent === 'business' 
                 ? 'Create a business account to list your properties'

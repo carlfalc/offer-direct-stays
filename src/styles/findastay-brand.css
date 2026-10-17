@@ -1,0 +1,77 @@
+/* findastay brand theme — opt-in dark surface for auth, messaging and other
+   app pages. Wrap a page in `.fas-brand` and drop a <BrandBackdrop/> behind it.
+   It remaps the shadcn design tokens to the brand palette inside this scope,
+   so existing shadcn components render in brand colours with no markup churn. */
+
+.fas-brand {
+  /* dark brand palette, as shadcn HSL token triplets */
+  --background: 219 52% 6%;
+  --foreground: 160 24% 96%;
+  --card: 214 42% 11%;
+  --card-foreground: 160 24% 96%;
+  --popover: 214 44% 10%;
+  --popover-foreground: 160 24% 96%;
+  --primary: 173 65% 50%;              /* teal-aqua */
+  --primary-foreground: 165 72% 7%;
+  --secondary: 235 60% 20%;            /* deep iris */
+  --secondary-foreground: 160 24% 96%;
+  --muted: 214 30% 16%;
+  --muted-foreground: 214 18% 68%;
+  --accent: 235 86% 75%;               /* iris */
+  --accent-foreground: 235 60% 12%;
+  --destructive: 8 64% 55%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 210 24% 22%;
+  --input: 210 24% 24%;
+  --ring: 173 65% 50%;
+
+  --fas-display: "Bricolage Grotesque", Georgia, serif;
+  --fas-body: "Hanken Grotesk", system-ui, sans-serif;
+  --fas-mono: "Space Mono", ui-monospace, monospace;
+
+  position: relative;
+  min-height: 100vh;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: var(--fas-body);
+  color-scheme: dark;
+}
+
+/* keep page content above the fixed backdrop canvas */
+.fas-brand > :not(canvas) { position: relative; z-index: 1; }
+
+/* display face for headings/titles within brand pages */
+.fas-brand .fas-display,
+.fas-brand h1.fas-title,
+.fas-brand h2.fas-title { font-family: var(--fas-display); font-weight: 800; letter-spacing: -.02em; }
+
+/* glass surface for cards/panels */
+.fas-brand .fas-glass {
+  background: rgba(16, 24, 40, .62);
+  border: 1px solid rgba(255, 255, 255, .11);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 30px 70px -24px rgba(0, 0, 0, .8), inset 0 1px 0 rgba(255, 255, 255, .06);
+}
+
+/* inputs: dark translucent fill, white text, teal focus */
+.fas-brand input,
+.fas-brand textarea {
+  background: rgba(0, 0, 0, .3);
+  color: hsl(var(--foreground));
+}
+.fas-brand input::placeholder,
+.fas-brand textarea::placeholder { color: hsl(var(--muted-foreground)); }
+
+/* eyebrow / mono label helper */
+.fas-brand .fas-eyebrow {
+  font-family: var(--fas-mono);
+  font-size: .72rem;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: hsl(var(--primary));
+  font-weight: 700;
+}
+
+/* brand wordmark */
+.fas-brand .fas-wordmark { font-family: var(--fas-display); font-weight: 800; letter-spacing: -.03em; }
+.fas-brand .fas-wordmark .a { color: hsl(var(--primary)); }
