@@ -32,6 +32,44 @@ export default function Auth() {
   const [signupIntent, setSignupIntent] = useState<string | null>(null);
   const [spin, setSpin] = useState(false);
   const triggerSpin = () => { setSpin(true); window.setTimeout(() => setSpin(false), 2600); };
+  const [devBusy, setDevBusy] = useState<string | null>(null);
+
+  // Dev quick-login: visible ONLY on vercel.app previews and localhost — never on
+  // a real custom domain, so it is not exposed to real users in production.
+  const showDevLogin = typeof window !== 'undefined' && (
+    /(^|\.)vercel\.app$/.test(window.location.hostname) ||
+    window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1'
+  );
+
+  const DEV_PASSWORD = 'findastay-test-1234';
+  const quickLogin = async (role: 'guest' | 'business') => {
+    const email = role === 'business' ? 'business.test@findastay.dev' : 'traveller.test@findastay.dev';
+    setDevBusy(role);
+    localStorage.setItem('signup_intent', role === 'business' ? 'business' : 'guest');
+    // try to sign in; if the account doesn't exist yet, create it then sign in
+    let { error } = await signIn(email, DEV_PASSWORD);
+    if (error) {
+      const { error: signUpErr } = await signUp(email, DEV_PASSWORD, role === 'business' ? 'Test' : 'Travis', role === 'business' ? 'Business' : 'Traveller');
+      if (!signUpErr) {
+        ({ error } = await signIn(email, DEV_PASSWORD));
+      } else {
+        error = signUpErr;
+      }
+    }
+    setDevBusy(null);
+    if (error) {
+      toast({
+        title: 'Quick login unavailable',
+        description: error.message.includes('confirm')
+          ? 'Email confirmation is on for this backend — we\'d need to turn it off in Supabase to auto-provision test accounts.'
+          : error.message,
+        variant: 'destructive',
+      });
+      return;
+    }
+    navigate(role === 'business' ? '/business/onboarding' : '/explore');
+  };
 
   useEffect(() => {
     const intent = localStorage.getItem('signup_intent');
@@ -300,6 +338,21 @@ export default function Auth() {
             </Tabs>
           </CardContent>
         </Card>
+
+        {showDevLogin && (
+          <div className="mt-4 rounded-xl border border-primary/25 bg-black/30 backdrop-blur px-4 py-3">
+            <p className="text-[11px] font-mono uppercase tracking-wider text-primary mb-2">Dev quick login · preview only</p>
+            <div className="grid grid-cols-2 gap-2">
+              <Button variant="outline" size="sm" disabled={!!devBusy} onClick={() => quickLogin('guest')}>
+                {devBusy === 'guest' ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Enter as Traveller'}
+              </Button>
+              <Button variant="outline" size="sm" disabled={!!devBusy} onClick={() => quickLogin('business')}>
+                {devBusy === 'business' ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Enter as Business'}
+              </Button>
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-2">Creates a test account on first use. Hidden on the live domain.</p>
+          </div>
+        )}
       </div>
 
       <div className={`fas-wm fas-wm-newera${spin ? ' gone' : ''}`} aria-label="new era">
