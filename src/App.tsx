@@ -9,6 +9,7 @@ import { BusinessProvider } from "@/contexts/BusinessContext";
 import AuthenticatedLayout from "@/components/layout/AuthenticatedLayout";
 import AdminLayout from "@/components/layout/AdminLayout";
 import Index from "./pages/Index";
+import FindAStayLanding from "./pages/FindAStayLanding";
 import Auth from "./pages/Auth";
 import Explore from "./pages/Explore";
 import AdminBilling from "./pages/AdminBilling";
@@ -40,7 +41,10 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               {/* Public routes */}
-              <Route path="/" element={<Index />} />
+              <Route path="/" element={<FindAStayLanding />} />
+              <Route path="/new-era" element={<FindAStayLanding initialView="new-era" />} />
+              <Route path="/faq" element={<FindAStayLanding initialView="faq" />} />
+              <Route path="/home-old" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
               
               {/* Authenticated routes with shared layout */}

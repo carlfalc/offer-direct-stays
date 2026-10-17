@@ -1,0 +1,311 @@
+<canvas id="sky"></canvas>
+<div id="grain"></div>
+
+<header class="nav">
+  <div class="wrap nav-in">
+    <nav class="nav-links" id="navlinks">
+      <a href="#home" data-nav data-view="home">How it works</a>
+      <a href="#new-era" data-nav data-view="new-era">New Era</a>
+      <a href="#faq" data-nav data-view="faq">FAQ</a>
+    </nav>
+    <div class="nav-right">
+      <button class="ghost" type="button" data-nav data-view="home" data-scroll="business">For Business</button>
+      <button class="solid" type="button" data-go="/auth">Get started</button>
+    </div>
+    <button class="menu-btn" id="menuBtn" type="button" aria-label="Menu">☰</button>
+  </div>
+</header>
+
+<main>
+<!-- ============ HOME ============ -->
+<div class="view" id="view-home">
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <span class="eyebrow">A new era in accommodation pricing</span>
+        <h1 style="margin-top:18px">Name your price.<br><span class="alt">They'll answer.</span></h1>
+        <p class="lede">Forget fixed rates and booking-site markup. Tell a place what you'd pay — they accept, counter, or pass. That simple.</p>
+        <div class="hero-cta">
+          <button class="big-solid" type="button" data-go="/auth">Find a stay
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </button>
+          <button class="big-ghost" type="button" data-nav data-view="new-era">Why it works</button>
+        </div>
+        <div class="trust">
+          <span><b>0%</b> commission</span>
+          <span><b>NZ&nbsp;&amp;&nbsp;AU</b> properties</span>
+          <span><b>Direct</b> to the owner</span>
+        </div>
+        <div class="deals" id="deals" aria-hidden="true"></div>
+      </div>
+
+      <div class="offer-col">
+        <div class="offer" id="offerCard">
+          <div class="offer-head">
+            <div>
+              <div class="k">Make an offer</div>
+              <div class="prop">Aotea Motor Lodge</div>
+              <div class="loc">Whanganui · 2 nights</div>
+            </div>
+            <div class="thumb"><canvas id="thumb" width="116" height="116"></canvas></div>
+          </div>
+          <div class="offer-price">
+            <div class="amt" id="amt">$165</div>
+            <div class="per">per night · listed at $189</div>
+          </div>
+          <div class="slider-wrap">
+            <input type="range" id="slider" min="120" max="200" value="165" step="1" aria-label="Your nightly offer">
+            <div class="scale"><span>$120</span><span>drag to set your offer</span><span>$200</span></div>
+          </div>
+          <div class="verdict go" id="verdict">
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg>
+            <span id="verdictText">Likely accepted — you're in the sweet spot.</span>
+          </div>
+          <div class="offer-foot">Property nets <b id="nets">$156</b> after one flat $8.99 fee · no commission</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- property showcase -->
+  <section>
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="eyebrow">Live on findastay</span>
+        <h2>Places worth making an offer on.</h2>
+        <p>Boutique stays, motels and lodges across New Zealand and Australia — each one open to a fair offer.</p>
+      </div>
+      <div class="showcase" id="showcase"></div>
+    </div>
+  </section>
+
+  <!-- how it works -->
+  <section class="band">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="eyebrow">How it works</span>
+        <h2>Three steps. No haggling fatigue.</h2>
+        <p>Our AI does the back-and-forth, so making a fair offer feels like sending a text.</p>
+      </div>
+      <div class="steps" id="steps">
+        <div class="step">
+          <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+          <div class="num">01</div><h3>Tell us the trip</h3>
+          <p>Chat where, when and your budget. The assistant drops real properties on a live map — no endless filtering.</p>
+        </div>
+        <div class="step">
+          <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12V8H6a2 2 0 0 1 0-4h12v4"/><path d="M4 6v12a2 2 0 0 0 2 2h14v-4"/><circle cx="16" cy="14" r="1.4"/></svg></div>
+          <div class="num">02</div><h3>Make your offer</h3>
+          <p>Name your nightly price. We suggest a fair figure for the dates, then send a tidy offer for you.</p>
+        </div>
+        <div class="step">
+          <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 13l4 4L19 7"/></svg></div>
+          <div class="num">03</div><h3>They respond</h3>
+          <p>Accept, one counter, or pass. Say yes and you're booked — then message the property direct.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- split -->
+  <section>
+    <div class="wrap">
+      <div class="split">
+        <div class="panel-card trav">
+          <span class="tag">For travellers</span>
+          <h3>Pay what it's worth to you.</h3>
+          <div class="plist">
+            <div class="pitem"><span class="m"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg></span><div><b>Set your own price</b><span>Offer within budget instead of accepting a sticker rate.</span></div></div>
+            <div class="pitem"><span class="m"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg></span><div><b>AI concierge</b><span>It finds places, drafts the offer, and keeps your details private.</span></div></div>
+            <div class="pitem"><span class="m"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg></span><div><b>Pay at property or online</b><span>Choose how you settle. No surprise fees stacked on top.</span></div></div>
+          </div>
+        </div>
+        <div class="panel-card biz">
+          <span class="tag">For properties</span>
+          <h3>Fill rooms, keep your margin.</h3>
+          <div class="plist">
+            <div class="pitem"><span class="m"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg></span><div><b>Zero commission</b><span>Flat $8.99 per confirmed booking, invoiced monthly. Nothing else.</span></div></div>
+            <div class="pitem"><span class="m"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg></span><div><b>You stay in control</b><span>Accept, counter once, or decline. You set the floor; quiet nights fill themselves.</span></div></div>
+            <div class="pitem"><span class="m"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg></span><div><b>Up in minutes</b><span>Guided onboarding with your NZBN/ABN and payout. Claim an existing listing in a tap.</span></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- stats + marquee -->
+  <section class="band">
+    <div class="wrap">
+      <div class="stats" id="stats">
+        <div class="stat"><div class="big" data-count="8.99" data-prefix="$" data-dec="2">$8.99</div><div class="lab">Flat fee per booking</div></div>
+        <div class="stat"><div class="big" data-count="0" data-suffix="%">0%</div><div class="lab">Commission, ever</div></div>
+        <div class="stat"><div class="big" data-count="1">1</div><div class="lab">Counter, then done</div></div>
+        <div class="stat"><div class="big" data-count="2">2</div><div class="lab">Countries, growing</div></div>
+      </div>
+    </div>
+    <div class="marquee" style="margin-top:46px">
+      <div class="track">
+        <span class="hot">Whanganui</span><span>Queenstown</span><span class="hot">Byron Bay</span><span>Wānaka</span><span>Rotorua</span><span class="hot">Gold Coast</span><span>Napier</span><span>Nelson</span><span class="hot">Taupō</span><span>Dunedin</span>
+        <span class="hot">Whanganui</span><span>Queenstown</span><span class="hot">Byron Bay</span><span>Wānaka</span><span>Rotorua</span><span class="hot">Gold Coast</span><span>Napier</span><span>Nelson</span><span class="hot">Taupō</span><span>Dunedin</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- new era teaser -->
+  <section>
+    <div class="wrap">
+      <div class="teaser">
+        <div>
+          <span class="eyebrow">Read the thinking</span>
+          <h2>Why fixed pricing is on its way out.</h2>
+          <p>Hotels discount constantly — just never to you. We wrote down the case for offer-led booking and what it means for travellers and owners.</p>
+          <button class="big-ghost" type="button" data-nav data-view="new-era" style="margin-top:24px">A New Era in Accommodation Pricing →</button>
+        </div>
+        <div class="big-price">$165<small>YOUR PRICE · NOT THEIRS</small></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- capture -->
+  <section id="business">
+    <div class="wrap">
+      <div class="capture">
+        <span class="eyebrow">For accommodation owners</span>
+        <h2 style="margin-top:14px">List your property. Pay only when you're booked.</h2>
+        <p>Join the owners filling quiet nights without handing 17% to a booking giant. Leave your email and we'll set you up.</p>
+        <form class="form" id="bizForm">
+          <input type="email" id="bizEmail" placeholder="you@yourproperty.co.nz" required aria-label="Email">
+          <button type="submit">Request access</button>
+        </form>
+        <div class="form-note">No credit card. We'll walk you through onboarding.</div>
+        <div class="ok-msg" id="bizOk" hidden>Thanks — we've got it. We'll be in touch shortly.</div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ============ NEW ERA ============ -->
+<div class="view" id="view-new-era" hidden>
+  <section>
+    <div class="wrap era-hero">
+      <span class="eyebrow">The manifesto</span>
+      <h1>A New Era in<br><em>Accommodation Pricing</em></h1>
+      <p>For twenty years the price of a room has been something done <em>to</em> you. That era is ending.</p>
+    </div>
+  </section>
+  <section class="band">
+    <div class="wrap prose">
+      <span class="eyebrow">The problem</span>
+      <h2>Everyone negotiates. You just weren't invited.</h2>
+      <p class="lead">A hotel room is not a tin of beans. Its value changes by the hour — a rainy Tuesday in winter is worth a fraction of a Saturday in summer, and owners know it.</p>
+      <p>So they discount constantly: to corporate contracts, to the big booking sites, to wholesalers, to the walk-in who asks at 8pm. The one person never offered the real price is the traveller booking online weeks ahead. You see one fixed number — and sitting inside it is a 15–18% commission the property pays the booking site and quietly builds back into your rate.</p>
+      <div class="pullquote">The discount already exists. We just hand you the keys to it.</div>
+    </div>
+  </section>
+  <section>
+    <div class="wrap prose">
+      <span class="eyebrow">The idea</span>
+      <h2>Flip the transaction.</h2>
+      <p>Instead of a property shouting one price into the void, the traveller opens the conversation: <b>here's what I'll pay for these nights.</b> The property looks at its real occupancy and answers in seconds — yes, here's my counter, or not this time.</p>
+      <p>It's how markets have always worked everywhere except the one screen you book a holiday on. No auctions, no gamesmanship, no waiting. One offer, one answer.</p>
+    </div>
+  </section>
+  <section class="band">
+    <div class="wrap prose">
+      <span class="eyebrow">The economics</span>
+      <h2>Where your money actually goes.</h2>
+      <p>Take a two-night stay listed at $189 a night — the same booking, old way and new.</p>
+      <div class="flow">
+        <div class="flowrow">
+          <div class="flabel"><span>Booking-site rate</span><b>$378 paid</b></div>
+          <div class="bar"><div class="seg keep" style="flex:0 0 82.5%">Property keeps ~$312</div><div class="seg fee" style="flex:1">–$66 commission</div></div>
+          <div class="flownote">You pay full freight; roughly 17.5% leaves with the platform.</div>
+        </div>
+        <div class="flowrow">
+          <div class="flabel"><span>findastay offer</span><b>$330 paid</b></div>
+          <div class="bar"><div class="seg pay" style="flex:0 0 74%">You pay $330</div><div class="seg save" style="flex:1">save $48</div></div>
+          <div class="flownote">You offer $165/night. The property nets ~$321 after one flat $8.99 fee — <b>more than the old way</b> — and you still pay less. Both sides win; only the middleman loses.</div>
+        </div>
+      </div>
+
+      <div class="local-note">
+        <div class="local-ic" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-6.3 7-11a7 7 0 1 0-14 0c0 4.7 7 11 7 11Z"/><circle cx="12" cy="10" r="2.4"/></svg>
+        </div>
+        <div>
+          <h3>And that "middleman"? It's not local.</h3>
+          <p>Booking.com and Expedia are offshore giants. Their commission doesn't just disappear from the price — <b>it leaves the country entirely.</b> Every dollar that goes to them is a dollar that never reaches the family that hosted you, never lands in the town you stayed in, and never circulates back home.</p>
+          <p>findastay keeps the whole thing between two people: <b>you and the local who hosts you.</b> The money you save stays in your pocket. The money they earn stays in their community. Nothing gets siphoned overseas. That's the real point — not just a cheaper night, but a fairer one.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section>
+    <div class="wrap prose">
+      <span class="eyebrow">Why now</span>
+      <h2>The tech finally caught up.</h2>
+      <p>Handling thousands of individual offers used to be impossible — no front desk could keep up. AI changes that. An assistant prices a fair offer, drafts it politely, and lets an owner clear a night's offers in the time it takes to make a coffee.</p>
+      <p>That's the unlock: negotiation at the scale of the whole internet, without the friction that made it unworkable before.</p>
+      <div class="pullquote">Fixed pricing was a limit of the old tools. It was never the fair outcome.</div>
+      <div style="margin-top:36px;display:flex;gap:13px;flex-wrap:wrap">
+        <button class="big-solid" type="button" data-go="/auth">Make your first offer</button>
+        <button class="big-ghost" type="button" data-nav data-view="faq">Read the FAQ</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ============ FAQ ============ -->
+<div class="view" id="view-faq" hidden>
+  <section>
+    <div class="wrap faq-hero">
+      <span class="eyebrow">Questions, answered</span>
+      <h1>Everything you're wondering.</h1>
+      <p>New way to book, so new questions. Straight talk for travellers and owners.</p>
+    </div>
+  </section>
+  <section class="band">
+    <div class="wrap faq-group">
+      <h3>For travellers</h3>
+      <details open><summary>How is this different from Booking.com or Airbnb?</summary><div class="ans">There you accept a fixed price with commission built in. Here <b>you make the offer</b> — your price, your dates — and the property accepts, counters once, or declines. You deal with the owner directly, not a call centre.</div></details>
+      <details><summary>Is making an offer free?</summary><div class="ans">Yes. Browsing and offering cost travellers nothing. You only pay for the stay itself, once an offer is accepted and you confirm.</div></details>
+      <details><summary>What if they say no?</summary><div class="ans">Then that's that — no obligation, no fee. Offer on another property, or come back with a different number. Most owners counter rather than flat-out decline if you're close.</div></details>
+      <details><summary>How do I know a fair price to offer?</summary><div class="ans">The AI concierge suggests a sensible figure from the dates, the property and typical rates — so you're not lowballing or overpaying. Adjust it before it sends.</div></details>
+      <details><summary>How do I pay?</summary><div class="ans">Your choice: securely online when the offer's accepted, or <b>pay at the property</b> on arrival where the owner allows it. Your contact details stay private until a booking is confirmed.</div></details>
+    </div>
+  </section>
+  <section class="band">
+    <div class="wrap faq-group">
+      <h3>For properties</h3>
+      <details><summary>What does it cost to list?</summary><div class="ans">Listing is free. You pay a <b>flat $8.99 per confirmed booking</b> — no commission, no percentage of the rate. Bookings total into one simple invoice each month.</div></details>
+      <details><summary>Do I have to accept low offers?</summary><div class="ans">Never. You set your floor. Every offer hits your dashboard and you accept, counter once, or decline. You're always in control of rates and availability.</div></details>
+      <details><summary>Won't this undercut my normal rates?</summary><div class="ans">It fills nights you'd otherwise leave empty. A room sold at a fair offer beats a room sold at nothing — and with no 17% commission you often <b>net more</b> than a full-price booking-site sale.</div></details>
+      <details><summary>How long does setup take?</summary><div class="ans">Minutes. Guided onboarding collects your business details, NZBN or ABN, and payout preference. If your property's already in our directory, claim it in a tap.</div></details>
+      <details><summary>Can I still use other channels?</summary><div class="ans">Yes. findastay is one more channel for filling rooms — run it alongside whatever you use now. Keep an eye on your own availability so you don't double-book while we build out calendar sync.</div></details>
+    </div>
+  </section>
+  <section>
+    <div class="wrap faq-group center">
+      <h3 style="color:var(--gold)">Still curious?</h3>
+      <p class="muted" style="max-width:40ch;margin:4px auto 22px">A question we didn't cover? Reach the team and we'll get back to you.</p>
+      <div style="display:flex;gap:13px;justify-content:center;flex-wrap:wrap">
+        <button class="big-solid" type="button" data-go="/auth">Start exploring</button>
+        <button class="big-ghost" type="button" data-nav data-view="new-era">Read the manifesto</button>
+      </div>
+    </div>
+  </section>
+</div>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <div class="mark">find<span>a</span>stay</div>
+    <div class="foot-links">
+      <a href="#home" data-nav data-view="home">How it works</a>
+      <a href="#new-era" data-nav data-view="new-era">New Era</a>
+      <a href="#faq" data-nav data-view="faq">FAQ</a>
+      <a href="#business" data-nav data-view="home" data-scroll="business">For Business</a>
+    </div>
+    <div class="copy">© 2026 findastay · Accommodation across New Zealand &amp; Australia · Your price, their call.</div>
+  </div>
+</footer>
