@@ -15,6 +15,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import BrandBackdrop from '@/components/brand/BrandBackdrop';
+import { useNotifications } from '@/hooks/useNotifications';
 import '@/styles/findastay-brand.css';
 
 interface AuthenticatedLayoutProps {
@@ -27,7 +28,16 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
+  const { unreadCount } = useNotifications();
   const [hasBusiness, setHasBusiness] = useState<boolean | null>(null);
+
+  // small count badge shown on the Messages nav item
+  const CountBadge = ({ count }: { count: number }) =>
+    count > 0 ? (
+      <span className="ml-auto inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-[10px] font-bold text-primary-foreground leading-none">
+        {count > 99 ? '99+' : count}
+      </span>
+    ) : null;
 
   useEffect(() => {
     const checkBusiness = async () => {
@@ -141,6 +151,7 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
                 >
                   <item.icon className="h-4 w-4" />
                   <span>{item.label}</span>
+                  {item.label === 'Messages' && <CountBadge count={unreadCount} />}
                 </button>
               );
             })}
@@ -156,13 +167,18 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
                   onClick={() => navigate(item.path)}
                   title={item.label}
                   className={cn(
-                    "flex items-center justify-center w-10 h-10 rounded-lg transition-all duration-300",
-                    isActive 
-                      ? "bg-primary/15 text-primary shadow-[0_0_12px_rgba(199,167,108,0.15)]" 
+                    "relative flex items-center justify-center w-10 h-10 rounded-lg transition-all duration-300",
+                    isActive
+                      ? "bg-primary/15 text-primary shadow-[0_0_12px_rgba(199,167,108,0.15)]"
                       : "text-muted-foreground hover:text-foreground hover:bg-primary/5 hover:shadow-[0_0_8px_rgba(199,167,108,0.1)]"
                   )}
                 >
                   <item.icon className="h-4.5 w-4.5" />
+                  {item.label === 'Messages' && unreadCount > 0 && (
+                    <span className="absolute top-1 right-1 min-w-[16px] h-[16px] px-1 rounded-full bg-primary text-[9px] font-bold text-primary-foreground inline-flex items-center justify-center leading-none">
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
+                  )}
                 </button>
               );
             })}
@@ -270,6 +286,7 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
                       >
                         <item.icon className="h-4.5 w-4.5" />
                         <span>{item.label}</span>
+                        {item.label === 'Messages' && <CountBadge count={unreadCount} />}
                       </button>
                     );
                   })}

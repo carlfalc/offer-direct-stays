@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
+import { NotificationsProvider } from "@/hooks/useNotifications";
 import { TripProvider } from "@/contexts/TripContext";
 import { BusinessProvider } from "@/contexts/BusinessContext";
 import AuthenticatedLayout from "@/components/layout/AuthenticatedLayout";
@@ -33,6 +34,7 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
+      <NotificationsProvider>
       <BusinessProvider>
         <TripProvider>
           <TooltipProvider>
@@ -135,6 +137,7 @@ const App = () => (
         </TooltipProvider>
       </TripProvider>
       </BusinessProvider>
+      </NotificationsProvider>
     </AuthProvider>
   </QueryClientProvider>
 );

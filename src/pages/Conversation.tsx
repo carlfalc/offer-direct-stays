@@ -12,6 +12,7 @@ import VoiceMicButton from '@/components/VoiceMicButton';
 import { ArrowLeft, Send, Lock, MapPin, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
+import { useNotifications } from '@/hooks/useNotifications';
 
 interface Message {
   id: string;
@@ -47,6 +48,19 @@ export default function Conversation() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { refresh: refreshNotifications } = useNotifications();
+
+  // mark everything the other party sent in this conversation as read
+  const markRead = async () => {
+    if (!user || !conversationId) return;
+    await supabase
+      .from('messages')
+      .update({ is_read: true })
+      .eq('conversation_id', conversationId)
+      .eq('is_read', false)
+      .neq('sender_user_id', user.id);
+    refreshNotifications();
+  };
 
   const [conversation, setConversation] = useState<ConversationDetails | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -188,6 +202,8 @@ export default function Conversation() {
     }
 
     setMessages(data || []);
+    // opening the thread clears its unread messages
+    markRead();
   };
 
   const subscribeToMessages = () => {
@@ -204,6 +220,8 @@ export default function Conversation() {
         (payload) => {
           const newMsg = payload.new as Message;
           setMessages((prev) => [...prev, newMsg]);
+          // thread is open, so a message from the other party is read on arrival
+          if (newMsg.sender_user_id !== user?.id) markRead();
         }
       )
       .subscribe();

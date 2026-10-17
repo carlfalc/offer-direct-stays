@@ -6,8 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { MessageSquare, ArrowLeft, MapPin, Lock } from 'lucide-react';
+import { MessageSquare, ArrowLeft, MapPin, Lock, Bell } from 'lucide-react';
 import { format } from 'date-fns';
+import { useNotifications } from '@/hooks/useNotifications';
 
 interface Conversation {
   id: string;
@@ -44,6 +45,7 @@ interface Conversation {
 
 export default function Messages() {
   const { user, loading: authLoading } = useAuth();
+  const { permission, requestPermission } = useNotifications();
   const navigate = useNavigate();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -268,6 +270,15 @@ export default function Messages() {
     <div className="min-h-full">
       {/* Content */}
       <main className="container mx-auto px-4 py-6">
+        {permission === 'default' && (
+          <div className="mb-4 flex items-center gap-3 rounded-xl border border-primary/30 bg-primary/10 px-4 py-3">
+            <Bell className="h-5 w-5 text-primary flex-shrink-0" />
+            <p className="text-sm text-foreground flex-1">
+              Get a desktop pop-up the moment an offer or message arrives — even when this tab is in the background.
+            </p>
+            <Button size="sm" onClick={requestPermission}>Enable notifications</Button>
+          </div>
+        )}
         {loading ? (
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
