@@ -14,6 +14,8 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import BrandBackdrop from '@/components/brand/BrandBackdrop';
+import '@/styles/findastay-brand.css';
 
 interface AuthenticatedLayoutProps {
   children: ReactNode;
@@ -89,7 +91,8 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="fas-brand flex items-center justify-center">
+        <BrandBackdrop />
         <div className="animate-pulse text-muted-foreground">Loading...</div>
       </div>
     );
@@ -99,9 +102,10 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
   const userInitial = userEmail.charAt(0).toUpperCase();
 
   return (
-    <div className={`flex flex-col bg-background ${fullHeight ? 'h-screen overflow-hidden' : 'min-h-screen'}`}>
+    <div className={`fas-brand flex flex-col ${fullHeight ? 'h-screen overflow-hidden' : 'min-h-screen'}`}>
+      <BrandBackdrop />
       {/* Premium Header */}
-      <header className="h-16 border-b border-border/30 bg-card/90 backdrop-blur-md flex items-center justify-between px-4 md:px-6 flex-shrink-0 z-20">
+      <header className="h-16 border-b border-border/30 bg-card/80 backdrop-blur-md flex items-center justify-between px-4 md:px-6 flex-shrink-0 z-20">
         {/* Logo */}
         <button 
           onClick={() => navigate('/explore')}
@@ -109,10 +113,10 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
         >
           <div className={cn(
             "w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-300",
-            "bg-gradient-to-br from-gold/20 to-teal/10 border border-gold/20",
-            "group-hover:shadow-[0_0_16px_rgba(199,167,108,0.3)] group-hover:border-gold/40"
+            "bg-gradient-to-br from-primary/20 to-accent/10 border border-primary/20",
+            "group-hover:shadow-[0_0_16px_rgba(199,167,108,0.3)] group-hover:border-primary/40"
           )}>
-            <MapPin className="h-4.5 w-4.5 text-gold" />
+            <MapPin className="h-4.5 w-4.5 text-primary" />
           </div>
           <span className="font-display font-semibold text-lg text-foreground tracking-tight hidden sm:block">
             findastay
@@ -131,8 +135,8 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
                   className={cn(
                     "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300",
                     isActive 
-                      ? "bg-gold/15 text-gold shadow-[0_0_12px_rgba(199,167,108,0.15)]" 
-                      : "text-muted-foreground hover:text-foreground hover:bg-gold/5 hover:shadow-[0_0_8px_rgba(199,167,108,0.1)]"
+                      ? "bg-primary/15 text-primary shadow-[0_0_12px_rgba(199,167,108,0.15)]" 
+                      : "text-muted-foreground hover:text-foreground hover:bg-primary/5 hover:shadow-[0_0_8px_rgba(199,167,108,0.1)]"
                   )}
                 >
                   <item.icon className="h-4 w-4" />
@@ -154,8 +158,8 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
                   className={cn(
                     "flex items-center justify-center w-10 h-10 rounded-lg transition-all duration-300",
                     isActive 
-                      ? "bg-gold/15 text-gold shadow-[0_0_12px_rgba(199,167,108,0.15)]" 
-                      : "text-muted-foreground hover:text-foreground hover:bg-gold/5 hover:shadow-[0_0_8px_rgba(199,167,108,0.1)]"
+                      ? "bg-primary/15 text-primary shadow-[0_0_12px_rgba(199,167,108,0.15)]" 
+                      : "text-muted-foreground hover:text-foreground hover:bg-primary/5 hover:shadow-[0_0_8px_rgba(199,167,108,0.1)]"
                   )}
                 >
                   <item.icon className="h-4.5 w-4.5" />
@@ -170,14 +174,14 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
               <button className={cn(
                 "hidden md:flex items-center gap-2 px-2.5 py-2 rounded-lg transition-all duration-300",
                 "text-muted-foreground hover:text-foreground",
-                "hover:bg-gold/5 hover:shadow-[0_0_12px_rgba(199,167,108,0.1)]",
-                "focus:outline-none focus:ring-2 focus:ring-gold/30 focus:ring-offset-2 focus:ring-offset-background"
+                "hover:bg-primary/5 hover:shadow-[0_0_12px_rgba(199,167,108,0.1)]",
+                "focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-2 focus:ring-offset-background"
               )}>
                 <div className={cn(
                   "w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300",
-                  "bg-gradient-to-br from-gold/25 to-teal/15 border border-gold/30"
+                  "bg-gradient-to-br from-primary/25 to-accent/15 border border-primary/30"
                 )}>
-                  <span className="text-xs font-semibold text-gold">{userInitial}</span>
+                  <span className="text-xs font-semibold text-primary">{userInitial}</span>
                 </div>
                 <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
               </button>
@@ -196,14 +200,14 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
               <DropdownMenuSeparator className="bg-border/50" />
               <DropdownMenuItem 
                 onClick={() => navigate('/profile')}
-                className="cursor-pointer hover:bg-gold/5 focus:bg-gold/10 focus:text-foreground"
+                className="cursor-pointer hover:bg-primary/5 focus:bg-primary/10 focus:text-foreground"
               >
                 <User className="h-4 w-4 mr-2 text-muted-foreground" />
                 Profile
               </DropdownMenuItem>
               <DropdownMenuItem 
                 onClick={() => navigate(hasBusiness ? '/business/settings' : '/settings')}
-                className="cursor-pointer hover:bg-gold/5 focus:bg-gold/10 focus:text-foreground"
+                className="cursor-pointer hover:bg-primary/5 focus:bg-primary/10 focus:text-foreground"
               >
                 <Settings className="h-4 w-4 mr-2 text-muted-foreground" />
                 Settings
@@ -225,7 +229,7 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
               <button className={cn(
                 "md:hidden flex items-center justify-center w-10 h-10 rounded-lg transition-all duration-300",
                 "text-muted-foreground hover:text-foreground",
-                "hover:bg-gold/5 hover:shadow-[0_0_8px_rgba(199,167,108,0.1)]"
+                "hover:bg-primary/5 hover:shadow-[0_0_8px_rgba(199,167,108,0.1)]"
               )}>
                 <Menu className="h-5 w-5" />
               </button>
@@ -233,14 +237,14 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
             <SheetContent side="right" className="w-72 bg-card border-border/30 p-0">
               <div className="flex flex-col h-full">
                 {/* User info header */}
-                <div className="p-5 border-b border-border/30 bg-gradient-to-br from-gold/5 to-transparent">
+                <div className="p-5 border-b border-border/30 bg-gradient-to-br from-primary/5 to-transparent">
                   <div className="flex items-center gap-3">
                     <div className={cn(
                       "w-12 h-12 rounded-full flex items-center justify-center",
-                      "bg-gradient-to-br from-gold/25 to-teal/15 border border-gold/30",
+                      "bg-gradient-to-br from-primary/25 to-accent/15 border border-primary/30",
                       "shadow-[0_0_16px_rgba(199,167,108,0.2)]"
                     )}>
-                      <span className="text-base font-semibold text-gold">{userInitial}</span>
+                      <span className="text-base font-semibold text-primary">{userInitial}</span>
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-foreground">Account</p>
@@ -260,8 +264,8 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
                         className={cn(
                           "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300",
                           isActive 
-                            ? "bg-gold/15 text-gold shadow-[0_0_12px_rgba(199,167,108,0.15)]" 
-                            : "text-muted-foreground hover:text-foreground hover:bg-gold/5"
+                            ? "bg-primary/15 text-primary shadow-[0_0_12px_rgba(199,167,108,0.15)]" 
+                            : "text-muted-foreground hover:text-foreground hover:bg-primary/5"
                         )}
                       >
                         <item.icon className="h-4.5 w-4.5" />
@@ -277,14 +281,14 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
                   {/* Profile & Settings in mobile nav */}
                   <button
                     onClick={() => navigate('/profile')}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-gold/5 transition-all duration-300"
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-primary/5 transition-all duration-300"
                   >
                     <User className="h-4.5 w-4.5" />
                     <span>Profile</span>
                   </button>
                   <button
                     onClick={() => navigate(hasBusiness ? '/business/settings' : '/settings')}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-gold/5 transition-all duration-300"
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-primary/5 transition-all duration-300"
                   >
                     <Settings className="h-4.5 w-4.5" />
                     <span>Settings</span>

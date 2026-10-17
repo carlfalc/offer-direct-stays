@@ -279,7 +279,7 @@ export default function Conversation() {
   }
 
   return (
-    <div className="h-full flex flex-col bg-background">
+    <div className="h-full flex flex-col">
       {/* Conversation Header (not main nav, just context) */}
       <div className="border-b border-border bg-card flex-shrink-0">
         <div className="container mx-auto px-4 h-12 flex items-center gap-4">

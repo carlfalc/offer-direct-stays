@@ -265,7 +265,7 @@ export default function Messages() {
   }
 
   return (
-    <div className="min-h-full bg-background">
+    <div className="min-h-full">
       {/* Content */}
       <main className="container mx-auto px-4 py-6">
         {loading ? (
