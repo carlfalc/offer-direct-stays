@@ -30,6 +30,8 @@ export default function Auth() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [signupIntent, setSignupIntent] = useState<string | null>(null);
+  const [spin, setSpin] = useState(false);
+  const triggerSpin = () => { setSpin(true); window.setTimeout(() => setSpin(false), 2600); };
 
   useEffect(() => {
     const intent = localStorage.getItem('signup_intent');
@@ -152,19 +154,19 @@ export default function Auth() {
   };
 
   return (
-    <div className="fas-brand flex items-center justify-center p-4">
+    <div className="fas-brand fas-stage">
       <BrandBackdrop />
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-2 mb-3">
-            <MapPin className="h-7 w-7 text-primary" />
-            <span className="fas-wordmark text-3xl">find<span className="a">a</span>stay</span>
-          </div>
-          <p className="fas-eyebrow mb-2">A new era in accommodation pricing</p>
-          <p className="text-muted-foreground">
-            Name your price. They'll answer.
-          </p>
-        </div>
+
+      <div className={`fas-wm fas-wm-logo${spin ? ' gone' : ''}`} aria-label="findastay">
+        <svg viewBox="0 0 1200 230" xmlns="http://www.w3.org/2000/svg">
+          <text x="600" y="178" textAnchor="middle" textLength="1140" lengthAdjust="spacingAndGlyphs"
+                fontFamily="Bricolage Grotesque, Georgia, serif" fontWeight="800" fontSize="210" letterSpacing="-5">
+            <tspan className="w">find</tspan><tspan className="t">a</tspan><tspan className="w">stay</tspan>
+          </text>
+        </svg>
+      </div>
+
+      <div className="w-full max-w-md" style={{ position: 'relative', zIndex: 3 }}>
 
         {signupIntent === 'business' && (
           <div className="mb-4 p-4 bg-primary/10 rounded-lg border border-primary/20">
@@ -188,7 +190,7 @@ export default function Auth() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="login" className="w-full">
+            <Tabs defaultValue="login" className="w-full" onValueChange={triggerSpin}>
               <TabsList className="grid w-full grid-cols-2 mb-6">
                 <TabsTrigger value="login">Login</TabsTrigger>
                 <TabsTrigger value="signup">Sign Up</TabsTrigger>
@@ -298,6 +300,15 @@ export default function Auth() {
             </Tabs>
           </CardContent>
         </Card>
+      </div>
+
+      <div className={`fas-wm fas-wm-newera${spin ? ' gone' : ''}`} aria-label="new era">
+        <svg viewBox="0 0 1200 190" xmlns="http://www.w3.org/2000/svg">
+          <text x="600" y="150" textAnchor="middle" textLength="1140" lengthAdjust="spacingAndGlyphs"
+                fontFamily="Bricolage Grotesque, Georgia, serif" fontWeight="800" fontSize="180" letterSpacing="-4">
+            <tspan className="w">n</tspan><tspan className="t">e</tspan><tspan className="w">w</tspan><tspan> </tspan><tspan className="t">e</tspan><tspan className="w">r</tspan><tspan className="t">a</tspan>
+          </text>
+        </svg>
       </div>
     </div>
   );

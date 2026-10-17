@@ -75,3 +75,30 @@
 /* brand wordmark */
 .fas-brand .fas-wordmark { font-family: var(--fas-display); font-weight: 800; letter-spacing: -.03em; }
 .fas-brand .fas-wordmark .a { color: hsl(var(--primary)); }
+
+/* ---- auth hero: big findastay logo above the card, "new era" below, spin-away ---- */
+.fas-brand .fas-stage {
+  min-height: 100vh;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: clamp(14px, 4.2vh, 46px);
+  padding-block: 24px;
+}
+.fas-brand .fas-wm {
+  width: min(94vw, 780px); pointer-events: none;
+  transition: transform 1.05s cubic-bezier(.55,.08,.3,1), opacity 1.05s ease;
+  will-change: transform;
+}
+.fas-brand .fas-wm svg { width: 100%; height: auto; display: block; }
+.fas-brand .fas-wm .w { fill: #F4FBF9; }
+.fas-brand .fas-wm .t { fill: hsl(var(--primary)); }
+.fas-brand .fas-wm-logo {
+  position: relative; z-index: 4; transform-origin: center 62%;
+  filter: drop-shadow(0 16px 28px rgba(0,0,0,.55)) drop-shadow(0 0 40px rgba(46,211,192,.26));
+}
+.fas-brand .fas-wm-logo.gone { transform: translateY(-130vh) rotate(680deg) scale(.35); opacity: 0; }
+.fas-brand .fas-wm-newera {
+  position: relative; z-index: 1; transform-origin: center 38%;
+  filter: drop-shadow(0 0 40px rgba(46,211,192,.16));
+}
+.fas-brand .fas-wm-newera.gone { transform: translateY(130vh) rotate(-680deg) scale(.35); opacity: 0; }
+@media (prefers-reduced-motion: reduce) { .fas-brand .fas-wm { transition: none; } }
