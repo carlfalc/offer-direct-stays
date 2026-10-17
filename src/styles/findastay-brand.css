@@ -77,14 +77,17 @@
 .fas-brand .fas-wordmark .a { color: hsl(var(--primary)); }
 
 /* ---- auth hero: big findastay logo above the card, "new era" below, spin-away ---- */
+/* fas-stage sits on the SAME element as fas-brand, so match it directly (and as a child, for safety) */
+.fas-brand.fas-stage,
 .fas-brand .fas-stage {
   min-height: 100vh;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: clamp(14px, 4.2vh, 46px);
-  padding-block: 24px;
+  gap: clamp(36px, 7vh, 96px);
+  padding-block: 40px;
+  text-align: center;
 }
 .fas-brand .fas-wm {
-  width: min(94vw, 780px); pointer-events: none;
+  width: min(88vw, 620px); margin-inline: auto; pointer-events: none;
   transition: transform 1.05s cubic-bezier(.55,.08,.3,1), opacity 1.05s ease;
   will-change: transform;
 }
