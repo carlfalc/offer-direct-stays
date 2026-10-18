@@ -84,6 +84,16 @@ h1{font-family:var(--display); font-size:clamp(1.6rem,4vw,2.1rem); margin:0; let
 .claim .locked-rooms{margin-top:26px; display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; opacity:.5}
 .locked{background:var(--surface); border:1px solid var(--line); border-radius:var(--r-sm); padding:12px; font-size:.78rem; color:var(--faint)}
 .locked .lock{font-size:.68rem; color:var(--warn)}
+.tn-divide{display:flex; align-items:center; gap:12px; margin:24px 0 14px; color:var(--faint); font-size:.72rem; text-transform:uppercase; letter-spacing:.06em}
+.tn-divide::before,.tn-divide::after{content:""; flex:1; height:1px; background:var(--line)}
+.tn-lead{color:var(--muted); font-size:.88rem; margin:0 auto 14px; max-width:42ch}
+.nudge-btn{appearance:none; border:1px solid var(--iris); background:var(--iris-dim); color:#d3ccfb; font-family:var(--body); font-weight:700; font-size:.88rem; padding:11px 20px; border-radius:var(--r-sm); cursor:pointer; transition:.18s}
+.nudge-btn:hover{background:rgba(139,123,247,.26)}
+.nudge-done{animation:fade .3s ease}
+.nd-tick{width:46px;height:46px;border-radius:50%;background:rgba(54,211,153,.15);border:1px solid var(--good);color:var(--good);font-size:1.4rem;display:flex;align-items:center;justify-content:center;margin:0 auto 12px}
+.nd-msg{color:var(--fg); font-size:.92rem; margin:0 auto 12px; max-width:42ch}
+.nd-route{font-size:.78rem; color:var(--muted); background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:10px 14px; max-width:46ch; margin:0 auto}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 
 /* offer composer (slide-up sheet) */
 .scrim{position:fixed; inset:0; background:rgba(5,6,12,.66); backdrop-filter:blur(3px); opacity:0; pointer-events:none; transition:.25s; z-index:40}
@@ -174,6 +184,13 @@ footer{margin-top:40px; text-align:center; color:var(--faint); font-size:.76rem}
       <h2>Is this your property?</h2>
       <p>Aotea Motor Lodge is viewable, but it can't take offers until the owner claims it and we approve the listing.</p>
       <button class="claim-btn" onclick="alertClaim()">Claim this business →</button>
+
+      <div class="traveller-nudge" id="travellerNudge">
+        <div class="tn-divide">just passing through?</div>
+        <p class="tn-lead">Like the look of Aotea Motor Lodge? Tell us you'd stay here and we'll try to get them onto findastay.</p>
+        <button class="nudge-btn" onclick="sendNudge()">Send Aotea Motor Lodge a nudge to join →</button>
+      </div>
+
       <div class="locked-rooms">
         <div class="locked">Executive Suite<br><span class="lock">🔒 locked</span></div>
         <div class="locked">Executive Studio<br><span class="lock">🔒 locked</span></div>
@@ -352,6 +369,14 @@ function sendOffer(){
 function alertClaim(){
   const v=document.getElementById("unclaimedView");
   v.querySelector(".claim p").innerHTML="→ This opens the <b style='color:var(--fg)'>Business Sign-up onboarding</b>. Once submitted, it lands in the findastay admin queue for approval — you'd get a live notification to approve, decline, or ask for more detail.";
+}
+function sendNudge(){
+  document.getElementById("travellerNudge").innerHTML =
+    '<div class="nudge-done">'+
+    '<div class="nd-tick">✓</div>'+
+    '<p class="nd-msg">Thanks! Our team will do our best to onboard <b>Aotea Motor Lodge</b> by the next time you search here.</p>'+
+    '<div class="nd-route">→ Logged to the findastay Admin dashboard as <b>“Unclaimed request by traveller”</b>. Our team may reach out to onboard them.</div>'+
+    '</div>';
 }
 document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeSheet(); });
 renderRooms(); recalc();
