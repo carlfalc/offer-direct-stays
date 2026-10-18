@@ -140,6 +140,18 @@ export default function MapPanel({
                   color: hsl(190, 64%, 44%);
                 ">⚡ EV</span>
               ` : ''}
+              ${!property.is_claimed ? `
+                <span style="
+                  font-size: 10px;
+                  font-weight: 700;
+                  letter-spacing: 0.3px;
+                  padding: 2px 6px;
+                  border-radius: 999px;
+                  border: 1px solid hsla(40, 80%, 55%, 0.7);
+                  background: hsla(40, 80%, 50%, 0.18);
+                  color: hsl(40, 85%, 62%);
+                ">Claim</span>
+              ` : ''}
             </div>
             <div style="
               width: 2px;

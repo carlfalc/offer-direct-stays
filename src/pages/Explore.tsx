@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useTrip } from '@/contexts/TripContext';
 import { supabase } from '@/integrations/supabase/client';
+import { searchListings } from '@/lib/listings';
 import { Property, ChatMessage, ShortlistItem, Room } from '@/types';
 import ChatPanel from '@/components/explore/ChatPanel';
 import MapPanel from '@/components/explore/MapPanel';
@@ -211,17 +212,25 @@ export default function Explore() {
         radius: 50,
       });
 
-      // Nearest properties to the searched place (zooms the map via visibleProperties)
-      const withDist = properties
-        .filter((p) => p.latitude != null && p.longitude != null)
-        .map((p) => ({
-          p,
-          d: haversineKm(geo!.lat, geo!.lng, p.latitude as number, p.longitude as number),
-        }))
-        .sort((a, b) => a.d - b.d);
-      let near = withDist.filter((x) => x.d <= 60).map((x) => x.p);
-      if (near.length === 0) near = withDist.filter((x) => x.d <= 200).map((x) => x.p).slice(0, 6);
-      if (near.length === 0) near = properties.filter((p) => p.country === geo!.country).slice(0, 6);
+      // Real LiteAPI properties for the area (merged with claim status); demo table as fallback.
+      let near: Property[] = [];
+      try {
+        near = await searchListings({ name: geo.name, lat: geo.lat, lng: geo.lng, country: geo.country });
+      } catch {
+        near = [];
+      }
+      if (near.length === 0) {
+        const withDist = properties
+          .filter((p) => p.latitude != null && p.longitude != null)
+          .map((p) => ({
+            p,
+            d: haversineKm(geo!.lat, geo!.lng, p.latitude as number, p.longitude as number),
+          }))
+          .sort((a, b) => a.d - b.d);
+        near = withDist.filter((x) => x.d <= 60).map((x) => x.p);
+        if (near.length === 0) near = withDist.filter((x) => x.d <= 200).map((x) => x.p).slice(0, 6);
+        if (near.length === 0) near = properties.filter((p) => p.country === geo!.country).slice(0, 6);
+      }
 
       // Must-have handling (e.g. a swimming pool floats to the top)
       const wantsPool =

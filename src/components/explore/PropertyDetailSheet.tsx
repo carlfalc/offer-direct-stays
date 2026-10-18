@@ -5,8 +5,12 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { MapPin, Heart, Loader2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useTrip } from '@/contexts/TripContext';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
+import { loadLiteApiRooms } from '@/lib/listings';
 import RoomTypeCard from './RoomTypeCard';
 
 interface PropertyDetailSheetProps {
@@ -29,6 +33,9 @@ export default function PropertyDetailSheet({
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loadingRooms, setLoadingRooms] = useState(false);
   const { trip, getPropertyPriceEstimate } = useTrip();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { toast } = useToast();
 
   useEffect(() => {
     if (property && open) {
@@ -41,13 +48,18 @@ export default function PropertyDetailSheet({
     
     setLoadingRooms(true);
     try {
-      const { data, error } = await supabase
-        .from('rooms')
-        .select('*')
-        .eq('property_id', property.id);
+      if (property.id.startsWith('lp')) {
+        // LiteAPI content listing
+        setRooms(await loadLiteApiRooms(property.id));
+      } else {
+        const { data, error } = await supabase
+          .from('rooms')
+          .select('*')
+          .eq('property_id', property.id);
 
-      if (error) throw error;
-      setRooms((data as Room[]) || []);
+        if (error) throw error;
+        setRooms((data as Room[]) || []);
+      }
     } catch (err) {
       console.error('Error loading rooms:', err);
     } finally {
@@ -56,6 +68,32 @@ export default function PropertyDetailSheet({
   };
 
   if (!property) return null;
+
+  const isClaimed = property.is_claimed === true;
+
+  const handleClaim = () => {
+    // Business claim → sign-up / onboarding (refined with the admin approval flow later)
+    navigate('/auth');
+  };
+
+  const handleNudge = async () => {
+    try {
+      await supabase.from('fs_listing_leads').insert({
+        liteapi_hotel_id: property.id,
+        property_name: property.name,
+        city: property.city,
+        type: 'traveller_nudge',
+        requested_by: user?.id ?? null,
+        note: 'Requested from map',
+      });
+      toast({
+        title: 'Nudge sent',
+        description: `We'll do our best to get ${property.name} onto findastay by your next search.`,
+      });
+    } catch (e: any) {
+      toast({ title: 'Could not send', description: e?.message || 'Please try again', variant: 'destructive' });
+    }
+  };
 
   const priceEstimate = getPropertyPriceEstimate(property.id);
   const currencySymbol = trip.currency === 'AUD' ? 'A$' : 'NZ$';
@@ -93,9 +131,13 @@ export default function PropertyDetailSheet({
                 <Badge variant="secondary" className="text-xs">
                   {propertyTypeLabels[property.property_type] || property.property_type}
                 </Badge>
-                {property.registration_status === 'registered' && (
+                {isClaimed ? (
                   <Badge variant="outline" className="text-xs text-success border-success">
-                    Registered
+                    Open to offers
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="text-xs" style={{ color: '#b7791f', borderColor: '#f0c35b' }}>
+                    Unclaimed
                   </Badge>
                 )}
               </div>
@@ -125,6 +167,16 @@ export default function PropertyDetailSheet({
 
         <ScrollArea className="h-[calc(100%-180px)] mt-4">
           <div className="space-y-4 pb-4">
+            {/* Unclaimed notice */}
+            {!isClaimed && (
+              <div
+                className="rounded-md border p-3 text-sm"
+                style={{ borderColor: '#f0c35b', background: 'rgba(240,195,91,0.1)', color: '#8a5e0f' }}
+              >
+                This property isn't on findastay yet. You can view it and claim it, or nudge us to onboard them.
+              </div>
+            )}
+
             {/* Description */}
             {property.description && (
               <p className="text-sm text-muted-foreground">{property.description}</p>
@@ -160,7 +212,14 @@ export default function PropertyDetailSheet({
                       room={room}
                       estimatedRate={getRoomEstimate(room, index)}
                       currency={trip.currency}
-                      onMakeOffer={() => onMakeOffer(property, room)}
+                      onMakeOffer={() =>
+                        isClaimed
+                          ? onMakeOffer(property, room)
+                          : toast({
+                              title: 'Not on findastay yet',
+                              description: 'This property needs to claim its listing before it can take offers.',
+                            })
+                      }
                     />
                   ))}
                 </div>
@@ -174,9 +233,20 @@ export default function PropertyDetailSheet({
         </ScrollArea>
 
         <div className="pt-4 border-t border-border">
-          <Button className="w-full" onClick={() => onMakeOffer(property)}>
-            Make an offer for this property
-          </Button>
+          {isClaimed ? (
+            <Button className="w-full" onClick={() => onMakeOffer(property)}>
+              Make an offer for this property
+            </Button>
+          ) : (
+            <div className="space-y-2">
+              <Button className="w-full" onClick={handleClaim}>
+                Claim this business
+              </Button>
+              <Button variant="outline" className="w-full" onClick={handleNudge}>
+                Nudge them to join findastay
+              </Button>
+            </div>
+          )}
         </div>
       </SheetContent>
     </Sheet>
