@@ -1,0 +1,358 @@
+<title>findastay Offer Flow</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: single dark property page — hero header, state toggle, room grid, slide-up offer composer.
+   Brand: deep iris-ink ground, teal-aqua primary action, iris secondary, white text. Committed dark. */
+:root{
+  --bg:#0a0b14; --surface:#13162a; --surface-2:#1a1e38; --line:rgba(255,255,255,.09);
+  --fg:#f5f6fc; --muted:#a6abc9; --faint:#6f759a;
+  --teal:#2fe0c8; --teal-ink:#06281f; --iris:#8b7bf7; --iris-dim:rgba(139,123,247,.16);
+  --good:#36d399; --warn:#f7b955;
+  --r:18px; --r-sm:12px;
+  --display:"Bricolage Grotesque",Georgia,serif;
+  --body:"Figtree",-apple-system,system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:
+    radial-gradient(1100px 620px at 82% -8%, rgba(139,123,247,.16), transparent 60%),
+    radial-gradient(900px 560px at 6% 4%, rgba(47,224,200,.10), transparent 55%),
+    var(--bg);
+  color:var(--fg); font-family:var(--body); line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1040px; margin:0 auto; padding-left:max(18px,env(safe-area-inset-left,0px)); padding-right:max(18px,env(safe-area-inset-right,0px)); padding-block:0 64px}
+
+/* top bar */
+.top{display:flex; align-items:center; justify-content:space-between; padding-block:20px 8px; gap:16px; flex-wrap:wrap}
+.brand{font-family:var(--display); font-weight:700; font-size:1.35rem; letter-spacing:-.02em}
+.brand b{color:var(--teal); font-weight:700}
+.brand i{color:var(--iris); font-style:normal}
+.demo-note{font-size:.72rem; color:var(--faint); letter-spacing:.04em; text-transform:uppercase}
+
+/* state toggle */
+.seg{display:inline-flex; background:var(--surface); border:1px solid var(--line); border-radius:999px; padding:4px; gap:2px}
+.seg button{appearance:none; border:0; background:transparent; color:var(--muted); font-family:var(--body); font-weight:600; font-size:.82rem; padding:8px 15px; border-radius:999px; cursor:pointer; transition:.2s}
+.seg button[aria-pressed="true"]{background:linear-gradient(135deg,var(--iris),#6d5cf0); color:#fff}
+
+/* hero */
+.hero{position:relative; margin-top:16px; border-radius:var(--r); overflow:hidden; border:1px solid var(--line); background:var(--surface)}
+.hero-img{height:230px; background:
+  linear-gradient(135deg, rgba(47,224,200,.22), rgba(139,123,247,.30)),
+  repeating-linear-gradient(45deg, rgba(255,255,255,.03) 0 14px, transparent 14px 28px);
+  display:flex; align-items:flex-end; padding:18px}
+.hero-img .ph{font-size:.7rem; color:rgba(255,255,255,.65); letter-spacing:.05em; text-transform:uppercase; background:rgba(0,0,0,.3); padding:4px 10px; border-radius:999px; backdrop-filter:blur(4px)}
+.hero-body{padding:20px 22px 22px}
+.hero-row{display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap}
+h1{font-family:var(--display); font-size:clamp(1.6rem,4vw,2.1rem); margin:0; letter-spacing:-.02em; text-wrap:balance}
+.addr{color:var(--muted); font-size:.92rem; margin-top:4px}
+.rating{display:flex; align-items:center; gap:8px; flex-shrink:0}
+.rating .score{background:var(--teal); color:var(--teal-ink); font-weight:800; font-size:1rem; padding:6px 10px; border-radius:10px; font-variant-numeric:tabular-nums}
+.rating .lab{font-size:.78rem; color:var(--muted)}
+.badges{display:flex; gap:8px; margin-top:14px; flex-wrap:wrap}
+.chip{font-size:.74rem; padding:5px 11px; border-radius:999px; border:1px solid var(--line); color:var(--muted); background:rgba(255,255,255,.02)}
+.status{font-weight:700}
+.status.active{color:var(--teal); border-color:rgba(47,224,200,.4); background:rgba(47,224,200,.08)}
+.status.unclaimed{color:var(--warn); border-color:rgba(247,185,85,.4); background:rgba(247,185,85,.08)}
+
+/* section head */
+.sec-head{display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin:30px 2px 14px; flex-wrap:wrap}
+.sec-head h2{font-family:var(--display); font-size:1.15rem; margin:0; font-weight:600}
+.sec-head .hint{font-size:.82rem; color:var(--faint)}
+
+/* room grid */
+.rooms{display:grid; grid-template-columns:repeat(auto-fill,minmax(290px,1fr)); gap:16px}
+.room{background:var(--surface); border:1px solid var(--line); border-radius:var(--r); overflow:hidden; display:flex; flex-direction:column}
+.room-img{height:140px; background:linear-gradient(135deg, rgba(139,123,247,.26), rgba(47,224,200,.16)); position:relative}
+.room-img::after{content:"📷 live photos"; position:absolute; left:10px; bottom:10px; font-size:.64rem; letter-spacing:.04em; color:rgba(255,255,255,.6); background:rgba(0,0,0,.32); padding:3px 8px; border-radius:999px}
+.room-body{padding:15px 16px 16px; display:flex; flex-direction:column; gap:10px; flex:1}
+.room h3{font-size:1rem; margin:0; font-weight:650; letter-spacing:-.01em}
+.specs{display:flex; flex-wrap:wrap; gap:6px}
+.spec{font-size:.72rem; color:var(--muted); background:rgba(255,255,255,.04); border:1px solid var(--line); padding:3px 8px; border-radius:7px; font-variant-numeric:tabular-nums}
+.room p.desc{font-size:.82rem; color:var(--muted); margin:0; flex:1}
+.offer-btn{appearance:none; border:0; margin-top:4px; width:100%; padding:11px; border-radius:var(--r-sm); font-family:var(--body); font-weight:700; font-size:.9rem; cursor:pointer;
+  background:linear-gradient(135deg,var(--teal),#1fc9b4); color:var(--teal-ink); transition:.18s}
+.offer-btn:hover{filter:brightness(1.08); transform:translateY(-1px)}
+
+/* claim state */
+.claim{background:linear-gradient(160deg,var(--surface-2),var(--surface)); border:1px solid rgba(247,185,85,.28); border-radius:var(--r); padding:28px 24px; text-align:center; max-width:560px; margin:0 auto}
+.claim h2{font-family:var(--display); font-size:1.4rem; margin:0 0 8px}
+.claim p{color:var(--muted); font-size:.92rem; margin:0 auto 18px; max-width:42ch}
+.claim-btn{appearance:none; border:0; padding:13px 26px; border-radius:var(--r-sm); font-family:var(--body); font-weight:700; font-size:.95rem; cursor:pointer; background:linear-gradient(135deg,var(--warn),#f0a93a); color:#2b1d02}
+.claim .locked-rooms{margin-top:26px; display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; opacity:.5}
+.locked{background:var(--surface); border:1px solid var(--line); border-radius:var(--r-sm); padding:12px; font-size:.78rem; color:var(--faint)}
+.locked .lock{font-size:.68rem; color:var(--warn)}
+
+/* offer composer (slide-up sheet) */
+.scrim{position:fixed; inset:0; background:rgba(5,6,12,.66); backdrop-filter:blur(3px); opacity:0; pointer-events:none; transition:.25s; z-index:40}
+.scrim.open{opacity:1; pointer-events:auto}
+.sheet{position:fixed; left:50%; bottom:0; transform:translate(-50%,102%); width:min(560px,100%); max-height:92vh; overflow:auto;
+  background:var(--surface); border:1px solid var(--line); border-bottom:0; border-radius:20px 20px 0 0; z-index:50; transition:transform .32s cubic-bezier(.22,1,.36,1);
+  padding:22px max(20px,env(safe-area-inset-left,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(20px,env(safe-area-inset-right,0px))}
+.sheet.open{transform:translate(-50%,0)}
+.sheet-grip{width:40px; height:4px; border-radius:999px; background:var(--line); margin:0 auto 16px}
+.sheet h2{font-family:var(--display); font-size:1.25rem; margin:0 0 2px}
+.sheet .sub{color:var(--muted); font-size:.85rem; margin:0 0 18px}
+.field{margin-bottom:16px}
+.field > label{display:block; font-size:.74rem; text-transform:uppercase; letter-spacing:.05em; color:var(--faint); margin-bottom:7px; font-weight:600}
+.row2{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+input[type=date], input[type=number]{width:100%; background:var(--bg); border:1px solid var(--line); border-radius:10px; color:var(--fg); font-family:var(--body); font-size:.92rem; padding:10px 12px}
+input:focus-visible, textarea:focus-visible, button:focus-visible{outline:2px solid var(--teal); outline-offset:2px}
+.stepper{display:flex; align-items:center; gap:0; border:1px solid var(--line); border-radius:10px; overflow:hidden; background:var(--bg)}
+.stepper button{appearance:none; border:0; background:transparent; color:var(--fg); font-size:1.2rem; width:40px; height:40px; cursor:pointer}
+.stepper button:disabled{color:var(--faint); cursor:not-allowed}
+.stepper .val{flex:1; text-align:center; font-weight:700; font-variant-numeric:tabular-nums}
+.stepper .cap{font-size:.66rem; color:var(--faint); padding-right:10px}
+.offerbox{background:var(--iris-dim); border:1px solid rgba(139,123,247,.3); border-radius:var(--r-sm); padding:14px}
+.offerbox .line{display:flex; justify-content:space-between; font-size:.9rem; padding:3px 0; color:var(--muted)}
+.offerbox .line b{color:var(--fg); font-variant-numeric:tabular-nums}
+.offerbox .total{border-top:1px solid var(--line); margin-top:8px; padding-top:10px; font-size:1.05rem}
+.offerbox .total b{color:var(--teal)}
+textarea{width:100%; background:var(--bg); border:1px solid var(--line); border-radius:10px; color:var(--fg); font-family:var(--body); font-size:.9rem; padding:12px; min-height:96px; resize:vertical; line-height:1.55}
+.ai-tag{display:inline-flex; align-items:center; gap:6px; font-size:.7rem; color:var(--iris); margin-bottom:7px; font-weight:600; text-transform:uppercase; letter-spacing:.04em}
+.send{appearance:none; border:0; width:100%; padding:14px; border-radius:var(--r-sm); font-family:var(--body); font-weight:800; font-size:1rem; cursor:pointer; background:linear-gradient(135deg,var(--teal),#1fc9b4); color:var(--teal-ink); margin-top:4px}
+.send:hover{filter:brightness(1.08)}
+.sent{text-align:center; padding:20px 0}
+.sent .tick{width:58px; height:58px; border-radius:50%; background:rgba(54,211,153,.15); border:1px solid var(--good); color:var(--good); font-size:1.8rem; display:flex; align-items:center; justify-content:center; margin:0 auto 14px}
+.sent h2{margin:0 0 6px}
+.sent p{color:var(--muted); font-size:.9rem; margin:0 auto; max-width:40ch}
+.flow{display:flex; align-items:center; justify-content:center; gap:8px; margin-top:18px; font-size:.72rem; color:var(--faint); flex-wrap:wrap}
+.flow span{background:var(--surface-2); border:1px solid var(--line); padding:5px 10px; border-radius:999px}
+.flow .arr{background:none; border:0; color:var(--teal)}
+.close-x{position:absolute; top:16px; right:16px; appearance:none; border:0; background:var(--surface-2); color:var(--muted); width:32px; height:32px; border-radius:50%; cursor:pointer; font-size:1rem}
+footer{margin-top:40px; text-align:center; color:var(--faint); font-size:.76rem}
+@media (max-width:420px){ .row2{grid-template-columns:1fr} }
+</style>
+
+<div class="wrap">
+  <div class="top">
+    <div class="brand"><b>find</b><i>a</i>stay</div>
+    <div class="seg" role="group" aria-label="Demo property state">
+      <button id="st-active" aria-pressed="true" onclick="setState('active')">Claimed &amp; active</button>
+      <button id="st-unclaimed" aria-pressed="false" onclick="setState('unclaimed')">Unclaimed</button>
+    </div>
+  </div>
+  <div class="demo-note">Design proof · real Aotea Motor Lodge data from LiteAPI · photos load live in the app</div>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-img"><span class="ph">Hero photo — 53 live images</span></div>
+    <div class="hero-body">
+      <div class="hero-row">
+        <div>
+          <h1>Aotea Motor Lodge</h1>
+          <div class="addr">390 Victoria Avenue, Whanganui</div>
+        </div>
+        <div class="rating">
+          <span class="score">8.8</span>
+          <span class="lab">Guest<br>rating</span>
+        </div>
+      </div>
+      <div class="badges">
+        <span id="statusChip" class="chip status active">● Active on findastay</span>
+        <span class="chip">Motel · Boutique apartments</span>
+        <span class="chip">Spa baths · Free parking · WiFi</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ACTIVE: rooms -->
+  <div id="activeView">
+    <div class="sec-head">
+      <h2>Choose a room, name your price</h2>
+      <span class="hint">8 room types · no fixed rates — you make the offer</span>
+    </div>
+    <div class="rooms" id="roomGrid"></div>
+  </div>
+
+  <!-- UNCLAIMED -->
+  <div id="unclaimedView" hidden>
+    <div class="sec-head"><h2>This property isn't on findastay yet</h2></div>
+    <div class="claim">
+      <h2>Is this your property?</h2>
+      <p>Aotea Motor Lodge is viewable, but it can't take offers until the owner claims it and we approve the listing.</p>
+      <button class="claim-btn" onclick="alertClaim()">Claim this business →</button>
+      <div class="locked-rooms">
+        <div class="locked">Executive Suite<br><span class="lock">🔒 locked</span></div>
+        <div class="locked">Executive Studio<br><span class="lock">🔒 locked</span></div>
+        <div class="locked">Deluxe Studio<br><span class="lock">🔒 locked</span></div>
+        <div class="locked">+5 more<br><span class="lock">🔒 locked</span></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>findastay · make-an-offer accommodation · Whanganui → NZ &amp; Australia</footer>
+</div>
+
+<!-- OFFER COMPOSER -->
+<div class="scrim" id="scrim" onclick="closeSheet()"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+  <button class="close-x" onclick="closeSheet()" aria-label="Close">✕</button>
+  <div class="sheet-grip"></div>
+  <div id="composer">
+    <div class="sheet-grip" style="display:none"></div>
+    <h2 id="sheetTitle">Make an offer</h2>
+    <p class="sub" id="sheetRoom">Executive One-Bedroom Suite · sleeps 4</p>
+
+    <div class="field row2">
+      <div><label for="ci">Check-in</label><input type="date" id="ci" oninput="recalc()"></div>
+      <div><label for="co">Check-out</label><input type="date" id="co" oninput="recalc()"></div>
+    </div>
+
+    <div class="field row2">
+      <div>
+        <label>Adults</label>
+        <div class="stepper"><button type="button" onclick="step('ad',-1)">−</button><span class="val" id="adVal">2</span><span class="cap" id="adCap">/4</span><button type="button" onclick="step('ad',1)">+</button></div>
+      </div>
+      <div>
+        <label>Children</label>
+        <div class="stepper"><button type="button" onclick="step('ch',-1)">−</button><span class="val" id="chVal">0</span><span class="cap" id="chCap">/3</span><button type="button" onclick="step('ch',1)">+</button></div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="nightly">Your offer per night (NZD)</label>
+      <input type="number" id="nightly" value="155" min="1" step="5" oninput="recalc()">
+    </div>
+
+    <div class="field">
+      <div class="offerbox">
+        <div class="line"><span id="nightsLine">2 nights × $155</span><b id="subT">$310</b></div>
+        <div class="line"><span>findastay booking fee</span><b>$8.99</b></div>
+        <div class="line total"><span>Your total offer</span><b id="totT">$318.99</b></div>
+      </div>
+    </div>
+
+    <div class="field">
+      <span class="ai-tag">✦ AI-drafted — edit anything before you send</span>
+      <textarea id="msg"></textarea>
+    </div>
+
+    <button class="send" onclick="sendOffer()">Send offer to Aotea Motor Lodge</button>
+  </div>
+
+  <div id="sentView" class="sent" hidden>
+    <div class="tick">✓</div>
+    <h2>Offer sent</h2>
+    <p>Your offer is now in Aotea Motor Lodge's dashboard. They can <b style="color:var(--fg)">accept</b>, <b style="color:var(--fg)">counter</b>, or <b style="color:var(--fg)">decline</b> — you'll get a notification the moment they reply.</p>
+    <div class="flow">
+      <span>Your offer</span><b class="arr">→</b><span>Business dashboard</span><b class="arr">→</b><span>Live notification</span><b class="arr">→</b><span>Reply</span>
+    </div>
+    <button class="send" style="margin-top:22px" onclick="closeSheet()">Done</button>
+  </div>
+</div>
+
+<script>
+// Real Aotea Motor Lodge rooms (LiteAPI content, hotelId lp543c0). No rates — price is the traveller's offer.
+const ROOMS = [
+  {id:3379853,name:"Executive One-Bedroom Suite",size:"54 sqm",occ:4,ad:4,ch:3,beds:["2× Twin","1× Double"],am:["Spa bath","Kitchenette","Balcony","Air con"],desc:"Spacious unit with private furnished balcony, double luxurious spa bath and 46-inch LCD TV."},
+  {id:3379854,name:"Executive Studio",size:"37 sqm",occ:2,ad:2,ch:1,beds:["1× Double"],am:["Spa bath","Kitchenette","Balcony"],desc:"Luxury studio with modern decor, double spa bath, separate shower and private balcony."},
+  {id:3379852,name:"Deluxe Studio",size:"34 sqm",occ:2,ad:2,ch:1,beds:["1× Double"],am:["Spa bath","Kitchenette","Air con"],desc:"Luxurious modern unit with double spa bath, separate shower and 46-inch LCD TV."},
+  {id:3379855,name:"Deluxe Twin Studio",size:"34 sqm",occ:3,ad:3,ch:2,beds:["1× Twin","1× Double"],am:["Spa bath","Kitchenette","TV"],desc:"Studio unit with double spa bath, separate shower and 46-inch LCD TV with DVD player."},
+  {id:3379856,name:"Deluxe One-Bedroom Suite",size:"54 sqm",occ:4,ad:4,ch:3,beds:["2× Twin","1× Double"],am:["Spa bath","Kitchenette","Lounge"],desc:"Spacious suite with kitchenette, spa bath and a lounge area with satellite flat-screen TV."},
+  {id:1459536300,name:"Deluxe Room, 1 Bedroom",size:"54 m²",occ:4,ad:4,ch:3,beds:["1× Queen","2× Twin"],am:["Kitchenette","Mini-fridge","TV"],desc:"Soundproofed bedroom layout with free WiFi, kitchenette and mini-fridge."}
+];
+
+let current = ROOMS[0];
+let ad = 2, ch = 0;
+
+function money(n){ return "$" + n.toLocaleString("en-NZ",{minimumFractionDigits: (n%1?2:0), maximumFractionDigits:2}); }
+
+function renderRooms(){
+  document.getElementById("roomGrid").innerHTML = ROOMS.map((r,i)=>`
+    <div class="room">
+      <div class="room-img"></div>
+      <div class="room-body">
+        <h3>${r.name}</h3>
+        <div class="specs">
+          <span class="spec">${r.size}</span>
+          <span class="spec">Sleeps ${r.occ}</span>
+          <span class="spec">${r.beds.join(" + ")}</span>
+        </div>
+        <div class="specs">${r.am.map(a=>`<span class="spec">${a}</span>`).join("")}</div>
+        <p class="desc">${r.desc}</p>
+        <button class="offer-btn" onclick="openSheet(${i})">Make an Offer</button>
+      </div>
+    </div>`).join("");
+}
+
+function setState(s){
+  const active = s==="active";
+  document.getElementById("activeView").hidden = !active;
+  document.getElementById("unclaimedView").hidden = active;
+  document.getElementById("st-active").setAttribute("aria-pressed", active);
+  document.getElementById("st-unclaimed").setAttribute("aria-pressed", !active);
+  const chip = document.getElementById("statusChip");
+  if(active){ chip.className="chip status active"; chip.textContent="● Active on findastay"; }
+  else{ chip.className="chip status unclaimed"; chip.textContent="● Unclaimed — view only"; }
+}
+
+function openSheet(i){
+  current = ROOMS[i];
+  ad = Math.min(2, current.ad); ch = 0;
+  document.getElementById("sheetRoom").textContent = `${current.name} · sleeps ${current.occ}`;
+  document.getElementById("adCap").textContent = "/"+current.ad;
+  document.getElementById("chCap").textContent = "/"+current.ch;
+  // default dates: ~3 weeks out, 2 nights
+  const d1=new Date(Date.now()+21*864e5), d2=new Date(Date.now()+23*864e5);
+  document.getElementById("ci").value=d1.toISOString().slice(0,10);
+  document.getElementById("co").value=d2.toISOString().slice(0,10);
+  document.getElementById("composer").hidden=false;
+  document.getElementById("sentView").hidden=true;
+  updSteppers(); recalc();
+  document.getElementById("scrim").classList.add("open");
+  document.getElementById("sheet").classList.add("open");
+}
+function closeSheet(){
+  document.getElementById("scrim").classList.remove("open");
+  document.getElementById("sheet").classList.remove("open");
+}
+function step(which,dir){
+  if(which==="ad"){ ad=Math.max(1,Math.min(current.ad, ad+dir)); }
+  else{ ch=Math.max(0,Math.min(current.ch, ch+dir)); }
+  // keep total within max occupancy
+  if(ad+ch>current.occ){ if(which==="ad") ad-=dir>0?1:0; else ch-=dir>0?1:0; if(ad+ch>current.occ){ if(which==="ad")ad=current.occ-ch; else ch=current.occ-ad; } }
+  updSteppers(); recalc();
+}
+function updSteppers(){
+  document.getElementById("adVal").textContent=ad;
+  document.getElementById("chVal").textContent=ch;
+}
+function nights(){
+  const a=new Date(document.getElementById("ci").value), b=new Date(document.getElementById("co").value);
+  const n=Math.round((b-a)/864e5); return n>0?n:1;
+}
+function recalc(){
+  const n=nights(), rate=Math.max(1,+document.getElementById("nightly").value||0);
+  const sub=n*rate, tot=sub+8.99;
+  document.getElementById("nightsLine").textContent=`${n} night${n>1?"s":""} × ${money(rate)}`;
+  document.getElementById("subT").textContent=money(sub);
+  document.getElementById("totT").textContent=money(tot);
+  draft(n,rate,sub);
+}
+function draft(n,rate,sub){
+  const ci=new Date(document.getElementById("ci").value).toLocaleDateString("en-NZ",{day:"numeric",month:"short"});
+  const co=new Date(document.getElementById("co").value).toLocaleDateString("en-NZ",{day:"numeric",month:"short"});
+  const guests = `${ad} adult${ad>1?"s":""}${ch?` and ${ch} child${ch>1?"ren":""}`:""}`;
+  document.getElementById("msg").value =
+`Hi Aotea Motor Lodge,
+
+I'd love to stay in your ${current.name} for ${n} night${n>1?"s":""}, ${ci}–${co}, for ${guests}.
+
+I'd like to offer ${money(rate)} per night (${money(sub)} total). Would that work for you?
+
+Thanks!`;
+}
+function sendOffer(){
+  document.getElementById("composer").hidden=true;
+  document.getElementById("sentView").hidden=false;
+}
+function alertClaim(){
+  const v=document.getElementById("unclaimedView");
+  v.querySelector(".claim p").innerHTML="→ This opens the <b style='color:var(--fg)'>Business Sign-up onboarding</b>. Once submitted, it lands in the findastay admin queue for approval — you'd get a live notification to approve, decline, or ask for more detail.";
+}
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeSheet(); });
+renderRooms(); recalc();
+</script>
