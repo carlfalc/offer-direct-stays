@@ -68,6 +68,9 @@ export default function OfferModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loadingRooms, setLoadingRooms] = useState(false);
+  const [engineListingId, setEngineListingId] = useState<string | null>(null);
+  const [checkIn, setCheckIn] = useState('');
+  const [checkOut, setCheckOut] = useState('');
 
   // Currency and BCF based on property country
   const currency = property?.country === 'AU' ? 'AUD' : 'NZD';
