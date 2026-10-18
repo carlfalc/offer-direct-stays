@@ -232,10 +232,21 @@ create policy fs_leads_insert on fs_listing_leads for insert with check (true);
 -- Grants
 -- =====================================================================
 grant usage on schema public to anon, authenticated, service_role;
-grant select on fs_listings, fs_listing_rooms to anon, authenticated;
-grant select, insert, update on fs_offers to authenticated;
-grant insert on fs_listing_leads to anon, authenticated;
 grant all on fs_listings, fs_listing_rooms, fs_room_thresholds, fs_pricing_periods,
   fs_period_room_rates, fs_offers, fs_listing_leads to service_role;
+
+-- Defence in depth: a project-wide "grant all to anon" from earlier setup can
+-- leak new tables to anon. Shut the private tables at the GRANT layer so anon is
+-- denied outright, not just row-filtered by RLS.
+revoke all on fs_room_thresholds, fs_pricing_periods, fs_period_room_rates from anon, authenticated;
+revoke all on fs_offers from anon;
+revoke all on fs_listing_leads from anon, authenticated;
+
+-- Then grant exactly what each role legitimately needs (RLS still gates rows):
+grant select on fs_listings, fs_listing_rooms to anon, authenticated;
+grant select, insert, update, delete on fs_room_thresholds, fs_pricing_periods,
+  fs_period_room_rates to authenticated;   -- RLS restricts to the owning business
+grant select, insert, update on fs_offers to authenticated;
+grant insert on fs_listing_leads to anon, authenticated;  -- create a lead/nudge, but not read
 
 notify pgrst, 'reload schema';
