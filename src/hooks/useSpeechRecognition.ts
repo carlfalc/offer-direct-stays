@@ -95,7 +95,13 @@ export function useSpeechRecognition(): UseSpeechRecognitionReturn {
         setIsListening(false);
         return;
       }
-      // network / transient: let onend try to resume rather than showing an error.
+      if (e === 'network') {
+        // Surface this rather than silently retrying forever with no result.
+        shouldListenRef.current = false;
+        setError('network');
+        setIsListening(false);
+        return;
+      }
       console.warn('Speech recognition:', e);
     };
 
@@ -147,7 +153,8 @@ export function useSpeechRecognition(): UseSpeechRecognitionReturn {
     setIsListening(false);
     if (!recognitionRef.current) return;
     try {
-      recognitionRef.current.stop();
+      // abort() stops immediately (stop() can linger); the current transcript is already captured.
+      recognitionRef.current.abort();
     } catch {
       /* ignore */
     }

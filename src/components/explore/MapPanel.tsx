@@ -127,7 +127,7 @@ export default function MapPanel({
               align-items: center;
               gap: 6px;
             ">
-              <span>~${currencySymbol}${displayPrice}</span>
+              ${property.is_claimed ? `<span>~${currencySymbol}${displayPrice}</span>` : ''}
               ${isEv ? `
                 <span style="
                   font-size: 10px;
