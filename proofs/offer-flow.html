@@ -1,24 +1,26 @@
 <title>findastay Offer Flow</title>
 <meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700;800&display=swap">
 <style>
 /* Layout: single dark property page — hero header, state toggle, room grid, slide-up offer composer.
    Brand: deep iris-ink ground, teal-aqua primary action, iris secondary, white text. Committed dark. */
 :root{
-  --bg:#0a0b14; --surface:#13162a; --surface-2:#1a1e38; --line:rgba(255,255,255,.09);
-  --fg:#f5f6fc; --muted:#a6abc9; --faint:#6f759a;
-  --teal:#2fe0c8; --teal-ink:#06281f; --iris:#8b7bf7; --iris-dim:rgba(139,123,247,.16);
-  --good:#36d399; --warn:#f7b955;
+  --bg:#070C16; --surface:#0f1626; --surface-2:#141d31; --line:rgba(255,255,255,.09);
+  --fg:#F5F8F7; --muted:#9AA6B8; --faint:#6c7792;
+  --teal:#2ED3C0; --teal-ink:#042019; --iris:#8B93F6; --iris-dim:rgba(139,147,246,.16);
+  --good:#46E0A0; --warn:#f7b955;
   --r:18px; --r-sm:12px;
   --display:"Bricolage Grotesque",Georgia,serif;
-  --body:"Figtree",-apple-system,system-ui,sans-serif;
+  --body:"Hanken Grotesk",system-ui,sans-serif;
   color-scheme:dark;
 }
 *{box-sizing:border-box}
 html,body{margin:0}
 body{
   background:
-    radial-gradient(1100px 620px at 82% -8%, rgba(139,123,247,.16), transparent 60%),
-    radial-gradient(900px 560px at 6% 4%, rgba(47,224,200,.10), transparent 55%),
+    radial-gradient(1100px 620px at 82% -8%, rgba(139,147,246,.16), transparent 60%),
+    radial-gradient(900px 560px at 6% 4%, rgba(46,211,192,.10), transparent 55%),
     var(--bg);
   color:var(--fg); font-family:var(--body); line-height:1.5;
   -webkit-font-smoothing:antialiased;
@@ -27,9 +29,8 @@ body{
 
 /* top bar */
 .top{display:flex; align-items:center; justify-content:space-between; padding-block:20px 8px; gap:16px; flex-wrap:wrap}
-.brand{font-family:var(--display); font-weight:700; font-size:1.35rem; letter-spacing:-.02em}
-.brand b{color:var(--teal); font-weight:700}
-.brand i{color:var(--iris); font-style:normal}
+.brand{font-family:var(--display); font-weight:800; font-size:1.4rem; letter-spacing:-.03em; color:var(--fg)}
+.brand span{color:var(--teal)}
 .demo-note{font-size:.72rem; color:var(--faint); letter-spacing:.04em; text-transform:uppercase}
 
 /* state toggle */
@@ -66,7 +67,7 @@ h1{font-family:var(--display); font-size:clamp(1.6rem,4vw,2.1rem); margin:0; let
 .rooms{display:grid; grid-template-columns:repeat(auto-fill,minmax(290px,1fr)); gap:16px}
 .room{background:var(--surface); border:1px solid var(--line); border-radius:var(--r); overflow:hidden; display:flex; flex-direction:column}
 .room-img{height:140px; background:linear-gradient(135deg, rgba(139,123,247,.26), rgba(47,224,200,.16)); position:relative}
-.room-img::after{content:"📷 live photos"; position:absolute; left:10px; bottom:10px; font-size:.64rem; letter-spacing:.04em; color:rgba(255,255,255,.6); background:rgba(0,0,0,.32); padding:3px 8px; border-radius:999px}
+
 .room-body{padding:15px 16px 16px; display:flex; flex-direction:column; gap:10px; flex:1}
 .room h3{font-size:1rem; margin:0; font-weight:650; letter-spacing:-.01em}
 .specs{display:flex; flex-wrap:wrap; gap:6px}
@@ -120,7 +121,7 @@ input:focus-visible, textarea:focus-visible, button:focus-visible{outline:2px so
 .offerbox .line b{color:var(--fg); font-variant-numeric:tabular-nums}
 .offerbox .total{border-top:1px solid var(--line); margin-top:8px; padding-top:10px; font-size:1.05rem}
 .offerbox .total b{color:var(--teal)}
-textarea{width:100%; background:var(--bg); border:1px solid var(--line); border-radius:10px; color:var(--fg); font-family:var(--body); font-size:.9rem; padding:12px; min-height:96px; resize:vertical; line-height:1.55}
+textarea{width:100%; background:var(--bg); border:1px solid var(--line); border-radius:10px; color:var(--fg); font-family:var(--body); font-size:.92rem; padding:14px; min-height:210px; resize:vertical; line-height:1.6; overflow:hidden}
 .ai-tag{display:inline-flex; align-items:center; gap:6px; font-size:.7rem; color:var(--iris); margin-bottom:7px; font-weight:600; text-transform:uppercase; letter-spacing:.04em}
 .send{appearance:none; border:0; width:100%; padding:14px; border-radius:var(--r-sm); font-family:var(--body); font-weight:800; font-size:1rem; cursor:pointer; background:linear-gradient(135deg,var(--teal),#1fc9b4); color:var(--teal-ink); margin-top:4px}
 .send:hover{filter:brightness(1.08)}
@@ -138,17 +139,16 @@ footer{margin-top:40px; text-align:center; color:var(--faint); font-size:.76rem}
 
 <div class="wrap">
   <div class="top">
-    <div class="brand"><b>find</b><i>a</i>stay</div>
+    <div class="brand">find<span>a</span>stay</div>
     <div class="seg" role="group" aria-label="Demo property state">
       <button id="st-active" aria-pressed="true" onclick="setState('active')">Claimed &amp; active</button>
       <button id="st-unclaimed" aria-pressed="false" onclick="setState('unclaimed')">Unclaimed</button>
     </div>
   </div>
-  <div class="demo-note">Design proof · real Aotea Motor Lodge data from LiteAPI · photos load live in the app</div>
 
   <!-- HERO -->
   <div class="hero">
-    <div class="hero-img"><span class="ph">Hero photo — 53 live images</span></div>
+    <div class="hero-img"></div>
     <div class="hero-body">
       <div class="hero-row">
         <div>
@@ -210,7 +210,7 @@ footer{margin-top:40px; text-align:center; color:var(--faint); font-size:.76rem}
   <div class="sheet-grip"></div>
   <div id="composer">
     <div class="sheet-grip" style="display:none"></div>
-    <h2 id="sheetTitle">Make an offer</h2>
+    <h2 id="sheetTitle">Ready to make an offer?</h2>
     <p class="sub" id="sheetRoom">Executive One-Bedroom Suite · sleeps 4</p>
 
     <div class="field row2">
@@ -361,6 +361,8 @@ I'd love to stay in your ${current.name} for ${n} night${n>1?"s":""}, ${ci}–${
 I'd like to offer ${money(rate)} per night (${money(sub)} total). Would that work for you?
 
 Thanks!`;
+  const ta=document.getElementById("msg");
+  ta.style.height="auto"; ta.style.height=(ta.scrollHeight+6)+"px";
 }
 function sendOffer(){
   document.getElementById("composer").hidden=true;
