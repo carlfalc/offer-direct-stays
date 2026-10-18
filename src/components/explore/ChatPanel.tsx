@@ -17,17 +17,21 @@ interface ChatPanelProps {
   onAddToWatchlist: (property: Property) => void;
   shortlistedIds: string[];
   watchlistedIds: string[];
+  tone: 'fun' | 'pro';
+  onToneChange: (tone: 'fun' | 'pro') => void;
 }
 
-export default function ChatPanel({ 
-  messages, 
-  onSendMessage, 
+export default function ChatPanel({
+  messages,
+  onSendMessage,
   isLoading,
   onPropertySelect,
   onMakeOffer,
   onAddToWatchlist,
   shortlistedIds,
-  watchlistedIds
+  watchlistedIds,
+  tone,
+  onToneChange
 }: ChatPanelProps) {
   const [pendingVoiceText, setPendingVoiceText] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -68,6 +72,32 @@ export default function ChatPanel({
             <p className="text-lg text-muted-foreground max-w-md mx-auto">
               Your AI-powered travel concierge. Speak or type to discover accommodation across Australia & New Zealand.
             </p>
+          </div>
+
+          {/* Conversation Type slider */}
+          <div className="mb-8 animate-fade-in" style={{ animationDelay: '120ms' }}>
+            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2">Conversation Type</p>
+            <div className="relative inline-flex items-center rounded-full border border-border/60 bg-card/60 p-1">
+              <span
+                className="absolute top-1 bottom-1 rounded-full bg-primary transition-all duration-300 ease-out"
+                style={{ left: tone === 'fun' ? '4px' : '50%', right: tone === 'fun' ? '50%' : '4px' }}
+                aria-hidden="true"
+              />
+              <button
+                type="button"
+                onClick={() => onToneChange('fun')}
+                className={`relative z-10 px-4 py-1.5 text-sm font-medium rounded-full transition-colors ${tone === 'fun' ? 'text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+              >
+                😎 Fun &amp; Relaxed
+              </button>
+              <button
+                type="button"
+                onClick={() => onToneChange('pro')}
+                className={`relative z-10 px-4 py-1.5 text-sm font-medium rounded-full transition-colors ${tone === 'pro' ? 'text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+              >
+                🎩 Professional
+              </button>
+            </div>
           </div>
 
           {/* Glowing Mic CTA */}

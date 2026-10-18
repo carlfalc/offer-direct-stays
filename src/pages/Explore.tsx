@@ -34,6 +34,7 @@ export default function Explore() {
   const [shortlist, setShortlist] = useState<ShortlistItem[]>([]);
   const [watchlistedIds, setWatchlistedIds] = useState<string[]>([]);
   const [mapboxToken, setMapboxToken] = useState<string>(import.meta.env.VITE_MAPBOX_TOKEN || '');
+  const [tone, setTone] = useState<'fun' | 'pro'>('fun');
   const [isMobileChatOpen, setIsMobileChatOpen] = useState(false);
 
   // Property detail sheet
@@ -118,7 +119,7 @@ export default function Explore() {
     const getAiReply = async (message: string, context: Record<string, any>) => {
       try {
         const { data, error } = await supabase.functions.invoke('ai-router', {
-          body: { type: 'concierge', message, context },
+          body: { type: 'concierge', message, context, tone },
         });
         if (error || !data?.reply) return null;
         return data.reply as string;
@@ -352,6 +353,8 @@ export default function Explore() {
               onAddToWatchlist={handleAddToWatchlist}
               shortlistedIds={shortlistedIds}
               watchlistedIds={watchlistedIds}
+              tone={tone}
+              onToneChange={setTone}
             />
           </div>
           <div className="flex-shrink-0">
