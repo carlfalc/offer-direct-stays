@@ -34,6 +34,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { MapPin, Users, Info, AlertCircle, Loader2 } from 'lucide-react';
+import OfferSlider from './OfferSlider';
 
 interface OfferModalProps {
   open: boolean;
@@ -72,6 +73,13 @@ export default function OfferModal({
   const currency = property?.country === 'AU' ? 'AUD' : 'NZD';
   const bcfAmount = property?.country === 'AU' ? 12.0 : 8.99;
 
+  // Offer slider range + sweet spot (guidance only — the business sets the real thresholds)
+  const sweetLo = 180;
+  const sweetHi = 230;
+  const sliderMin = 100;
+  const sliderMax = 280;
+  const midpoint = Math.round((sweetLo + sweetHi) / 2);
+
   // Reset form when property changes
   useEffect(() => {
     if (property) {
@@ -79,7 +87,7 @@ export default function OfferModal({
       setAdults(initialAdults);
       setChildren(initialChildren);
       setRequirements('');
-      setOfferAmount('');
+      setOfferAmount(String(midpoint));
       setPaymentMethod('pay_at_property');
       setError(null);
       loadRooms(property.id);
@@ -190,6 +198,9 @@ export default function OfferModal({
     onOpenChange(false);
   };
 
+  const offerNum = parseFloat(offerAmount);
+  const sliderVal = isNaN(offerNum) ? midpoint : Math.min(sliderMax, Math.max(sliderMin, offerNum));
+
   // Inline JSX to prevent remount on state changes (fixes scroll jump)
   const modalContent = (
     <ScrollArea className="max-h-[70vh] pr-4">
@@ -284,24 +295,26 @@ export default function OfferModal({
           />
         </div>
 
-        {/* Suggested Offer Range */}
-        <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-1">
-          <div className="flex items-center gap-2">
-            <Info className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm font-medium text-foreground">Suggested offer range</span>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            Guests typically start offers between <span className="font-medium">{currency} $180–$230</span> per night
-            for similar stays in this area.
-          </p>
+        {/* Offer slider — brand sweet-spot guidance */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-foreground">Your offer per night</label>
+          <OfferSlider
+            value={sliderVal}
+            min={sliderMin}
+            max={sliderMax}
+            sweetLo={sweetLo}
+            sweetHi={sweetHi}
+            currency={currency}
+            onChange={(v) => { setOfferAmount(String(v)); setError(null); }}
+          />
           <p className="text-xs text-muted-foreground">
-            Want help? I can suggest an average offer price — you’re always in control.
+            Guests usually land between <span className="font-medium">{currency} ${sweetLo}–${sweetHi}</span> for stays like this. Drag to your number — you’re always in control.
           </p>
         </div>
 
         {/* Offer Price Input */}
         <div className="space-y-2">
-          <label className="text-sm font-medium text-foreground">Your offer per night</label>
+          <label className="text-sm font-medium text-foreground">Or type an exact amount</label>
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
               {currency}

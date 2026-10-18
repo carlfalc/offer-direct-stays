@@ -323,3 +323,19 @@
     mask-composite: exclude;
   }
 }
+
+/* ---------- findastay offer slider (brand, matches landing) ---------- */
+.fs-offer-slider { --fsos-teal:#2ED3C0; --fsos-teal-deep:#0E9C86; --fsos-accept:#46E0A0; }
+.fs-offer-slider .fsos-amt { font-size:1.9rem; font-weight:800; letter-spacing:-.02em; color:var(--fsos-teal-deep); line-height:1; }
+.fs-offer-slider .fsos-amt span { font-size:.9rem; font-weight:500; color:#9AA6B8; margin-left:5px; }
+.fs-offer-slider .fsos-track-wrap { position:relative; margin:14px 0 6px; height:26px; display:flex; align-items:center; }
+.fs-offer-slider .fsos-sweet { position:absolute; top:50%; transform:translateY(-50%); height:10px; border-radius:999px; background:rgba(70,224,160,.28); border:1px solid rgba(70,224,160,.55); pointer-events:none; z-index:1; }
+.fs-offer-slider input[type=range] { -webkit-appearance:none; appearance:none; width:100%; height:10px; border-radius:999px; background:linear-gradient(90deg, var(--fsos-teal) var(--fill,50%), #e4e7ee var(--fill,50%)); outline:none; position:relative; z-index:2; }
+.fs-offer-slider input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:26px; height:26px; border-radius:50%; background:radial-gradient(circle at 35% 35%, #fff, var(--fsos-teal)); box-shadow:0 0 0 5px rgba(46,211,192,.22), 0 4px 10px rgba(0,0,0,.25); cursor:grab; border:none; }
+.fs-offer-slider input[type=range]::-webkit-slider-thumb:active { cursor:grabbing; }
+.fs-offer-slider input[type=range]::-moz-range-thumb { width:26px; height:26px; border-radius:50%; background:radial-gradient(circle at 35% 35%, #fff, var(--fsos-teal)); box-shadow:0 0 0 5px rgba(46,211,192,.22), 0 4px 10px rgba(0,0,0,.25); cursor:grab; border:none; }
+.fs-offer-slider .fsos-scale { display:flex; justify-content:space-between; font-size:.72rem; color:#9AA6B8; margin-top:4px; }
+.fs-offer-slider .fsos-verdict { margin-top:12px; font-size:.86rem; font-weight:600; padding:9px 12px; border-radius:10px; border:1px solid transparent; }
+.fs-offer-slider .fsos-verdict.go { background:rgba(70,224,160,.12); color:var(--fsos-teal-deep); border-color:rgba(70,224,160,.3); }
+.fs-offer-slider .fsos-verdict.mid { background:rgba(247,185,85,.14); color:#8a5e0f; border-color:rgba(247,185,85,.4); }
+.fs-offer-slider .fsos-verdict.bold { background:rgba(139,147,246,.12); color:#4b53c8; border-color:rgba(139,147,246,.3); }

@@ -16,10 +16,48 @@ import { MapPin, LogOut, Menu, Heart, Plane, Star } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
-const aiFallbackPhrases = [
-  "Tell me your destination and dates and I’ll take it from there.",
-  "I can suggest an average offer price if you want — you’re always in control.",
-];
+const EARTH_KM = 6371;
+function haversineKm(aLat: number, aLng: number, bLat: number, bLng: number) {
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(bLat - aLat);
+  const dLng = toRad(bLng - aLng);
+  const s =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(aLat)) * Math.cos(toRad(bLat)) * Math.sin(dLng / 2) ** 2;
+  return EARTH_KM * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1 - s));
+}
+
+// Resolve any NZ/AU place name to coordinates via Mapbox geocoding.
+async function geocodePlace(q: string, token: string) {
+  if (!token || !q) return null;
+  try {
+    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
+      q,
+    )}.json?access_token=${token}&country=nz,au&types=place,locality,region,district,neighborhood&limit=1`;
+    const r = await fetch(url);
+    if (!r.ok) return null;
+    const j = await r.json();
+    const f = j.features?.[0];
+    if (!f) return null;
+    const cc =
+      (f.context || []).find((c: any) => String(c.id).startsWith('country'))?.short_code ||
+      f.properties?.short_code ||
+      '';
+    return {
+      name: f.text as string,
+      lat: f.center[1] as number,
+      lng: f.center[0] as number,
+      country: (String(cc).toUpperCase() === 'AU' ? 'AU' : 'NZ') as 'NZ' | 'AU',
+    };
+  } catch {
+    return null;
+  }
+}
+
+const POOL_RE = /pool|swim/i;
+function hasAmenity(p: Property, re: RegExp) {
+  return (p.amenities || []).some((a) => re.test(a));
+}
 
 export default function Explore() {
   const { user, signOut, loading: authLoading } = useAuth();
@@ -36,6 +74,16 @@ export default function Explore() {
   const [mapboxToken, setMapboxToken] = useState<string>(import.meta.env.VITE_MAPBOX_TOKEN || '');
   const [tone, setTone] = useState<'fun' | 'pro'>('fun');
   const [isMobileChatOpen, setIsMobileChatOpen] = useState(false);
+  const [visibleProperties, setVisibleProperties] = useState<Property[]>([]);
+  const [criteria, setCriteria] = useState<{
+    destination?: string;
+    adults?: number;
+    children?: number;
+    mustHaves?: string[];
+    checkIn?: string;
+    checkOut?: string;
+    placeLabel?: string;
+  }>({});
 
   // Property detail sheet
   const [detailProperty, setDetailProperty] = useState<Property | null>(null);
@@ -80,6 +128,7 @@ export default function Explore() {
       });
     } else if (data) {
       setProperties(data as Property[]);
+      setVisibleProperties(data as Property[]);
     }
   };
 
@@ -106,7 +155,6 @@ export default function Explore() {
   };
 
   const handleSendMessage = async (content: string) => {
-    // Add user message
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
       role: 'user',
@@ -116,111 +164,108 @@ export default function Explore() {
     setMessages((prev) => [...prev, userMessage]);
     setIsLoading(true);
 
-    const getAiReply = async (message: string, context: Record<string, any>) => {
-      try {
-        const { data, error } = await supabase.functions.invoke('ai-router', {
-          body: { type: 'concierge', message, context, tone },
-        });
-        if (error || !data?.reply) return null;
-        return data.reply as string;
-      } catch (err) {
-        console.warn('AI router error', err);
-        return null;
-      }
+    // Full conversation so far — used for robust JSON extraction (no chat loop)
+    const convoText = [...messages, userMessage]
+      .map((m) => `${m.role === 'user' ? 'Traveller' : 'Concierge'}: ${m.content}`)
+      .join('\n');
+
+    // 1) Extract structured criteria as JSON
+    let extracted: any = {};
+    try {
+      const { data } = await supabase.functions.invoke('ai-router', {
+        body: { type: 'extract', message: convoText },
+      });
+      if (data?.reply) extracted = JSON.parse(data.reply);
+    } catch {
+      /* fall back to what we already have */
+    }
+
+    const merged = {
+      destination: extracted.destination || criteria.destination,
+      adults: extracted.adults ?? criteria.adults,
+      children: extracted.children ?? criteria.children,
+      mustHaves:
+        (extracted.must_haves && extracted.must_haves.length
+          ? extracted.must_haves
+          : criteria.mustHaves) || [],
+      checkIn: extracted.check_in || criteria.checkIn,
+      checkOut: extracted.check_out || criteria.checkOut,
+      placeLabel: criteria.placeLabel,
     };
 
-    // Simple intent detection and response
-    const lowerContent = content.toLowerCase();
+    // 2) Resolve a location (works for any NZ/AU place, e.g. Whanganui)
+    let geo: { name: string; lat: number; lng: number; country: 'NZ' | 'AU' } | null = null;
+    if (merged.destination) geo = await geocodePlace(merged.destination, mapboxToken);
+    if (!geo && !merged.destination) geo = await geocodePlace(content, mapboxToken);
+
     let response = '';
-    let recommendedProperties: Property[] = [];
+    let recs: Property[] = [];
 
-    // City destinations with coordinates
-    const cityData: Record<string, { lat: number; lng: number; country: 'NZ' | 'AU' }> = {
-      auckland: { lat: -36.8485, lng: 174.7633, country: 'NZ' },
-      wellington: { lat: -41.2865, lng: 174.7762, country: 'NZ' },
-      christchurch: { lat: -43.5321, lng: 172.6362, country: 'NZ' },
-      queenstown: { lat: -45.0312, lng: 168.6626, country: 'NZ' },
-      rotorua: { lat: -38.1368, lng: 176.2497, country: 'NZ' },
-      sydney: { lat: -33.8688, lng: 151.2093, country: 'AU' },
-      melbourne: { lat: -37.8136, lng: 144.9631, country: 'AU' },
-      brisbane: { lat: -27.4698, lng: 153.0251, country: 'AU' },
-      'gold coast': { lat: -28.0167, lng: 153.4000, country: 'AU' },
-      perth: { lat: -31.9505, lng: 115.8605, country: 'AU' },
-    };
-
-    // Check for destination keywords
-    const matchedCity = Object.keys(cityData).find(city => lowerContent.includes(city));
-
-    if (matchedCity) {
-      const cityInfo = cityData[matchedCity];
-      
-      // Update trip context
+    if (geo) {
+      merged.placeLabel = geo.name;
       setDestination({
-        city: matchedCity.charAt(0).toUpperCase() + matchedCity.slice(1),
-        country: cityInfo.country,
-        latitude: cityInfo.lat,
-        longitude: cityInfo.lng,
+        city: geo.name,
+        country: geo.country,
+        latitude: geo.lat,
+        longitude: geo.lng,
         radius: 50,
       });
 
-      recommendedProperties = properties.filter(
-        p => p.city.toLowerCase().includes(matchedCity) || p.country === cityInfo.country
-      ).slice(0, 5);
+      // Nearest properties to the searched place (zooms the map via visibleProperties)
+      const withDist = properties
+        .filter((p) => p.latitude != null && p.longitude != null)
+        .map((p) => ({
+          p,
+          d: haversineKm(geo!.lat, geo!.lng, p.latitude as number, p.longitude as number),
+        }))
+        .sort((a, b) => a.d - b.d);
+      let near = withDist.filter((x) => x.d <= 60).map((x) => x.p);
+      if (near.length === 0) near = withDist.filter((x) => x.d <= 200).map((x) => x.p).slice(0, 6);
+      if (near.length === 0) near = properties.filter((p) => p.country === geo!.country).slice(0, 6);
 
-      if (recommendedProperties.length > 0) {
-        response = `Great choice — I found ${recommendedProperties.length} properties in ${matchedCity.charAt(0).toUpperCase() + matchedCity.slice(1)}.\n\nI’ll show them on the map. You can move it anytime to explore nearby options.\n\nIf you want, I can also suggest an average offer price you might consider.`;
-      } else {
-        response = `I couldn't find any properties in ${matchedCity} right now. Want to try another destination?`;
+      // Must-have handling (e.g. a swimming pool floats to the top)
+      const wantsPool =
+        (merged.mustHaves || []).some((m: string) => POOL_RE.test(m)) || POOL_RE.test(content);
+      let poolCount = 0;
+      if (wantsPool) {
+        const pools = near.filter((p) => hasAmenity(p, POOL_RE));
+        poolCount = pools.length;
+        near = [...pools, ...near.filter((p) => !hasAmenity(p, POOL_RE))];
       }
-    } else if (lowerContent.includes('new zealand') || lowerContent.includes('nz')) {
-      setDestination({
-        city: 'New Zealand',
-        country: 'NZ',
-        latitude: -41.5,
-        longitude: 172.5,
-        radius: 500,
-      });
-      recommendedProperties = properties.filter(p => p.country === 'NZ').slice(0, 5);
-      response = `Here are some great options across New Zealand.\n\nYou can explore them on the map — it’s fully interactive.`;
-    } else if (lowerContent.includes('australia') || lowerContent.includes('au')) {
-      setDestination({
-        city: 'Australia',
-        country: 'AU',
-        latitude: -25.2744,
-        longitude: 133.7751,
-        radius: 1000,
-      });
-      recommendedProperties = properties.filter(p => p.country === 'AU').slice(0, 5);
-      response = `Here are some great options across Australia.\n\nYou can explore them on the map — it’s fully interactive.`;
-    } else if (lowerContent.includes('hello') || lowerContent.includes('hi') || lowerContent.includes('hey')) {
-      response = `Hey — I’m here to make this fast, easy, and smarter than regular booking sites.\n\nWhere are you thinking of going?`;
+      recs = near.slice(0, 6);
+      setVisibleProperties(recs.length ? recs : properties);
+
+      const kids = (merged.children || 0) > 0;
+      const couple = merged.adults === 2 && !kids;
+      const opener =
+        tone === 'fun'
+          ? kids
+            ? "Ooh, a trip with the little ones — let's find somewhere they'll love too!"
+            : couple
+            ? 'A sneaky escape for two — lovely.'
+            : "Nice one — let's get you sorted."
+          : "Great — here's what I've found.";
+      const poolBit = wantsPool
+        ? poolCount > 0
+          ? ` ${poolCount === 1 ? 'One spot has' : `${poolCount} spots have`} a pool, right up top — plus a few more worth a look.`
+          : ' None nearby list a pool, but here are the closest options — tap a pin to check their facilities.'
+        : '';
+      response = `${opener}${poolBit}\n\nHere's what's around **${geo.name}**. Tap any pin or card to look closer, and hit **Make an Offer** when one fits. Want me to suggest an offer price?`;
     } else {
-      response = `Let’s hit the ground running.\n\nTell me:\n• **Where** are you heading?\n• **When** are you looking to travel?\n• **How many** guests?\n\nYou can say: “Gold Coast, March 22, two adults.”`;
+      response =
+        tone === 'fun'
+          ? "Hey! Just tell me **where** you fancy going, **when**, **how many** of you (adults & kids), and anything you really need — a pool, parking, pet-friendly. I'll pull up the map and show you what's around. 🌏"
+          : "Happy to help. Tell me **where** you'd like to stay, **when**, **how many guests** (adults and children), and any must-haves — then I'll show you the options.";
     }
 
-    const aiContext = {
-      destination: matchedCity || null,
-      recommendedCount: recommendedProperties.length,
-      hasMap: true,
-      currency: trip.currency,
-    };
-
-    const aiReply = await getAiReply(content, aiContext);
-    if (aiReply) {
-      response = aiReply;
-    } else if (!response) {
-      response = aiFallbackPhrases.join(' ');
-    }
-
-    // Simulate AI thinking delay
-    await new Promise(resolve => setTimeout(resolve, 600));
+    setCriteria(merged);
 
     const assistantMessage: ChatMessage = {
       id: (Date.now() + 1).toString(),
       role: 'assistant',
       content: response,
       timestamp: new Date(),
-      properties: recommendedProperties.length > 0 ? recommendedProperties : undefined,
+      properties: recs.length ? recs : undefined,
     };
 
     setMessages((prev) => [...prev, assistantMessage]);
@@ -370,7 +415,7 @@ export default function Explore() {
         {/* Right column: Map panel - hidden on mobile until messages exist */}
         <div className="hidden lg:block flex-1 relative min-w-0">
           <MapPanel
-            properties={properties}
+            properties={visibleProperties}
             selectedPropertyId={selectedPropertyId}
             shortlistedIds={shortlistedIds}
             watchlistedIds={watchlistedIds}
