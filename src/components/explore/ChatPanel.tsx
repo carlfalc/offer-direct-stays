@@ -45,14 +45,9 @@ export default function ChatPanel({
   }, [messages]);
 
   const handleVoiceTranscript = useCallback((text: string) => {
-    setPendingVoiceText(text);
-    // Auto-send after a brief pause for voice input
-    if (text.trim()) {
-      setTimeout(() => {
-        onSendMessage(text.trim());
-        setPendingVoiceText('');
-      }, 500);
-    }
+    // HeroMicButton already debounces to the settled utterance, so send it once.
+    const t = text.trim();
+    if (t) onSendMessage(t);
   }, [onSendMessage]);
 
   const handleQuickChipSelect = (prompt: string) => {

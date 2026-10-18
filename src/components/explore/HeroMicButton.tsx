@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Mic } from 'lucide-react';
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
 import { cn } from '@/lib/utils';
@@ -20,12 +20,22 @@ export default function HeroMicButton({ onTranscript, disabled }: HeroMicButtonP
     error 
   } = useSpeechRecognition();
 
-  // Update input when transcript changes
+  // Auto-submit after a short pause in speech, so natural pauses don't fire partial sends.
+  const sendTimer = useRef<ReturnType<typeof setTimeout>>();
   useEffect(() => {
-    if (transcript) {
-      onTranscript(transcript);
-    }
-  }, [transcript, onTranscript]);
+    if (!isListening || !transcript.trim()) return;
+    if (sendTimer.current) clearTimeout(sendTimer.current);
+    sendTimer.current = setTimeout(() => {
+      const t = transcript.trim();
+      if (t) {
+        onTranscript(t);
+        resetTranscript();
+      }
+    }, 1300);
+    return () => {
+      if (sendTimer.current) clearTimeout(sendTimer.current);
+    };
+  }, [transcript, isListening, onTranscript, resetTranscript]);
 
   const handleClick = () => {
     if (isListening) {
@@ -87,7 +97,11 @@ export default function HeroMicButton({ onTranscript, disabled }: HeroMicButtonP
           </span>
         ) : error ? (
           <span className="text-destructive text-sm">
-            {error === 'not-allowed' ? 'Microphone access denied' : 'Please try again'}
+            {error === 'not-allowed'
+              ? 'Microphone access denied'
+              : error === 'no-mic'
+              ? 'No microphone found'
+              : 'Please try again'}
           </span>
         ) : showTip ? (
           <span className="text-muted-foreground text-sm">
