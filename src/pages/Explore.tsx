@@ -33,7 +33,7 @@ export default function Explore() {
   const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
   const [shortlist, setShortlist] = useState<ShortlistItem[]>([]);
   const [watchlistedIds, setWatchlistedIds] = useState<string[]>([]);
-  const [mapboxToken, setMapboxToken] = useState('');
+  const [mapboxToken, setMapboxToken] = useState<string>(import.meta.env.VITE_MAPBOX_TOKEN || '');
   const [isMobileChatOpen, setIsMobileChatOpen] = useState(false);
 
   // Property detail sheet
