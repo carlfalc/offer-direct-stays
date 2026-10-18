@@ -106,6 +106,24 @@ h1{font-family:var(--display); font-size:clamp(1.5rem,3.6vw,2rem); margin:18px 0
 .peek .up{color:var(--amber)} .peek .down{color:var(--teal-bright)}
 .addbtn{appearance:none; width:100%; border:1.5px dashed var(--line); background:transparent; color:var(--muted); font-family:var(--body); font-weight:650; font-size:.9rem; padding:14px; border-radius:var(--r); cursor:pointer; margin-top:4px; transition:.18s}
 .addbtn:hover{border-color:var(--iris); color:var(--iris)}
+.expand{appearance:none; width:100%; display:flex; align-items:center; justify-content:center; gap:8px; background:transparent; border:0; border-top:1px solid var(--line); margin-top:14px; padding:12px 0 2px; color:var(--iris); font-family:var(--body); font-weight:700; font-size:.86rem; cursor:pointer}
+.expand svg{transition:transform .22s}
+.period.open .expand svg{transform:rotate(180deg)}
+.period-rooms{margin-top:12px; border-top:1px dashed var(--line); padding-top:14px; animation:fade .25s ease}
+.pr-hint{font-size:.78rem; color:var(--faint); margin:0 0 12px}
+.pr-head,.pr-row{display:grid; grid-template-columns:1.6fr 1fr 1fr 1fr; gap:8px; align-items:center}
+.pr-head{font-size:.64rem; text-transform:uppercase; letter-spacing:.04em; color:var(--faint); font-weight:700; padding:0 0 8px}
+.pr-head .g{color:var(--green)} .pr-head .r{color:var(--red)}
+.pr-row{padding:5px 0}
+.pr-name{font-size:.82rem; color:var(--fg); min-width:0}
+.pr-cell{display:flex; align-items:center; background:var(--bg); border:1px solid var(--line); border-radius:8px; padding:0 6px}
+.pr-cell i{color:var(--faint); font-style:normal; font-size:.82rem}
+.pr-cell input{width:100%; background:transparent; border:0; color:var(--fg); font-weight:650; font-size:.9rem; padding:8px 2px; font-variant-numeric:tabular-nums}
+.pr-cell input:focus-visible{outline:none}
+.pr-cell:focus-within{border-color:var(--teal)}
+.pr-cell.g:focus-within{border-color:var(--green)} .pr-cell.r:focus-within{border-color:var(--red)}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@media(max-width:560px){ .pr-head,.pr-row{grid-template-columns:1.3fr 1fr 1fr 1fr; gap:5px} .pr-name{font-size:.72rem} .pr-cell input{font-size:.8rem} .pr-cell i{font-size:.74rem} }
 
 /* example auto-accept notification */
 .notif{background:linear-gradient(160deg,var(--surface-2),var(--surface)); border:1px solid rgba(70,224,160,.3); border-radius:var(--r); padding:18px; margin-top:12px}
@@ -181,8 +199,8 @@ const ROOMS = [
   {name:"Deluxe Room, 1 Bedroom",      occ:4, guide:219, auto:188, floor:159}
 ];
 let PERIODS = [
-  {name:"Christmas / New Year", start:"2026-12-24", end:"2027-01-06", sign:1, pct:35, recur:true},
-  {name:"Winter low season",    start:"2026-06-01", end:"2026-08-31", sign:-1, pct:15, recur:true}
+  {name:"Christmas / New Year", start:"2026-12-24", end:"2027-01-06", sign:1, pct:35, recur:true, open:true, touched:false},
+  {name:"Winter low season",    start:"2026-06-01", end:"2026-08-31", sign:-1, pct:15, recur:true, open:false, touched:false}
 ];
 
 function renderRooms(){
@@ -202,7 +220,7 @@ function renderRooms(){
     </div>`).join("");
   ROOMS.forEach((_,i)=>drawRoom(i));
 }
-function upd(i,k,v){ ROOMS[i][k]=Math.max(0,+v||0); drawRoom(i); renderPeriods(); }
+function upd(i,k,v){ ROOMS[i][k]=Math.max(0,+v||0); drawRoom(i); PERIODS.forEach(p=>{ if(!p.touched) p.rooms=computePeriodRooms(p); }); renderPeriods(); }
 function drawRoom(i){
   const r=ROOMS[i];
   const lo=Math.min(r.floor,r.auto,r.guide)*0.8, hi=Math.max(r.floor,r.auto,r.guide)*1.12, span=hi-lo||1;
@@ -217,14 +235,29 @@ function drawRoom(i){
     `Offers of <b class="y">$${r.auto}+</b> book instantly · <b class="m">$${r.floor}–$${r.auto-1}</b> comes to you · under <b class="n">$${r.floor}</b> auto-declined.`;
 }
 
+function computePeriodRooms(p){
+  const f=1+p.sign*p.pct/100;
+  return ROOMS.map(r=>({guide:Math.round(r.guide*f), auto:Math.round(r.auto*f), floor:Math.round(r.floor*f)}));
+}
+function ensureRooms(p){ if(!p.rooms || p.rooms.length!==ROOMS.length) p.rooms=computePeriodRooms(p); }
+
 function renderPeriods(){
-  const sample=ROOMS[0];
   document.getElementById("periodList").innerHTML = PERIODS.map((p,i)=>{
-    const f=1+p.sign*p.pct/100;
-    const g=Math.round(sample.guide*f), a=Math.round(sample.auto*f), fl=Math.round(sample.floor*f);
-    const dir=p.sign>0?'up':'down';
+    ensureRooms(p);
+    const table = p.open ? `
+      <div class="period-rooms">
+        <p class="pr-hint">The % above re-applies to every room. Type into any cell to fine-tune a single room on its own.</p>
+        <div class="pr-head"><span>Room</span><span>Guide</span><span class="g">Auto-accept</span><span class="r">Floor</span></div>
+        ${ROOMS.map((r,j)=>`
+          <div class="pr-row">
+            <span class="pr-name">${r.name}</span>
+            <span class="pr-cell"><i>$</i><input id="pr-${i}-${j}-guide" type="number" value="${p.rooms[j].guide}" oninput="setRoom(${i},${j},'guide',this.value)"></span>
+            <span class="pr-cell g"><i>$</i><input id="pr-${i}-${j}-auto" type="number" value="${p.rooms[j].auto}" oninput="setRoom(${i},${j},'auto',this.value)"></span>
+            <span class="pr-cell r"><i>$</i><input id="pr-${i}-${j}-floor" type="number" value="${p.rooms[j].floor}" oninput="setRoom(${i},${j},'floor',this.value)"></span>
+          </div>`).join("")}
+      </div>` : "";
     return `
-    <div class="period">
+    <div class="period ${p.open?'open':''}">
       <div class="period-top">
         <input class="name" value="${p.name}" oninput="setP(${i},'name',this.value)">
         <button class="del" onclick="delP(${i})" aria-label="Remove period">✕</button>
@@ -232,33 +265,53 @@ function renderPeriods(){
       <div class="period-grid">
         <div><span class="fieldlab">From</span><input type="date" value="${p.start}" oninput="setP(${i},'start',this.value)"></div>
         <div><span class="fieldlab">To</span><input type="date" value="${p.end}" oninput="setP(${i},'end',this.value)"></div>
-        <div><span class="fieldlab">Adjust</span>
+        <div><span class="fieldlab">Adjust all rooms</span>
           <div class="adj">
             <div class="pm">
-              <button class="${p.sign>0?'on':''}" onclick="setP(${i},'sign',1)">＋</button>
-              <button class="${p.sign<0?'on':''}" onclick="setP(${i},'sign',-1)">－</button>
+              <button class="${p.sign>0?'on':''}" onclick="setSign(${i},1)">＋</button>
+              <button class="${p.sign<0?'on':''}" onclick="setSign(${i},-1)">－</button>
             </div>
-            <div class="pct"><input type="number" value="${p.pct}" min="0" max="300" oninput="setP(${i},'pct',this.value)"><span class="s">%</span></div>
+            <div class="pct"><input type="number" value="${p.pct}" min="0" max="300" oninput="setPct(${i},this.value)"><span class="s">%</span></div>
           </div>
         </div>
       </div>
       <div class="period-foot">
         <label class="recur"><input type="checkbox" ${p.recur?'checked':''} onchange="setP(${i},'recur',this.checked)"> Repeat every year</label>
-        <span class="peek">e.g. ${sample.name}: auto-accept <b class="${dir}">$${a}</b>, floor <b class="${dir}">$${fl}</b></span>
+        <span class="peek" id="peek-${i}"></span>
       </div>
+      <button class="expand" onclick="toggle(${i})">
+        <span>${p.open?'Hide room rates':'Adjust individual room rates'}</span>
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      ${table}
     </div>`;
   }).join("");
+  PERIODS.forEach((_,i)=>markPeek(i));
 }
-function setP(i,k,v){
-  if(k==='pct') v=Math.max(0,+v||0);
-  if(k==='sign') v=+v;
-  PERIODS[i][k]=v; renderPeriods();
+function markPeek(i){
+  const p=PERIODS[i]; const el=document.getElementById('peek-'+i); if(!el) return;
+  ensureRooms(p); const r0=p.rooms[0]; const dir=p.sign>0?'up':'down'; const nm=ROOMS[0].name.split(',')[0];
+  el.innerHTML = `${p.sign>0?'+':'−'}${p.pct}% · e.g. ${nm}: auto <b class="${dir}">$${r0.auto}</b>, floor <b class="${dir}">$${r0.floor}</b>` + (p.touched?' · <b class="up">edited by room</b>':'');
 }
+function updatePeriodCells(i){
+  const p=PERIODS[i]; if(!p.open) return;
+  ROOMS.forEach((_,j)=>['guide','auto','floor'].forEach(k=>{ const el=document.getElementById(`pr-${i}-${j}-${k}`); if(el) el.value=p.rooms[j][k]; }));
+}
+function setP(i,k,v){ PERIODS[i][k]=v; }
+function setPct(i,v){ const p=PERIODS[i]; p.pct=Math.max(0,+v||0); p.rooms=computePeriodRooms(p); p.touched=false; updatePeriodCells(i); markPeek(i); }
+function setSign(i,s){
+  const p=PERIODS[i]; p.sign=s; p.rooms=computePeriodRooms(p); p.touched=false;
+  const card=document.querySelectorAll('#periodList .period')[i];
+  if(card){ const b=card.querySelectorAll('.pm button'); b[0].classList.toggle('on',s>0); b[1].classList.toggle('on',s<0); }
+  updatePeriodCells(i); markPeek(i);
+}
+function setRoom(i,j,k,v){ ensureRooms(PERIODS[i]); PERIODS[i].rooms[j][k]=Math.max(0,+v||0); PERIODS[i].touched=true; markPeek(i); }
+function toggle(i){ PERIODS[i].open=!PERIODS[i].open; renderPeriods(); }
 function delP(i){ PERIODS.splice(i,1); renderPeriods(); }
 function addPeriod(){
-  PERIODS.push({name:"New period", start:"", end:"", sign:1, pct:20, recur:false});
+  PERIODS.push({name:"New period", start:"", end:"", sign:1, pct:20, recur:false, open:true, touched:false});
   renderPeriods();
-  document.getElementById("periodList").lastElementChild.querySelector(".name").focus();
+  const el=document.getElementById("periodList").lastElementChild.querySelector(".name"); if(el) el.focus();
 }
 
 renderRooms(); renderPeriods();
