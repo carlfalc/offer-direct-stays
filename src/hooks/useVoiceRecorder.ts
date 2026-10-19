@@ -6,44 +6,58 @@ interface UseVoiceRecorderReturn {
   isTranscribing: boolean;
   error: string | null;
   isSupported: boolean;
+  level: number; // live input level 0..1 (so the UI can prove it's hearing you)
   start: () => Promise<void>;
   stopAndTranscribe: () => Promise<string>;
   cancel: () => void;
 }
 
+// Whisper emits these on silence/empty audio — treat them as "no audio", never as a real request.
+const HALLUCINATIONS = new Set([
+  'thanks for watching', 'thank you for watching', 'thanks for watching everyone',
+  'thank you', 'thanks', 'please subscribe', 'subscribe', 'you', 'bye', 'okay', 'ok',
+]);
+
 function blobToBase64(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onloadend = () => {
-      const result = String(reader.result || '');
-      resolve(result.split(',')[1] || ''); // strip "data:...;base64,"
-    };
+    reader.onloadend = () => resolve(String(reader.result || '').split(',')[1] || '');
     reader.onerror = reject;
     reader.readAsDataURL(blob);
   });
 }
 
-/**
- * Records mic audio and transcribes it via the `transcribe` edge function (OpenAI Whisper).
- * One recorder per component; no browser single-engine conflict like the Web Speech API.
- */
 export function useVoiceRecorder(): UseVoiceRecorderReturn {
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [level, setLevel] = useState(0);
 
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const rafRef = useRef<number | null>(null);
+  const maxLevelRef = useRef(0);
+  const startTimeRef = useRef(0);
 
   const isSupported =
     typeof navigator !== 'undefined' &&
     !!navigator.mediaDevices?.getUserMedia &&
     typeof MediaRecorder !== 'undefined';
 
-  const cleanupStream = () => {
+  const cleanup = () => {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    rafRef.current = null;
+    try {
+      audioCtxRef.current?.close();
+    } catch {
+      /* ignore */
+    }
+    audioCtxRef.current = null;
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
+    setLevel(0);
   };
 
   const start = useCallback(async () => {
@@ -53,18 +67,54 @@ export function useVoiceRecorder(): UseVoiceRecorderReturn {
       return;
     }
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true },
+      });
       streamRef.current = stream;
       chunksRef.current = [];
+      maxLevelRef.current = 0;
+      startTimeRef.current = Date.now();
+
+      // Live metering + silence detection
+      try {
+        const AC = window.AudioContext || (window as any).webkitAudioContext;
+        const ctx: AudioContext = new AC();
+        audioCtxRef.current = ctx;
+        const source = ctx.createMediaStreamSource(stream);
+        const analyser = ctx.createAnalyser();
+        analyser.fftSize = 512;
+        source.connect(analyser);
+        const buf = new Uint8Array(analyser.fftSize);
+        let lastSet = 0;
+        const tick = () => {
+          analyser.getByteTimeDomainData(buf);
+          let peak = 0;
+          for (let i = 0; i < buf.length; i++) {
+            const d = Math.abs(buf[i] - 128);
+            if (d > peak) peak = d;
+          }
+          if (peak > maxLevelRef.current) maxLevelRef.current = peak;
+          const now = Date.now();
+          if (now - lastSet > 80) {
+            lastSet = now;
+            setLevel(Math.min(1, peak / 60));
+          }
+          rafRef.current = requestAnimationFrame(tick);
+        };
+        rafRef.current = requestAnimationFrame(tick);
+      } catch {
+        /* metering is optional */
+      }
+
       const recorder = new MediaRecorder(stream);
       recorder.ondataavailable = (e) => {
         if (e.data && e.data.size > 0) chunksRef.current.push(e.data);
       };
       recorderRef.current = recorder;
-      recorder.start();
+      recorder.start(1000); // collect chunks every second
       setIsRecording(true);
     } catch (e: any) {
-      cleanupStream();
+      cleanup();
       const name = e?.name || '';
       setError(name === 'NotAllowedError' ? 'not-allowed' : name === 'NotFoundError' ? 'no-mic' : 'mic-error');
     }
@@ -74,6 +124,10 @@ export function useVoiceRecorder(): UseVoiceRecorderReturn {
     const recorder = recorderRef.current;
     if (!recorder) return '';
     setIsRecording(false);
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
 
     const blob = await new Promise<Blob>((resolve) => {
       recorder.onstop = () => resolve(new Blob(chunksRef.current, { type: recorder.mimeType || 'audio/webm' }));
@@ -83,10 +137,17 @@ export function useVoiceRecorder(): UseVoiceRecorderReturn {
         resolve(new Blob(chunksRef.current, { type: 'audio/webm' }));
       }
     });
-    cleanupStream();
+
+    const duration = Date.now() - startTimeRef.current;
+    const maxLevel = maxLevelRef.current;
+    cleanup();
     recorderRef.current = null;
 
-    if (!blob.size) return '';
+    // Guard: if nothing was actually heard, don't send silence to Whisper (it hallucinates).
+    if (!blob.size || duration < 500 || maxLevel < 5) {
+      setError('no-audio');
+      return '';
+    }
 
     setIsTranscribing(true);
     try {
@@ -98,7 +159,13 @@ export function useVoiceRecorder(): UseVoiceRecorderReturn {
         setError('transcribe');
         return '';
       }
-      return String(data.text || '').trim();
+      const text = String(data.text || '').trim();
+      const norm = text.toLowerCase().replace(/[.!?]+$/g, '').trim();
+      if (!text || HALLUCINATIONS.has(norm)) {
+        setError('no-audio');
+        return '';
+      }
+      return text;
     } catch {
       setError('transcribe');
       return '';
@@ -113,11 +180,11 @@ export function useVoiceRecorder(): UseVoiceRecorderReturn {
     } catch {
       /* ignore */
     }
-    cleanupStream();
+    cleanup();
     recorderRef.current = null;
     setIsRecording(false);
     setIsTranscribing(false);
   }, []);
 
-  return { isRecording, isTranscribing, error, isSupported, start, stopAndTranscribe, cancel };
+  return { isRecording, isTranscribing, error, isSupported, level, start, stopAndTranscribe, cancel };
 }

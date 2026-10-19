@@ -10,7 +10,7 @@ interface HeroMicButtonProps {
 
 export default function HeroMicButton({ onTranscript, disabled }: HeroMicButtonProps) {
   const [showTip, setShowTip] = useState(true);
-  const { isRecording, isTranscribing, error, isSupported, start, stopAndTranscribe } = useVoiceRecorder();
+  const { isRecording, isTranscribing, error, isSupported, level, start, stopAndTranscribe } = useVoiceRecorder();
 
   const handleClick = async () => {
     if (isTranscribing) return;
@@ -37,6 +37,8 @@ export default function HeroMicButton({ onTranscript, disabled }: HeroMicButtonP
       ? 'Microphone blocked — allow mic access for this site'
       : error === 'no-mic'
       ? 'No microphone found — check your device'
+      : error === 'no-audio'
+      ? "I didn't hear anything — check your mic isn't muted or used by another app (e.g. your dictation tool)"
       : error === 'transcribe'
       ? "Couldn't transcribe that — try again"
       : error
@@ -75,8 +77,8 @@ export default function HeroMicButton({ onTranscript, disabled }: HeroMicButtonP
         )}
       </button>
 
-      {/* Status */}
-      <div className="mt-4 min-h-[1.5rem] flex items-center text-center">
+      {/* Status + live level */}
+      <div className="mt-4 min-h-[1.5rem] flex flex-col items-center gap-2 text-center">
         {isTranscribing ? (
           <span className="text-primary font-medium">Transcribing…</span>
         ) : isRecording ? (
@@ -86,6 +88,12 @@ export default function HeroMicButton({ onTranscript, disabled }: HeroMicButtonP
         ) : showTip ? (
           <span className="text-muted-foreground text-sm">Tap to speak your request</span>
         ) : null}
+
+        {isRecording && (
+          <div className="w-40 h-1.5 rounded-full bg-muted/40 overflow-hidden" aria-hidden="true">
+            <div className="h-full bg-primary transition-[width] duration-75" style={{ width: `${Math.round(level * 100)}%` }} />
+          </div>
+        )}
       </div>
     </div>
   );
