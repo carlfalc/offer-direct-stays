@@ -219,8 +219,8 @@ export default function MapPanel({
                   ? `<img src="${esc(property.image_url)}" alt="" style="width:46px;height:46px;border-radius:8px;object-fit:cover;flex:none" onerror="this.style.display='none'"/>`
                   : '') +
                 `<div style="min-width:0">` +
-                `<div style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(property.name)}</div>` +
-                `<div style="font-size:11px;opacity:.75">${property.is_claimed ? 'Open to offers · tap to view' : 'Unclaimed · tap to view / claim'}</div>` +
+                `<div style="font-weight:700;font-size:13px;line-height:1.25">${esc(property.name)}</div>` +
+                `<div style="font-size:11px;opacity:.75;margin-top:2px">${property.is_claimed ? 'Open to offers · tap to view' : 'Unclaimed · tap to view / claim'}</div>` +
                 `</div></div>`,
             )
             .addTo(map.current!);

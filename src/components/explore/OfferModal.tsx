@@ -76,11 +76,13 @@ export default function OfferModal({
   const currency = property?.country === 'AU' ? 'AUD' : 'NZD';
   const bcfAmount = property?.country === 'AU' ? 12.0 : 8.99;
 
-  // Offer slider range + sweet spot (guidance only — the business sets the real thresholds)
-  const sweetLo = 180;
-  const sweetHi = 230;
-  const sliderMin = 100;
-  const sliderMax = 280;
+  // Offer slider sweet spot — from the selected room's public guide when available.
+  const selectedRoom = rooms.find((r) => r.id === selectedRoomId) || null;
+  const guide = selectedRoom?.avg_rate ?? null;
+  const sweetHi = guide ? Math.round(guide) : 230;
+  const sweetLo = guide ? Math.round(guide * 0.82) : 180;
+  const sliderMin = Math.round(sweetLo * 0.6);
+  const sliderMax = Math.round(sweetHi * 1.2);
   const midpoint = Math.round((sweetLo + sweetHi) / 2);
 
   // Reset form when property changes
@@ -93,24 +95,59 @@ export default function OfferModal({
       setOfferAmount(String(midpoint));
       setPaymentMethod('pay_at_property');
       setError(null);
+      setEngineListingId(null);
+      const d1 = new Date(Date.now() + 7 * 864e5);
+      const d2 = new Date(Date.now() + 9 * 864e5);
+      setCheckIn(d1.toISOString().slice(0, 10));
+      setCheckOut(d2.toISOString().slice(0, 10));
       loadRooms(property.id);
     }
   }, [property, initialAdults, initialChildren]);
 
   const loadRooms = async (propertyId: string) => {
     setLoadingRooms(true);
-    const { data, error } = await supabase
-      .from('rooms')
-      .select('*')
-      .eq('property_id', propertyId)
-      .order('name');
-
-    if (error) {
-      console.error('Error loading rooms:', error);
-    } else {
-      setRooms(data as Room[]);
+    try {
+      if (propertyId.startsWith('lp')) {
+        // Active findastay listing? Load its engine rooms (with public guide price).
+        const { data: listing } = await supabase
+          .from('fs_listings')
+          .select('id,status')
+          .eq('liteapi_hotel_id', propertyId)
+          .maybeSingle();
+        if (listing && (listing as any).status === 'active') {
+          setEngineListingId((listing as any).id);
+          const { data: lrooms } = await supabase
+            .from('fs_listing_rooms')
+            .select('id,room_name,max_adults,max_children,max_occupancy,base_guide')
+            .eq('listing_id', (listing as any).id)
+            .order('room_name');
+          const mapped: Room[] = ((lrooms as any[]) || []).map((r) => ({
+            id: r.id,
+            property_id: propertyId,
+            name: r.room_name,
+            description: null,
+            max_adults: r.max_adults ?? 2,
+            max_children: r.max_children ?? 0,
+            bed_configuration: null,
+            amenities: null,
+            avg_rate: r.base_guide ?? null,
+            actual_rate: null,
+            currency: 'NZD',
+            created_at: '',
+            updated_at: '',
+          }));
+          setRooms(mapped);
+          return;
+        }
+      }
+      const { data, error } = await supabase.from('rooms').select('*').eq('property_id', propertyId).order('name');
+      if (error) console.error('Error loading rooms:', error);
+      else setRooms((data as Room[]) || []);
+    } catch (e) {
+      console.error('Error loading rooms:', e);
+    } finally {
+      setLoadingRooms(false);
     }
-    setLoadingRooms(false);
   };
 
   const validateForm = (): boolean => {
@@ -141,6 +178,40 @@ export default function OfferModal({
     if (!validateForm()) return;
 
     setIsSubmitting(true);
+
+    // New offer engine (claimed/active findastay listings) → fs_submit_offer
+    if (engineListingId) {
+      if (!selectedRoomId) {
+        setIsSubmitting(false);
+        setError('Please choose a room first');
+        return;
+      }
+      const { error: rpcError } = await supabase.rpc('fs_submit_offer', {
+        p_room: selectedRoomId,
+        p_check_in: checkIn,
+        p_check_out: checkOut,
+        p_adults: adults,
+        p_children: children,
+        p_nightly: parseFloat(offerAmount),
+        p_message: requirements.trim() || null,
+      } as any);
+      setIsSubmitting(false);
+      if (rpcError) {
+        toast({
+          title: 'Could not send offer',
+          description: rpcError.message || 'Please try again',
+          variant: 'destructive',
+        });
+        return;
+      }
+      toast({
+        title: 'Offer sent',
+        description: "We'll notify you the moment the property responds — you'll then have 1 hour to confirm.",
+      });
+      onOfferSent?.(property.id);
+      onOpenChange(false);
+      return;
+    }
 
     // Calculate dates (MVP: use today and tomorrow as defaults)
     const today = new Date();
@@ -247,7 +318,17 @@ export default function OfferModal({
               Loading rooms...
             </div>
           ) : rooms.length > 0 ? (
-            <Select value={selectedRoomId || ''} onValueChange={(v) => setSelectedRoomId(v || null)}>
+            <Select
+              value={selectedRoomId || ''}
+              onValueChange={(v) => {
+                setSelectedRoomId(v || null);
+                const rm = rooms.find((r) => r.id === v);
+                if (rm?.avg_rate) {
+                  const g = rm.avg_rate;
+                  setOfferAmount(String(Math.round((Math.round(g * 0.82) + Math.round(g)) / 2)));
+                }
+              }}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select a room" />
               </SelectTrigger>
@@ -272,6 +353,21 @@ export default function OfferModal({
               </p>
             </div>
           )}
+        </div>
+
+        {/* Dates */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-foreground">Dates</label>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <span className="text-xs text-muted-foreground">Check-in</span>
+              <Input type="date" value={checkIn} onChange={(e) => setCheckIn(e.target.value)} />
+            </div>
+            <div>
+              <span className="text-xs text-muted-foreground">Check-out</span>
+              <Input type="date" value={checkOut} onChange={(e) => setCheckOut(e.target.value)} />
+            </div>
+          </div>
         </div>
 
         {/* Guests */}
