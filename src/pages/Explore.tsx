@@ -241,6 +241,8 @@ export default function Explore() {
         poolCount = pools.length;
         near = [...pools, ...near.filter((p) => !hasAmenity(p, POOL_RE))];
       }
+      // Claimed/registered businesses get first priority in results (premium placement).
+      near = [...near].sort((a, b) => Number(b.is_claimed) - Number(a.is_claimed));
       recs = near.slice(0, 8);
       setVisibleProperties(near.length ? near : properties);
 
