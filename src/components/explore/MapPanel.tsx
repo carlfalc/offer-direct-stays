@@ -81,7 +81,27 @@ export default function MapPanel({
     }
   }, [mapboxToken]);
 
-  // Update markers when properties change
+  // Keep the canvas correct when returning to the tab or resizing, so markers don't mis-render.
+  useEffect(() => {
+    const resize = () => {
+      try {
+        map.current?.resize();
+      } catch {
+        /* ignore */
+      }
+    };
+    window.addEventListener('focus', resize);
+    document.addEventListener('visibilitychange', resize);
+    return () => {
+      window.removeEventListener('focus', resize);
+      document.removeEventListener('visibilitychange', resize);
+    };
+  }, []);
+
+  // Rebuild markers ONLY when the set of properties changes — never on hover, selection,
+  // zoom, pan, or tab-return — so pins never flicker or vanish.
+  const propsKey = properties.map((p) => p.id).join('|');
+
   useEffect(() => {
     if (!map.current || !isMapReady) return;
 
@@ -245,7 +265,8 @@ export default function MapPanel({
         });
       }
     }
-  }, [properties, selectedPropertyId, shortlistedIds, watchlistedIds, isMapReady, onPropertySelect, onPropertyClick, getPropertyPriceEstimate, trip.currency]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [propsKey, isMapReady, trip.currency]);
 
   // Stylized map placeholder when no token
   if (!mapboxToken) {
