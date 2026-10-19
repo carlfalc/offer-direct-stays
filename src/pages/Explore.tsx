@@ -34,12 +34,18 @@ async function geocodePlace(q: string, token: string) {
   try {
     const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
       q,
-    )}.json?access_token=${token}&country=nz,au&types=place,locality,region,district,neighborhood&limit=1`;
+    )}.json?access_token=${token}&country=nz,au&types=place,locality,region&limit=5`;
     const r = await fetch(url);
     if (!r.ok) return null;
     const j = await r.json();
-    const f = j.features?.[0];
-    if (!f) return null;
+    const feats: any[] = j.features || [];
+    if (!feats.length) return null;
+    // Prefer the city/town itself over a suburb (e.g. "Whanganui", not "Whanganui East").
+    const ql = q.trim().toLowerCase();
+    const f =
+      feats.find((x) => String(x.text || '').toLowerCase() === ql) ||
+      feats.find((x) => (x.place_type || []).includes('place')) ||
+      feats[0];
     const cc =
       (f.context || []).find((c: any) => String(c.id).startsWith('country'))?.short_code ||
       f.properties?.short_code ||
@@ -263,7 +269,15 @@ export default function Explore() {
         : '';
       const nAdults = merged.adults || 2;
       const guestsStr = `${nAdults} adult${nAdults > 1 ? 's' : ''}${kids ? ` + ${merged.children} child${(merged.children || 0) > 1 ? 'ren' : ''}` : ''}`;
-      response = `${opener}${poolBit}\n\nShowing **${geo.name}** for ${guestsStr} — ${near.length} place${near.length === 1 ? '' : 's'} on the map. If I misheard the place, just type the right one. Tap any pin or card to look closer, then **Make an Offer**.`;
+      const fmtDate = (d?: string) => {
+        if (!d) return '';
+        const dt = new Date(d);
+        return isNaN(dt.getTime()) ? '' : dt.toLocaleDateString('en-NZ', { day: 'numeric', month: 'short' });
+      };
+      const ci = fmtDate(merged.checkIn);
+      const co = fmtDate(merged.checkOut);
+      const datesStr = ci ? (co ? ` · ${ci}–${co}` : ` · from ${ci}`) : '';
+      response = `Got that — **${geo.name}** · ${guestsStr}${datesStr} · ${near.length} place${near.length === 1 ? '' : 's'} nearby.${poolBit}\n\nNot the right spot? Just type or say the correct details. Tap any pin or card to look closer, then **Make an Offer**.`;
     } else {
       response =
         tone === 'fun'
