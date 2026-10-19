@@ -249,7 +249,7 @@ export default function Explore() {
       }
       // Claimed/registered businesses get first priority in results (premium placement).
       near = [...near].sort((a, b) => Number(b.is_claimed) - Number(a.is_claimed));
-      recs = near.slice(0, 8);
+      recs = near.slice(0, 12);
       setVisibleProperties(near.length ? near : properties);
 
       const kids = (merged.children || 0) > 0;
