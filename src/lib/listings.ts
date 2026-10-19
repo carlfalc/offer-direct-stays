@@ -54,46 +54,46 @@ export function mapHotelToProperty(h: any, country: 'NZ' | 'AU'): Property {
  * Fetch real LiteAPI properties for an area and merge in findastay claim status.
  * Returns the nearest properties with `is_claimed` set from fs_listings.
  */
-export async function searchListings(geo: GeoPoint, limit = 24): Promise<Property[]> {
+export async function searchListings(geo: GeoPoint, limit = 100): Promise<Property[]> {
   const invoke = (params: Record<string, unknown>) =>
     supabase.functions.invoke('liteapi-content-ts', {
       body: { action: 'searchHotels', params },
     });
 
+  // Pull hotels a few ways and merge, since LiteAPI area coverage varies.
+  const seen = new Set<string>();
   let hotels: any[] = [];
-  try {
-    const { data } = await invoke({
-      countryCode: geo.country,
-      latitude: geo.lat,
-      longitude: geo.lng,
-      radius: 25000,
-      limit,
-    });
-    const d = (data as any)?.data ?? data;
-    if (Array.isArray(d)) hotels = d;
-  } catch {
-    /* ignore — try city fallback */
-  }
-
-  if (!hotels.length) {
-    try {
-      const { data } = await invoke({ countryCode: geo.country, cityName: geo.name, limit });
-      const d = (data as any)?.data ?? data;
-      if (Array.isArray(d)) hotels = d;
-    } catch {
-      /* ignore */
+  const addHotels = (d: any) => {
+    const arr = (d as any)?.data ?? d;
+    if (Array.isArray(arr)) {
+      for (const h of arr) {
+        const id = String(h.id);
+        if (!seen.has(id)) {
+          seen.add(id);
+          hotels.push(h);
+        }
+      }
     }
-  }
+  };
+
+  try {
+    const { data } = await invoke({ countryCode: geo.country, latitude: geo.lat, longitude: geo.lng, radius: 30000, limit });
+    addHotels(data);
+  } catch { /* ignore */ }
+  try {
+    const { data } = await invoke({ countryCode: geo.country, cityName: geo.name, limit });
+    addHotels(data);
+  } catch { /* ignore */ }
 
   let props = hotels
     .map((h) => mapHotelToProperty(h, geo.country))
     .filter((p) => p.latitude != null && p.longitude != null);
 
-  // Keep it local: nearest within 60km, else the nearest dozen
+  // Keep it local: everything within 50km, else the nearest 30.
   props = props
     .map((p) => ({ p, d: distKm(geo.lat, geo.lng, p.latitude as number, p.longitude as number) }))
     .sort((a, b) => a.d - b.d)
-    .filter((x, i) => x.d <= 60 || i < 12)
+    .filter((x, i) => x.d <= 50 || i < 30)
     .map((x) => x.p);
 
   // Merge claim status from fs_listings
@@ -113,6 +113,46 @@ export async function searchListings(geo: GeoPoint, limit = 24): Promise<Propert
     } catch {
       /* claim status is best-effort */
     }
+  }
+
+  // Always surface OUR active listings near this area, even if LiteAPI's area search missed them.
+  try {
+    const { data: active } = await supabase
+      .from('fs_listings')
+      .select('liteapi_hotel_id,name,city,country,latitude,longitude,thumbnail,status')
+      .eq('status', 'active');
+    const existing = new Map(props.map((p) => [p.id, p]));
+    (active || []).forEach((l: any) => {
+      if (l.latitude == null || l.longitude == null) return;
+      if (distKm(geo.lat, geo.lng, l.latitude, l.longitude) > 60) return;
+      const already = existing.get(l.liteapi_hotel_id);
+      if (already) {
+        already.is_claimed = true;
+        already.registration_status = 'registered';
+        return;
+      }
+      props.unshift({
+        id: l.liteapi_hotel_id,
+        business_id: null,
+        name: l.name || 'Property',
+        description: null,
+        property_type: 'hotel',
+        country: l.country === 'AU' ? 'AU' : 'NZ',
+        city: l.city || '',
+        area: null,
+        address: null,
+        latitude: l.latitude,
+        longitude: l.longitude,
+        amenities: null,
+        registration_status: 'registered',
+        is_claimed: true,
+        image_url: l.thumbnail || null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
+    });
+  } catch {
+    /* best-effort */
   }
 
   return props;

@@ -241,8 +241,8 @@ export default function Explore() {
         poolCount = pools.length;
         near = [...pools, ...near.filter((p) => !hasAmenity(p, POOL_RE))];
       }
-      recs = near.slice(0, 6);
-      setVisibleProperties(recs.length ? recs : properties);
+      recs = near.slice(0, 8);
+      setVisibleProperties(near.length ? near : properties);
 
       const kids = (merged.children || 0) > 0;
       const couple = merged.adults === 2 && !kids;
@@ -259,7 +259,9 @@ export default function Explore() {
           ? ` ${poolCount === 1 ? 'One spot has' : `${poolCount} spots have`} a pool, right up top — plus a few more worth a look.`
           : ' None nearby list a pool, but here are the closest options — tap a pin to check their facilities.'
         : '';
-      response = `${opener}${poolBit}\n\nHere's what's around **${geo.name}**. Tap any pin or card to look closer, and hit **Make an Offer** when one fits. Want me to suggest an offer price?`;
+      const nAdults = merged.adults || 2;
+      const guestsStr = `${nAdults} adult${nAdults > 1 ? 's' : ''}${kids ? ` + ${merged.children} child${(merged.children || 0) > 1 ? 'ren' : ''}` : ''}`;
+      response = `${opener}${poolBit}\n\nShowing **${geo.name}** for ${guestsStr} — ${near.length} place${near.length === 1 ? '' : 's'} on the map. If I misheard the place, just type the right one. Tap any pin or card to look closer, then **Make an Offer**.`;
     } else {
       response =
         tone === 'fun'

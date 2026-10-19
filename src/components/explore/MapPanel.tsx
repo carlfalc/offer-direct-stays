@@ -43,7 +43,11 @@ export default function MapPanel({
   const map = useRef<mapboxgl.Map | null>(null);
   const markers = useRef<mapboxgl.Marker[]>([]);
   const [isMapReady, setIsMapReady] = useState(false);
+  const hoverPopup = useRef<mapboxgl.Popup | null>(null);
   const { getPropertyPriceEstimate, trip } = useTrip();
+
+  const esc = (s: string) =>
+    s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
   // Initialize map
   useEffect(() => {
@@ -83,6 +87,7 @@ export default function MapPanel({
 
     markers.current.forEach((marker) => marker.remove());
     markers.current = [];
+    hoverPopup.current?.remove();
 
     const currencySymbol = trip.currency === 'AUD' ? 'A$' : 'NZ$';
 
@@ -177,13 +182,27 @@ export default function MapPanel({
           </div>
         `;
 
+        // Scale an inner wrapper on hover — never the marker element itself, or it
+        // overwrites Mapbox's own position transform and the pin jumps off-screen.
+        const inner = el.firstElementChild as HTMLElement | null;
         el.addEventListener('mouseenter', () => {
-          el.style.transform = 'scale(1.1)';
+          if (inner) inner.style.transform = 'scale(1.12)';
           el.style.zIndex = '10';
+          if (!hoverPopup.current) {
+            hoverPopup.current = new mapboxgl.Popup({ closeButton: false, closeOnClick: false, offset: 22, className: 'fs-pin-popup' });
+          }
+          hoverPopup.current
+            .setLngLat([property.longitude!, property.latitude!])
+            .setHTML(
+              `<div style="font-weight:600;font-size:13px">${esc(property.name)}</div>` +
+                `<div style="font-size:11px;opacity:.75">${property.is_claimed ? 'Open to offers' : 'Tap to claim / view'}</div>`,
+            )
+            .addTo(map.current!);
         });
         el.addEventListener('mouseleave', () => {
-          el.style.transform = 'scale(1)';
+          if (inner) inner.style.transform = 'scale(1)';
           el.style.zIndex = '';
+          hoverPopup.current?.remove();
         });
 
         const marker = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
