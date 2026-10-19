@@ -1,8 +1,7 @@
 import { useState, useRef } from 'react';
-import { Send, Mic } from 'lucide-react';
+import { Send, Mic, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
-import { useEffect } from 'react';
+import { useVoiceRecorder } from '@/hooks/useVoiceRecorder';
 
 interface PremiumChatInputProps {
   onSend: (message: string) => void;
@@ -19,20 +18,7 @@ export default function PremiumChatInput({
 }: PremiumChatInputProps) {
   const [input, setInput] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
-  const { 
-    isListening, 
-    transcript, 
-    startListening, 
-    stopListening, 
-    resetTranscript,
-    isSupported 
-  } = useSpeechRecognition();
-
-  useEffect(() => {
-    if (transcript) {
-      setInput(transcript);
-    }
-  }, [transcript]);
+  const { isRecording, isTranscribing, isSupported, start, stopAndTranscribe } = useVoiceRecorder();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,12 +28,13 @@ export default function PremiumChatInput({
     }
   };
 
-  const handleVoiceClick = () => {
-    if (isListening) {
-      stopListening();
+  const handleVoiceClick = async () => {
+    if (isTranscribing) return;
+    if (isRecording) {
+      const text = await stopAndTranscribe();
+      if (text) setInput((prev) => (prev ? `${prev} ${text}` : text));
     } else {
-      resetTranscript();
-      startListening();
+      await start();
     }
   };
 
@@ -63,15 +50,16 @@ export default function PremiumChatInput({
         <button
           type="button"
           onClick={handleVoiceClick}
-          disabled={isLoading}
+          disabled={isLoading || isTranscribing}
+          aria-label={isRecording ? 'Tap to stop' : 'Tap to speak'}
           className={cn(
             "p-2 rounded-lg transition-all duration-200",
-            isListening 
-              ? "bg-primary text-primary-foreground animate-pulse" 
+            isRecording
+              ? "bg-primary text-primary-foreground animate-pulse"
               : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
           )}
         >
-          <Mic className="w-5 h-5" />
+          {isTranscribing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Mic className="w-5 h-5" />}
         </button>
       )}
       
