@@ -13,8 +13,10 @@ import PropertyDetailSheet from '@/components/explore/PropertyDetailSheet';
 import OfferModal from '@/components/explore/OfferModal';
 import { PostStayReviewModal, ReviewPayload } from '@/components/review';
 import { Button } from '@/components/ui/button';
-import { MapPin, LogOut, Menu, Heart, Plane, Star } from 'lucide-react';
+import { MapPin, LogOut, Menu, Heart, Plane, Star, Map as MapIcon, List } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { cn } from '@/lib/utils';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 const EARTH_KM = 6371;
@@ -71,6 +73,7 @@ export default function Explore() {
   const { trip, setDestination, setCheckIn, setCheckOut, getPropertyPriceEstimate } = useTrip();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -82,6 +85,7 @@ export default function Explore() {
   const [tone, setTone] = useState<'fun' | 'pro'>('fun');
   const [isMobileChatOpen, setIsMobileChatOpen] = useState(false);
   const [visibleProperties, setVisibleProperties] = useState<Property[]>([]);
+  const [mobileMapOpen, setMobileMapOpen] = useState(false);
   const [criteria, setCriteria] = useState<{
     destination?: string;
     adults?: number;
@@ -411,47 +415,72 @@ export default function Explore() {
       {/* Trip Summary Bar */}
       <TripSummaryBar />
 
-      {/* Main content - responsive layout */}
-      <div className="flex-1 flex min-h-0">
-        {/* Left column: Chat/Hero panel */}
-        <div className="flex-1 lg:flex-none lg:w-[520px] xl:w-[600px] 2xl:w-[640px] flex flex-col overflow-hidden border-r border-border/50">
-          <div className="flex-1 min-h-0 overflow-hidden">
-            <ChatPanel
-              messages={messages}
-              onSendMessage={handleSendMessage}
-              isLoading={isLoading}
-              onPropertySelect={handlePropertySelect}
-              onMakeOffer={handleMakeOffer}
-              onAddToWatchlist={handleAddToWatchlist}
+      {/* Main content - list-first; map is on-demand and lazy-mounted */}
+      <div className="flex-1 flex min-h-0 relative">
+        {/* Left: chat/results — hidden on mobile while the map is open */}
+        {(!isMobile || !mobileMapOpen) && (
+          <div
+            className={cn(
+              'flex flex-col overflow-hidden border-r border-border/50',
+              isMobile ? 'flex-1 w-full' : 'flex-none w-[520px] xl:w-[600px] 2xl:w-[640px]',
+            )}
+          >
+            <div className="flex-1 min-h-0 overflow-hidden">
+              <ChatPanel
+                messages={messages}
+                onSendMessage={handleSendMessage}
+                isLoading={isLoading}
+                onPropertySelect={handlePropertySelect}
+                onMakeOffer={handleMakeOffer}
+                onAddToWatchlist={handleAddToWatchlist}
+                shortlistedIds={shortlistedIds}
+                watchlistedIds={watchlistedIds}
+                tone={tone}
+                onToneChange={setTone}
+              />
+            </div>
+            <div className="flex-shrink-0">
+              <ShortlistPanel
+                items={shortlist}
+                onRemove={handleRemoveFromShortlist}
+                onMakeOffer={(p) => handleMakeOffer(p)}
+                sentOfferIds={sentOfferIds}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Map — desktop always; mobile only when toggled. Mounted only when visible, so
+            Mapbox never initialises (and never costs a map load) for list-only users. */}
+        {(!isMobile || mobileMapOpen) && (
+          <div className="flex-1 relative min-w-0">
+            <MapPanel
+              properties={visibleProperties}
+              selectedPropertyId={selectedPropertyId}
               shortlistedIds={shortlistedIds}
               watchlistedIds={watchlistedIds}
-              tone={tone}
-              onToneChange={setTone}
+              onPropertySelect={handlePropertySelect}
+              onPropertyClick={handlePropertyPinClick}
+              mapboxToken={mapboxToken}
+              onTokenChange={setMapboxToken}
             />
+            {isMobile && (
+              <Button onClick={() => setMobileMapOpen(false)} size="sm" className="absolute top-4 left-4 z-20 shadow-lg gap-2">
+                <List className="h-4 w-4" /> List
+              </Button>
+            )}
           </div>
-          <div className="flex-shrink-0">
-            <ShortlistPanel
-              items={shortlist}
-              onRemove={handleRemoveFromShortlist}
-              onMakeOffer={(p) => handleMakeOffer(p)}
-              sentOfferIds={sentOfferIds}
-            />
-          </div>
-        </div>
+        )}
 
-        {/* Right column: Map panel - hidden on mobile until messages exist */}
-        <div className="hidden lg:block flex-1 relative min-w-0">
-          <MapPanel
-            properties={visibleProperties}
-            selectedPropertyId={selectedPropertyId}
-            shortlistedIds={shortlistedIds}
-            watchlistedIds={watchlistedIds}
-            onPropertySelect={handlePropertySelect}
-            onPropertyClick={handlePropertyPinClick}
-            mapboxToken={mapboxToken}
-            onTokenChange={setMapboxToken}
-          />
-        </div>
+        {/* Mobile "Map" toggle while viewing the list */}
+        {isMobile && !mobileMapOpen && (
+          <Button
+            onClick={() => setMobileMapOpen(true)}
+            className="fixed bottom-24 left-1/2 -translate-x-1/2 z-40 rounded-full px-5 shadow-xl gap-2"
+          >
+            <MapIcon className="h-4 w-4" /> Map
+          </Button>
+        )}
       </div>
 
       {/* Property Detail Sheet (for pin clicks) */}
