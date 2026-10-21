@@ -160,7 +160,8 @@ export async function searchListings(geo: GeoPoint, limit = 100): Promise<Proper
 
 /** Pull a LiteAPI room's photos, main photo first, as plain URLs. */
 function roomImages(r: any): string[] {
-  const imgs = [...((r?.images as any[]) || [])].sort(
+  // LiteAPI returns the room's picture array under `photos` (sometimes `images`).
+  const imgs = [...((r?.photos as any[]) || (r?.images as any[]) || [])].sort(
     (a, b) => (b?.mainPhoto ? 1 : 0) - (a?.mainPhoto ? 1 : 0),
   );
   return imgs
