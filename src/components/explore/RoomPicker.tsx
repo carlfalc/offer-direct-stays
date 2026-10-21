@@ -54,7 +54,7 @@ function RoomGallery({
   const go = (d: number) => setIdx((i) => (i + d + images.length) % images.length);
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col bg-background/98 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[60] flex flex-col bg-background">
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <div className="min-w-0">
           <h3 className="truncate text-base font-semibold text-foreground">{room.name}</h3>
