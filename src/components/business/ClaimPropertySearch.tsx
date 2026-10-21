@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { searchClaimableHotels, ClaimableHotel } from '@/lib/listings';
+import BusinessDetailsForm from './BusinessDetailsForm';
+import RequestOnboardingForm from './RequestOnboardingForm';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -39,12 +42,15 @@ export default function ClaimPropertySearch({
 }: Props) {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<ClaimableHotel[]>([]);
   const [searching, setSearching] = useState(false);
   const [selected, setSelected] = useState<ClaimableHotel | null>(null);
   const [claiming, setClaiming] = useState(false);
+  const [claimedHotel, setClaimedHotel] = useState<ClaimableHotel | null>(null);
+  const [showRequest, setShowRequest] = useState(false);
   const reqId = useRef(0);
 
   useEffect(() => {
@@ -79,15 +85,34 @@ export default function ClaimPropertySearch({
       p_lng: selected.longitude,
       p_thumb: selected.thumbnail,
     } as any);
-    setClaiming(false);
     if (error) {
+      setClaiming(false);
       toast({ title: 'Could not claim business', description: error.message || 'Please try again', variant: 'destructive' });
       return;
     }
-    toast({ title: 'Business claimed', description: `${selected.name} is now yours. Set your room prices to start taking offers.` });
-    if (onClaimed) onClaimed(selected);
-    else navigate('/business/dashboard');
+    // Claimed. If there's no business profile yet, collect it next; otherwise done.
+    let hasProfile = false;
+    if (user) {
+      const { data: biz } = await supabase.from('businesses').select('id').eq('user_id', user.id).maybeSingle();
+      hasProfile = !!biz;
+    }
+    setClaiming(false);
+    toast({ title: 'Business claimed', description: `${selected.name} is now yours.` });
+    if (hasProfile) {
+      if (onClaimed) onClaimed(selected);
+      else navigate('/business/dashboard');
+    } else {
+      setClaimedHotel(selected); // show the details form
+    }
   };
+
+  if (claimedHotel) {
+    return <BusinessDetailsForm hotel={claimedHotel} onDone={() => window.location.assign('/business/dashboard')} />;
+  }
+
+  if (showRequest) {
+    return <RequestOnboardingForm initialBusinessName={query.trim()} onBack={() => setShowRequest(false)} />;
+  }
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
@@ -106,9 +131,14 @@ export default function ClaimPropertySearch({
 
           <div className="mt-3 space-y-2">
             {query.trim().length >= 2 && !searching && results.length === 0 && (
-              <p className="px-1 py-6 text-center text-sm text-muted-foreground">
-                No matches in New Zealand or Australia for “{query.trim()}”. Check the spelling, or try a shorter name.
-              </p>
+              <div className="px-1 py-6 text-center">
+                <p className="text-sm text-muted-foreground">
+                  No matches in New Zealand or Australia for “{query.trim()}”.
+                </p>
+                <Button variant="outline" size="sm" className="mt-3" onClick={() => setShowRequest(true)}>
+                  Can't find it? Request onboarding
+                </Button>
+              </div>
             )}
 
             {results.map((h) => {
@@ -149,6 +179,13 @@ export default function ClaimPropertySearch({
               );
             })}
           </div>
+
+          <p className="mt-6 text-center text-sm text-muted-foreground">
+            Business not listed or brand new?{' '}
+            <button onClick={() => setShowRequest(true)} className="font-medium text-primary underline-offset-2 hover:underline">
+              Request onboarding
+            </button>
+          </p>
         </>
       ) : (
         <Card className="p-4">
