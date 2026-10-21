@@ -1,7 +1,7 @@
 -- ============================================================
 -- findastay FULL REBUILD — run once, top to bottom, in the
--- Supabase SQL editor. Safe on a clean slate.
--- Generated 2026-10-21T02:29Z
+-- Supabase SQL editor. Safe on a clean slate and re-runnable.
+-- Generated 2026-10-21T05:32Z
 -- ============================================================
 
 
@@ -326,8 +326,11 @@ grant all on fs_notifications to service_role;
 -- ---------- helper: insert a notification ----------
 create or replace function fs_notify(p_user uuid, p_offer uuid, p_kind text, p_title text, p_body text)
 returns void language sql security definer set search_path = public as $$
+  -- Null-safe: a missing recipient (e.g. a business listing with no owner linked
+  -- yet) must never block the traveller's offer. Skip the row instead of failing.
   insert into fs_notifications(user_id, offer_id, kind, title, body)
-  values (p_user, p_offer, p_kind, p_title, p_body);
+  select p_user, p_offer, p_kind, p_title, p_body
+  where p_user is not null;
 $$;
 revoke all on function fs_notify(uuid,uuid,text,text,text) from public, anon, authenticated;
 
