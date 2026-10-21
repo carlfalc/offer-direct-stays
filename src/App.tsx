@@ -22,6 +22,7 @@ import BusinessOfferResponse from "./pages/BusinessOfferResponse";
 import BusinessSettings from "./pages/BusinessSettings";
 import GuestOffers from "./pages/GuestOffers";
 import BusinessDashboard from "./pages/BusinessDashboard";
+import BusinessPricing from "./pages/BusinessPricing";
 import Messages from "./pages/Messages";
 import Conversation from "./pages/Conversation";
 import Watchlist from "./pages/Watchlist";
@@ -115,6 +116,11 @@ const App = () => (
               <Route path="/business/dashboard" element={
                 <AuthenticatedLayout>
                   <BusinessDashboard />
+                </AuthenticatedLayout>
+              } />
+              <Route path="/business/pricing" element={
+                <AuthenticatedLayout>
+                  <BusinessPricing />
                 </AuthenticatedLayout>
               } />
               <Route path="/business/settings" element={

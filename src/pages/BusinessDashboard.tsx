@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Inbox, Clock, CheckCircle2, Users, CalendarDays, Plus, RefreshCw } from 'lucide-react';
+import { Loader2, Inbox, Clock, CheckCircle2, Users, CalendarDays, Plus, RefreshCw, SlidersHorizontal } from 'lucide-react';
 
 interface FsOffer {
   id: string;
@@ -220,9 +220,16 @@ export default function BusinessDashboard() {
             {listings.map((l) => l.name).join(' · ')}
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={load}>
-          <RefreshCw className="mr-1.5 h-4 w-4" /> Refresh
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={load}>
+            <RefreshCw className="mr-1.5 h-4 w-4" /> Refresh
+          </Button>
+          <Button variant="outline" size="sm" asChild>
+            <Link to="/business/pricing">
+              <SlidersHorizontal className="mr-1.5 h-4 w-4" /> Pricing
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {/* Stats */}
