@@ -49,7 +49,7 @@ begin
   return jsonb_build_object('listing_id', v_id, 'status', 'active');
 end $$;
 
-revoke all on function fs_claim_listing(text,text,text,double precision,double precision,text) from public, anon;
-grant execute on function fs_claim_listing(text,text,text,double precision,double precision,text) to authenticated;
+revoke all on function fs_claim_listing(text,text,text,text,double precision,double precision,text) from public, anon;
+grant execute on function fs_claim_listing(text,text,text,text,double precision,double precision,text) to authenticated;
 
 notify pgrst, 'reload schema';

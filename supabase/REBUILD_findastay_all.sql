@@ -1,7 +1,7 @@
 -- ============================================================
 -- findastay FULL REBUILD — run once, top to bottom, in the
 -- Supabase SQL editor. Safe on a clean slate and re-runnable.
--- Generated 2026-10-21T05:53Z
+-- Generated 2026-10-21T05:54Z
 -- ============================================================
 
 
@@ -682,8 +682,8 @@ begin
   return jsonb_build_object('listing_id', v_id, 'status', 'active');
 end $$;
 
-revoke all on function fs_claim_listing(text,text,text,double precision,double precision,text) from public, anon;
-grant execute on function fs_claim_listing(text,text,text,double precision,double precision,text) to authenticated;
+revoke all on function fs_claim_listing(text,text,text,text,double precision,double precision,text) from public, anon;
+grant execute on function fs_claim_listing(text,text,text,text,double precision,double precision,text) to authenticated;
 
 notify pgrst, 'reload schema';
 
