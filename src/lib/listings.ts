@@ -21,6 +21,87 @@ function distKm(aLat: number, aLng: number, bLat: number, bLng: number) {
   return EARTH_KM * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1 - s));
 }
 
+export interface ClaimableHotel {
+  id: string;
+  name: string;
+  city: string | null;
+  country: 'NZ' | 'AU';
+  thumbnail: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  address: string | null;
+  claimedByOther: boolean;
+  claimedByMe: boolean;
+}
+
+/**
+ * Type-ahead search of LiteAPI accommodation across NZ + AU by name, for the
+ * business claim flow. Merges findastay claim status so the UI can show which
+ * are already registered.
+ */
+export async function searchClaimableHotels(query: string): Promise<ClaimableHotel[]> {
+  const q = query.trim();
+  if (q.length < 2) return [];
+
+  const countries: Array<'NZ' | 'AU'> = ['NZ', 'AU'];
+  const results = await Promise.all(
+    countries.map(async (cc) => {
+      try {
+        const { data } = await supabase.functions.invoke('liteapi-content-ts', {
+          body: { action: 'searchHotels', params: { countryCode: cc, hotelName: q, limit: 8 } },
+        });
+        const list = (data as any)?.data || [];
+        return list.map((h: any) => ({ h, cc }));
+      } catch {
+        return [];
+      }
+    }),
+  );
+  const flat = results.flat();
+  if (flat.length === 0) return [];
+
+  // Who's claimed already?
+  const ids = flat.map((x) => String(x.h.id));
+  let owners: Record<string, string | null> = {};
+  try {
+    const { data: me } = await supabase.auth.getUser();
+    const myId = me?.user?.id ?? null;
+    const { data: rows } = await supabase
+      .from('fs_listings')
+      .select('liteapi_hotel_id,owner_id')
+      .in('liteapi_hotel_id', ids);
+    (rows as any[] | null)?.forEach((r) => (owners[r.liteapi_hotel_id] = r.owner_id));
+    return flat.map(({ h, cc }) => {
+      const owner = owners[String(h.id)] ?? null;
+      return {
+        id: String(h.id),
+        name: h.name,
+        city: h.city ?? null,
+        country: cc,
+        thumbnail: h.thumbnail || h.main_photo || null,
+        latitude: typeof h.latitude === 'number' ? h.latitude : null,
+        longitude: typeof h.longitude === 'number' ? h.longitude : null,
+        address: h.address ?? null,
+        claimedByOther: !!owner && owner !== myId,
+        claimedByMe: !!owner && owner === myId,
+      } as ClaimableHotel;
+    });
+  } catch {
+    return flat.map(({ h, cc }) => ({
+      id: String(h.id),
+      name: h.name,
+      city: h.city ?? null,
+      country: cc,
+      thumbnail: h.thumbnail || h.main_photo || null,
+      latitude: typeof h.latitude === 'number' ? h.latitude : null,
+      longitude: typeof h.longitude === 'number' ? h.longitude : null,
+      address: h.address ?? null,
+      claimedByOther: false,
+      claimedByMe: false,
+    }));
+  }
+}
+
 /** Map one LiteAPI content hotel into the app's Property shape. */
 export function mapHotelToProperty(h: any, country: 'NZ' | 'AU'): Property {
   const lat = typeof h.latitude === 'number' ? h.latitude : h.location?.latitude ?? null;
