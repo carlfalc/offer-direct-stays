@@ -154,49 +154,42 @@ export default function OfferModal({
     }
   };
 
-  const validateForm = (): boolean => {
-    const amount = parseFloat(offerAmount);
+  const handleSubmit = async (overrideRoomId?: string, overrideAmount?: number) => {
+    if (!property || !user) return;
 
-    if (!offerAmount.trim()) {
-      setError('Enter an offer amount');
-      return false;
-    }
+    const roomId = overrideRoomId ?? selectedRoomId;
+    const amount = overrideAmount ?? parseFloat(offerAmount);
+
+    // Keep form state in sync when the offer comes from the room gallery.
+    if (overrideRoomId) setSelectedRoomId(overrideRoomId);
+    if (overrideAmount != null) setOfferAmount(String(overrideAmount));
 
     if (isNaN(amount) || amount < 20) {
       setError('Offer amount looks too low — please adjust');
-      return false;
+      return;
     }
-
     if (amount > 5000) {
       setError('Offer amount looks too high — please adjust');
-      return false;
+      return;
     }
-
     setError(null);
-    return true;
-  };
-
-  const handleSubmit = async () => {
-    if (!property || !user) return;
-
-    if (!validateForm()) return;
 
     setIsSubmitting(true);
 
     // New offer engine (claimed/active findastay listings) → fs_submit_offer
     if (engineListingId) {
-      if (!selectedRoomId) {
+      if (!roomId) {
         setIsSubmitting(false);
         setError('Please choose a room first');
         return;
       }
       const { error: rpcError } = await supabase.rpc('fs_submit_offer', {
-        p_room: selectedRoomId,
+        p_room: roomId,
         p_check_in: checkIn,
         p_check_out: checkOut,
         p_adults: adults,
         p_children: children,
-        p_nightly: parseFloat(offerAmount),
+        p_nightly: amount,
         p_message: requirements.trim() || null,
       } as any);
       setIsSubmitting(false);
@@ -228,8 +221,8 @@ export default function OfferModal({
     const { error: insertError } = await supabase.from('offers').insert({
       guest_user_id: user.id,
       property_id: property.id,
-      room_id: selectedRoomId,
-      offer_amount: parseFloat(offerAmount),
+      room_id: roomId,
+      offer_amount: amount,
       adults,
       children,
       check_in_date: checkInDate,
@@ -262,7 +255,7 @@ export default function OfferModal({
       property_id: property.id,
       user_id: user.id,
       event_type: 'offer_submitted',
-      metadata: { payment_method: paymentMethod, room_id: selectedRoomId || null }
+      metadata: { payment_method: paymentMethod, room_id: roomId || null }
     }).then(({ error }) => {
       if (error) console.warn('Event log failed', error.message);
     });
@@ -331,6 +324,7 @@ export default function OfferModal({
               rooms={rooms}
               selectedRoomId={selectedRoomId}
               currency={currency}
+              isSubmitting={isSubmitting}
               onSelect={(v) => {
                 setSelectedRoomId(v || null);
                 const rm = rooms.find((r) => r.id === v);
@@ -340,6 +334,7 @@ export default function OfferModal({
                 }
                 setError(null);
               }}
+              onSubmitOffer={(roomId, amount) => handleSubmit(roomId, amount)}
             />
           ) : (
             <div className="rounded-lg border border-border bg-muted/30 p-3">
@@ -481,7 +476,7 @@ export default function OfferModal({
       <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
         Cancel
       </Button>
-      <Button className="flex-1" onClick={handleSubmit} disabled={isSubmitting}>
+      <Button className="flex-1" onClick={() => handleSubmit()} disabled={isSubmitting}>
         {isSubmitting ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />

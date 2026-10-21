@@ -2,12 +2,15 @@ import { useState } from 'react';
 import { Room } from '@/types';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Check, Users, Maximize2, ImageIcon, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { Check, Users, Maximize2, ImageIcon, ChevronLeft, ChevronRight, X, Loader2 } from 'lucide-react';
+import OfferSlider from './OfferSlider';
 
 interface RoomPickerProps {
   rooms: Room[];
   selectedRoomId: string | null;
   onSelect: (roomId: string) => void;
+  onSubmitOffer: (roomId: string, amount: number) => void;
+  isSubmitting?: boolean;
   currency: string;
 }
 
@@ -22,13 +25,7 @@ function RoomImage({ src, alt, className }: { src?: string | null; alt: string; 
     );
   }
   return (
-    <img
-      src={src}
-      alt={alt}
-      loading="lazy"
-      onError={() => setFailed(true)}
-      className={cn('object-cover', className)}
-    />
+    <img src={src} alt={alt} loading="lazy" onError={() => setFailed(true)} className={cn('object-cover', className)} />
   );
 }
 
@@ -36,25 +33,44 @@ function occupancy(room: Room): number {
   return room.max_occupancy ?? room.max_adults + (room.max_children || 0);
 }
 
-/** Full-screen gallery for one room, with "Select this room". */
-function RoomGallery({
+/** Sweet-spot pricing for a room (mirrors OfferModal). */
+function priceBand(room: Room) {
+  const guide = room.avg_rate ?? null;
+  const sweetHi = guide ? Math.round(guide) : 230;
+  const sweetLo = guide ? Math.round(guide * 0.82) : 180;
+  return {
+    sweetLo,
+    sweetHi,
+    min: Math.round(sweetLo * 0.6),
+    max: Math.round(sweetHi * 1.2),
+    mid: Math.round((sweetLo + sweetHi) / 2),
+  };
+}
+
+/** Full-screen room view: photos, description, and set-your-price → send. */
+function RoomDetail({
   room,
   currency,
-  onSelect,
+  isSubmitting,
+  onSend,
   onClose,
 }: {
   room: Room;
   currency: string;
-  onSelect: () => void;
+  isSubmitting?: boolean;
+  onSend: (amount: number) => void;
   onClose: () => void;
 }) {
   const images = room.images?.length ? room.images : room.image_url ? [room.image_url] : [];
   const [idx, setIdx] = useState(0);
+  const band = priceBand(room);
+  const [price, setPrice] = useState(band.mid);
   const has = images.length > 0;
   const go = (d: number) => setIdx((i) => (i + d + images.length) % images.length);
 
   return (
     <div className="fixed inset-0 z-[60] flex flex-col bg-background">
+      {/* Header */}
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <div className="min-w-0">
           <h3 className="truncate text-base font-semibold text-foreground">{room.name}</h3>
@@ -68,76 +84,110 @@ function RoomGallery({
               </span>
             ) : null}
             {room.avg_rate ? (
-              <span className="font-medium text-foreground">
-                from {currency} ${Math.round(room.avg_rate)}
-              </span>
+              <span className="font-medium text-foreground">avg {currency} ${Math.round(room.avg_rate)}</span>
             ) : null}
           </div>
         </div>
-        <button onClick={onClose} aria-label="Close gallery" className="rounded-full p-2 hover:bg-muted">
+        <button onClick={onClose} aria-label="Back to rooms" className="rounded-full p-2 hover:bg-muted">
           <X className="h-5 w-5" />
         </button>
       </div>
 
-      <div className="relative flex-1 min-h-0">
-        <RoomImage src={has ? images[idx] : null} alt={room.name} className="h-full w-full" />
+      {/* Scrollable body: photo + thumbs + description + price */}
+      <div className="flex-1 min-h-0 overflow-y-auto">
+        <div className="relative aspect-[16/10] w-full bg-muted">
+          <RoomImage src={has ? images[idx] : null} alt={room.name} className="h-full w-full" />
+          {room.avg_rate ? (
+            <span className="absolute left-3 top-3 rounded-full bg-background/90 px-2.5 py-1 text-xs font-semibold text-foreground shadow">
+              avg {currency} ${Math.round(room.avg_rate)}/night
+            </span>
+          ) : null}
+          {images.length > 1 && (
+            <>
+              <button onClick={() => go(-1)} aria-label="Previous photo" className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-background/80 p-2 shadow hover:bg-background">
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+              <button onClick={() => go(1)} aria-label="Next photo" className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-background/80 p-2 shadow hover:bg-background">
+                <ChevronRight className="h-5 w-5" />
+              </button>
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-background/80 px-2.5 py-1 text-xs font-medium">
+                {idx + 1} / {images.length}
+              </div>
+            </>
+          )}
+        </div>
+
         {images.length > 1 && (
-          <>
-            <button
-              onClick={() => go(-1)}
-              aria-label="Previous photo"
-              className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-background/80 p-2 shadow hover:bg-background"
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </button>
-            <button
-              onClick={() => go(1)}
-              aria-label="Next photo"
-              className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-background/80 p-2 shadow hover:bg-background"
-            >
-              <ChevronRight className="h-5 w-5" />
-            </button>
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-background/80 px-2.5 py-1 text-xs font-medium">
-              {idx + 1} / {images.length}
-            </div>
-          </>
+          <div className="flex gap-2 overflow-x-auto px-4 py-3">
+            {images.map((src, i) => (
+              <button
+                key={i}
+                onClick={() => setIdx(i)}
+                className={cn(
+                  'h-14 w-20 flex-shrink-0 overflow-hidden rounded-md ring-2 transition',
+                  i === idx ? 'ring-primary' : 'ring-transparent opacity-70 hover:opacity-100',
+                )}
+              >
+                <RoomImage src={src} alt={`${room.name} ${i + 1}`} className="h-full w-full" />
+              </button>
+            ))}
+          </div>
         )}
+
+        <div className="space-y-5 px-4 pb-6 pt-2">
+          {room.description ? (
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-foreground">About this room</p>
+              <p className="text-sm leading-relaxed text-muted-foreground">{room.description}</p>
+            </div>
+          ) : null}
+
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-foreground">Your offer per night</p>
+            <OfferSlider
+              value={price}
+              min={band.min}
+              max={band.max}
+              sweetLo={band.sweetLo}
+              sweetHi={band.sweetHi}
+              currency={currency}
+              onChange={setPrice}
+            />
+            <p className="text-xs text-muted-foreground">
+              {room.avg_rate ? (
+                <>Average for this room is <span className="font-medium">{currency} ${Math.round(room.avg_rate)}</span>. </>
+              ) : null}
+              Most guests land between <span className="font-medium">{currency} ${band.sweetLo}–${band.sweetHi}</span> — drag to your number.
+            </p>
+          </div>
+        </div>
       </div>
 
-      {images.length > 1 && (
-        <div className="flex gap-2 overflow-x-auto border-t border-border px-4 py-3">
-          {images.map((src, i) => (
-            <button
-              key={i}
-              onClick={() => setIdx(i)}
-              className={cn(
-                'h-14 w-20 flex-shrink-0 overflow-hidden rounded-md ring-2 transition',
-                i === idx ? 'ring-primary' : 'ring-transparent opacity-70 hover:opacity-100',
-              )}
-            >
-              <RoomImage src={src} alt={`${room.name} ${i + 1}`} className="h-full w-full" />
-            </button>
-          ))}
-        </div>
-      )}
-
+      {/* Sticky action */}
       <div className="border-t border-border p-4">
-        <Button
-          className="w-full"
-          onClick={() => {
-            onSelect();
-            onClose();
-          }}
-        >
-          Select this room
+        <Button className="w-full" disabled={isSubmitting} onClick={() => onSend(price)}>
+          {isSubmitting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending…
+            </>
+          ) : (
+            <>Send {currency} ${price}/night offer</>
+          )}
         </Button>
       </div>
     </div>
   );
 }
 
-export default function RoomPicker({ rooms, selectedRoomId, onSelect, currency }: RoomPickerProps) {
-  const [galleryRoom, setGalleryRoom] = useState<Room | null>(null);
+export default function RoomPicker({
+  rooms,
+  selectedRoomId,
+  onSelect,
+  onSubmitOffer,
+  isSubmitting,
+  currency,
+}: RoomPickerProps) {
+  const [detailRoom, setDetailRoom] = useState<Room | null>(null);
 
   return (
     <>
@@ -153,27 +203,33 @@ export default function RoomPicker({ rooms, selectedRoomId, onSelect, currency }
                 selected ? 'border-primary ring-2 ring-primary' : 'border-border hover:border-primary/50',
               )}
             >
-              {/* Photo — tap to open the gallery */}
+              {/* Photo — tap to open the room view */}
               <button
                 type="button"
-                onClick={() => setGalleryRoom(room)}
+                onClick={() => setDetailRoom(room)}
                 className="relative block aspect-[4/3] w-full"
-                aria-label={`View photos of ${room.name}`}
+                aria-label={`View ${room.name}`}
               >
                 <RoomImage src={room.image_url} alt={room.name} className="h-full w-full" />
+                {/* Average price, on the image */}
+                {room.avg_rate ? (
+                  <span className="absolute left-2 top-2 rounded-full bg-background/90 px-2 py-0.5 text-[11px] font-semibold text-foreground shadow">
+                    avg {currency} ${Math.round(room.avg_rate)}
+                  </span>
+                ) : null}
                 {photoCount > 1 && (
                   <span className="absolute bottom-2 right-2 flex items-center gap-1 rounded-full bg-background/85 px-2 py-0.5 text-[11px] font-medium text-foreground">
                     <ImageIcon className="h-3 w-3" /> {photoCount}
                   </span>
                 )}
                 {selected && (
-                  <span className="absolute left-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground shadow">
+                  <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground shadow">
                     <Check className="h-4 w-4" />
                   </span>
                 )}
               </button>
 
-              {/* Details + select */}
+              {/* Details */}
               <div className="space-y-2 p-3">
                 <div>
                   <p className="text-sm font-semibold leading-tight text-foreground">{room.name}</p>
@@ -187,36 +243,29 @@ export default function RoomPicker({ rooms, selectedRoomId, onSelect, currency }
                       </span>
                     ) : null}
                   </div>
+                  {room.description ? (
+                    <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{room.description}</p>
+                  ) : null}
                 </div>
-                <div className="flex items-center justify-between">
-                  {room.avg_rate ? (
-                    <span className="text-xs text-muted-foreground">
-                      from <span className="font-semibold text-foreground">{currency} ${Math.round(room.avg_rate)}</span>
-                    </span>
-                  ) : (
-                    <span className="text-xs text-muted-foreground">Name your price</span>
-                  )}
-                  <Button
-                    size="sm"
-                    variant={selected ? 'default' : 'outline'}
-                    className="h-7 px-3 text-xs"
-                    onClick={() => onSelect(room.id)}
-                  >
-                    {selected ? 'Selected' : 'Choose'}
-                  </Button>
-                </div>
+                <Button size="sm" className="h-8 w-full text-xs" variant={selected ? 'default' : 'outline'} onClick={() => setDetailRoom(room)}>
+                  View & make offer
+                </Button>
               </div>
             </div>
           );
         })}
       </div>
 
-      {galleryRoom && (
-        <RoomGallery
-          room={galleryRoom}
+      {detailRoom && (
+        <RoomDetail
+          room={detailRoom}
           currency={currency}
-          onSelect={() => onSelect(galleryRoom.id)}
-          onClose={() => setGalleryRoom(null)}
+          isSubmitting={isSubmitting}
+          onSend={(amount) => {
+            onSelect(detailRoom.id);
+            onSubmitOffer(detailRoom.id, amount);
+          }}
+          onClose={() => setDetailRoom(null)}
         />
       )}
     </>
