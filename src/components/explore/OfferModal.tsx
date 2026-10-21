@@ -18,13 +18,6 @@ import {
   DrawerTitle,
   DrawerDescription,
 } from '@/components/ui/drawer';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -33,8 +26,10 @@ import { Stepper } from '@/components/ui/stepper';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { MapPin, Users, Info, AlertCircle, Loader2 } from 'lucide-react';
+import { MapPin, AlertCircle, Loader2 } from 'lucide-react';
 import OfferSlider from './OfferSlider';
+import RoomPicker from './RoomPicker';
+import { loadLiteApiRoomContent } from '@/lib/listings';
 
 interface OfferModalProps {
   open: boolean;
@@ -118,24 +113,33 @@ export default function OfferModal({
           setEngineListingId((listing as any).id);
           const { data: lrooms } = await supabase
             .from('fs_listing_rooms')
-            .select('id,room_name,max_adults,max_children,max_occupancy,base_guide')
+            .select('id,liteapi_room_id,room_name,max_adults,max_children,max_occupancy,base_guide')
             .eq('listing_id', (listing as any).id)
             .order('room_name');
-          const mapped: Room[] = ((lrooms as any[]) || []).map((r) => ({
-            id: r.id,
-            property_id: propertyId,
-            name: r.room_name,
-            description: null,
-            max_adults: r.max_adults ?? 2,
-            max_children: r.max_children ?? 0,
-            bed_configuration: null,
-            amenities: null,
-            avg_rate: r.base_guide ?? null,
-            actual_rate: null,
-            currency: 'NZD',
-            created_at: '',
-            updated_at: '',
-          }));
+          // Attach LiteAPI photos/size to each engine room by its liteapi_room_id.
+          const content = await loadLiteApiRoomContent(propertyId);
+          const mapped: Room[] = ((lrooms as any[]) || []).map((r) => {
+            const c = content[String(r.liteapi_room_id)] || {};
+            return {
+              id: r.id,
+              property_id: propertyId,
+              name: r.room_name,
+              description: c.description ?? null,
+              max_adults: r.max_adults ?? 2,
+              max_children: r.max_children ?? 0,
+              max_occupancy: r.max_occupancy ?? c.max_occupancy ?? null,
+              size_sqm: c.size_sqm ?? null,
+              images: c.images ?? null,
+              image_url: c.images?.[0] ?? null,
+              bed_configuration: null,
+              amenities: null,
+              avg_rate: r.base_guide ?? null,
+              actual_rate: null,
+              currency: 'NZD',
+              created_at: '',
+              updated_at: '',
+            };
+          });
           setRooms(mapped);
           return;
         }
@@ -311,40 +315,32 @@ export default function OfferModal({
 
         {/* Room Selection */}
         <div className="space-y-2">
-          <label className="text-sm font-medium text-foreground">Room type</label>
+          <div>
+            <label className="text-sm font-medium text-foreground">Choose a room</label>
+            {rooms.length > 0 && (
+              <p className="text-xs text-muted-foreground">Tap a photo to view the room, then pick the one you want to offer on.</p>
+            )}
+          </div>
           {loadingRooms ? (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" />
               Loading rooms...
             </div>
           ) : rooms.length > 0 ? (
-            <Select
-              value={selectedRoomId || ''}
-              onValueChange={(v) => {
+            <RoomPicker
+              rooms={rooms}
+              selectedRoomId={selectedRoomId}
+              currency={currency}
+              onSelect={(v) => {
                 setSelectedRoomId(v || null);
                 const rm = rooms.find((r) => r.id === v);
                 if (rm?.avg_rate) {
                   const g = rm.avg_rate;
                   setOfferAmount(String(Math.round((Math.round(g * 0.82) + Math.round(g)) / 2)));
                 }
+                setError(null);
               }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select a room" />
-              </SelectTrigger>
-              <SelectContent>
-                {rooms.map((room) => (
-                  <SelectItem key={room.id} value={room.id}>
-                    <div className="flex items-center gap-2">
-                      <span>{room.name}</span>
-                      <span className="text-muted-foreground text-xs">
-                        · Sleeps {room.max_adults + room.max_children}
-                      </span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            />
           ) : (
             <div className="rounded-lg border border-border bg-muted/30 p-3">
               <p className="text-sm font-medium text-foreground">No rooms listed yet</p>

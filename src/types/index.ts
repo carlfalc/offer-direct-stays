@@ -30,6 +30,10 @@ export interface Room {
   avg_rate?: number | null;
   actual_rate?: number | null;
   currency?: string | null;
+  images?: string[] | null;
+  image_url?: string | null;
+  size_sqm?: number | null;
+  max_occupancy?: number | null;
   created_at: string;
   updated_at: string;
 }

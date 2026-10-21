@@ -158,6 +158,43 @@ export async function searchListings(geo: GeoPoint, limit = 100): Promise<Proper
   return props;
 }
 
+/** Pull a LiteAPI room's photos, main photo first, as plain URLs. */
+function roomImages(r: any): string[] {
+  const imgs = [...((r?.images as any[]) || [])].sort(
+    (a, b) => (b?.mainPhoto ? 1 : 0) - (a?.mainPhoto ? 1 : 0),
+  );
+  return imgs
+    .map((i) => i?.url || i?.hd_url || i?.failoverPhoto)
+    .filter((u): u is string => !!u);
+}
+
+/**
+ * Map of liteapi_room_id -> content (photos, size, occupancy) for one hotel.
+ * Used to attach LiteAPI photos to a claimed listing's engine rooms.
+ */
+export async function loadLiteApiRoomContent(
+  hotelId: string,
+): Promise<Record<string, { images: string[]; size_sqm: number | null; max_occupancy: number | null; description: string | null }>> {
+  try {
+    const { data } = await supabase.functions.invoke('liteapi-content-ts', {
+      body: { action: 'hotelDetails', hotelId },
+    });
+    const d = (data as any)?.data ?? data;
+    const out: Record<string, any> = {};
+    for (const r of d?.rooms || []) {
+      out[String(r.id)] = {
+        images: roomImages(r),
+        size_sqm: r.roomSizeSquare ?? null,
+        max_occupancy: r.maxOccupancy ?? null,
+        description: stripHtml(r.description) || null,
+      };
+    }
+    return out;
+  } catch {
+    return {};
+  }
+}
+
 /** Load a LiteAPI hotel's room types, mapped to the app's Room shape. */
 export async function loadLiteApiRooms(hotelId: string): Promise<Room[]> {
   try {
@@ -166,22 +203,29 @@ export async function loadLiteApiRooms(hotelId: string): Promise<Room[]> {
     });
     const d = (data as any)?.data ?? data;
     const rooms = d?.rooms || [];
-    return rooms.map((r: any) => ({
-      id: String(r.id),
-      property_id: hotelId,
-      name: r.roomName || r.name || 'Room',
-      description: stripHtml(r.description) || null,
-      max_adults: r.maxAdults ?? 2,
-      max_children: r.maxChildren ?? 0,
-      bed_configuration:
-        (r.bedTypes || []).map((b: any) => `${b.quantity}× ${b.bedType}`).join(', ') || null,
-      amenities: (r.roomAmenities || []).map((a: any) => a.name).slice(0, 12),
-      avg_rate: null,
-      actual_rate: null,
-      currency: geo_currency(hotelId),
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    }));
+    return rooms.map((r: any) => {
+      const images = roomImages(r);
+      return {
+        id: String(r.id),
+        property_id: hotelId,
+        name: r.roomName || r.name || 'Room',
+        description: stripHtml(r.description) || null,
+        max_adults: r.maxAdults ?? 2,
+        max_children: r.maxChildren ?? 0,
+        max_occupancy: r.maxOccupancy ?? null,
+        size_sqm: r.roomSizeSquare ?? null,
+        images,
+        image_url: images[0] ?? null,
+        bed_configuration:
+          (r.bedTypes || []).map((b: any) => `${b.quantity}× ${b.bedType}`).join(', ') || null,
+        amenities: (r.roomAmenities || []).map((a: any) => a.name).slice(0, 12),
+        avg_rate: null,
+        actual_rate: null,
+        currency: geo_currency(hotelId),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+    });
   } catch {
     return [];
   }
