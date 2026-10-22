@@ -431,6 +431,7 @@ export default function Explore() {
                 onSendMessage={handleSendMessage}
                 isLoading={isLoading}
                 onPropertySelect={handlePropertySelect}
+                onViewDetails={handlePropertyPinClick}
                 onMakeOffer={handleMakeOffer}
                 onAddToWatchlist={handleAddToWatchlist}
                 shortlistedIds={shortlistedIds}

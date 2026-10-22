@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 interface PropertyResultCardProps {
   property: Property;
   onMakeOffer: () => void;
+  onViewDetails: () => void;
   onAddToWatchlist: () => void;
   isWatchlisted: boolean;
   priceEstimate?: PropertyPriceEstimate;
@@ -16,6 +17,7 @@ interface PropertyResultCardProps {
 export default function PropertyResultCard({
   property,
   onMakeOffer,
+  onViewDetails,
   onAddToWatchlist,
   isWatchlisted,
   priceEstimate,
@@ -37,10 +39,16 @@ export default function PropertyResultCard({
   const currencySymbol = trip.currency === 'AUD' ? 'A$' : 'NZ$';
 
   return (
-    <div className={cn(
-      "premium-card overflow-hidden group",
-      "hover:border-primary/40"
-    )}>
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onViewDetails}
+      onKeyDown={(e) => { if (e.key === 'Enter') onViewDetails(); }}
+      className={cn(
+        "premium-card overflow-hidden group cursor-pointer",
+        "hover:border-primary/40"
+      )}
+    >
       <div className="flex gap-4 p-4">
         {/* Image */}
         {property.image_url && (
@@ -118,7 +126,7 @@ export default function PropertyResultCard({
                 "flex-1 text-sm h-9 font-medium",
                 "bg-primary hover:bg-primary/90 text-primary-foreground"
               )}
-              onClick={onMakeOffer}
+              onClick={(e) => { e.stopPropagation(); onMakeOffer(); }}
             >
               Make an offer
             </Button>
@@ -131,7 +139,7 @@ export default function PropertyResultCard({
                   ? "bg-accent/10 border-accent/30 text-accent hover:bg-accent/20" 
                   : "hover:border-primary/30 hover:bg-primary/5"
               )}
-              onClick={onAddToWatchlist}
+              onClick={(e) => { e.stopPropagation(); onAddToWatchlist(); }}
             >
               <Heart className={cn(
                 "h-4 w-4",

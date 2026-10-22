@@ -16,6 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import BrandBackdrop from '@/components/brand/BrandBackdrop';
 import { useNotifications } from '@/hooks/useNotifications';
+import { useFsCounts } from '@/hooks/useFsCounts';
 import FsNotificationBell from './FsNotificationBell';
 import '@/styles/findastay-brand.css';
 
@@ -33,9 +34,26 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
   const [hasBusiness, setHasBusiness] = useState<boolean | null>(null);
 
   // small count badge shown on the Messages nav item
-  const CountBadge = ({ count }: { count: number }) =>
+  const { businessPending, toConfirm } = useFsCounts();
+
+  // How many items need attention on a given nav tile.
+  const badgeFor = (label: string) =>
+    label === 'Messages'
+      ? unreadCount
+      : label === 'Business' || label === 'Dashboard'
+      ? businessPending
+      : label === 'My Offers'
+      ? toConfirm
+      : 0;
+
+  const CountBadge = ({ count, tone = 'default' }: { count: number; tone?: 'default' | 'alert' }) =>
     count > 0 ? (
-      <span className="ml-auto inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-[10px] font-bold text-primary-foreground leading-none">
+      <span
+        className={cn(
+          'ml-auto inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold leading-none',
+          tone === 'alert' ? 'bg-red-500 text-white' : 'bg-primary text-primary-foreground',
+        )}
+      >
         {count > 99 ? '99+' : count}
       </span>
     ) : null;
@@ -152,7 +170,9 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
                 >
                   <item.icon className="h-4 w-4" />
                   <span>{item.label}</span>
-                  {item.label === 'Messages' && <CountBadge count={unreadCount} />}
+                  {badgeFor(item.label) > 0 && (
+                    <CountBadge count={badgeFor(item.label)} tone={item.label === 'Messages' ? 'default' : 'alert'} />
+                  )}
                 </button>
               );
             })}
@@ -175,9 +195,12 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
                   )}
                 >
                   <item.icon className="h-4.5 w-4.5" />
-                  {item.label === 'Messages' && unreadCount > 0 && (
-                    <span className="absolute top-1 right-1 min-w-[16px] h-[16px] px-1 rounded-full bg-primary text-[9px] font-bold text-primary-foreground inline-flex items-center justify-center leading-none">
-                      {unreadCount > 99 ? '99+' : unreadCount}
+                  {badgeFor(item.label) > 0 && (
+                    <span className={cn(
+                      "absolute top-1 right-1 min-w-[16px] h-[16px] px-1 rounded-full text-[9px] font-bold inline-flex items-center justify-center leading-none",
+                      item.label === 'Messages' ? "bg-primary text-primary-foreground" : "bg-red-500 text-white"
+                    )}>
+                      {badgeFor(item.label) > 99 ? '99+' : badgeFor(item.label)}
                     </span>
                   )}
                 </button>
@@ -290,7 +313,9 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
                       >
                         <item.icon className="h-4.5 w-4.5" />
                         <span>{item.label}</span>
-                        {item.label === 'Messages' && <CountBadge count={unreadCount} />}
+                        {badgeFor(item.label) > 0 && (
+                    <CountBadge count={badgeFor(item.label)} tone={item.label === 'Messages' ? 'default' : 'alert'} />
+                  )}
                       </button>
                     );
                   })}

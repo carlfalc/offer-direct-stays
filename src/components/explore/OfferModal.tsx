@@ -81,8 +81,8 @@ export default function OfferModal({
   const sweetHi = guide ? Math.round(guide) : 230;
   const sweetLo = guide ? Math.round(guide * 0.82) : 180;
   const sliderMin = Math.round(sweetLo * 0.6);
-  const sliderMax = Math.round(sweetHi * 1.2);
-  const midpoint = Math.round((sweetLo + sweetHi) / 2);
+  const sliderMax = sweetHi; // cap at the property's actual price — never offer above it
+  const midpoint = sweetHi;  // the handle starts at the real price; traveller drags down
 
   // Reset form when property changes
   useEffect(() => {
@@ -336,8 +336,7 @@ export default function OfferModal({
                 setSelectedRoomId(v || null);
                 const rm = rooms.find((r) => r.id === v);
                 if (rm?.avg_rate) {
-                  const g = rm.avg_rate;
-                  setOfferAmount(String(Math.round((Math.round(g * 0.82) + Math.round(g)) / 2)));
+                  setOfferAmount(String(Math.round(rm.avg_rate))); // start at the real price
                 }
                 setError(null);
               }}

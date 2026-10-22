@@ -13,6 +13,7 @@ interface ChatPanelProps {
   onSendMessage: (message: string) => void;
   isLoading: boolean;
   onPropertySelect: (property: Property) => void;
+  onViewDetails: (property: Property) => void;
   onMakeOffer: (property: Property, room?: Room) => void;
   onAddToWatchlist: (property: Property) => void;
   shortlistedIds: string[];
@@ -26,6 +27,7 @@ export default function ChatPanel({
   onSendMessage,
   isLoading,
   onPropertySelect,
+  onViewDetails,
   onMakeOffer,
   onAddToWatchlist,
   shortlistedIds,
@@ -166,10 +168,14 @@ export default function ChatPanel({
                 {/* Property recommendations */}
                 {message.properties && message.properties.length > 0 && (
                   <div className="mt-4 space-y-3">
+                    <p className="text-xs font-medium text-muted-foreground">
+                      {message.properties.length} {message.properties.length === 1 ? 'property' : 'properties'} nearby · tap a card to see rooms
+                    </p>
                     {message.properties.map((property) => (
                       <PropertyResultCard
                         key={property.id}
                         property={property}
+                        onViewDetails={() => onViewDetails(property)}
                         onMakeOffer={() => onMakeOffer(property)}
                         onAddToWatchlist={() => onAddToWatchlist(property)}
                         isWatchlisted={watchlistedIds.includes(property.id)}

@@ -33,17 +33,18 @@ function occupancy(room: Room): number {
   return room.max_occupancy ?? room.max_adults + (room.max_children || 0);
 }
 
-/** Sweet-spot pricing for a room (mirrors OfferModal). */
+/** Sweet-spot pricing for a room. The slider starts at the property's actual
+ * price (its right-hand ceiling) so the traveller drags DOWN to their offer. */
 function priceBand(room: Room) {
-  const guide = room.avg_rate ?? null;
-  const sweetHi = guide ? Math.round(guide) : 230;
-  const sweetLo = guide ? Math.round(guide * 0.82) : 180;
+  const actual = room.avg_rate ? Math.round(room.avg_rate) : 230; // the real/rack price
+  const sweetHi = actual;
+  const sweetLo = Math.round(actual * 0.82);
   return {
+    actual,                           // where the handle starts — far right
     sweetLo,
     sweetHi,
-    min: Math.round(sweetLo * 0.6),
-    max: Math.round(sweetHi * 1.2),
-    mid: Math.round((sweetLo + sweetHi) / 2),
+    min: Math.round(actual * 0.55),   // how low they can drag
+    max: actual,                      // never above the real price
   };
 }
 
@@ -64,7 +65,7 @@ function RoomDetail({
   const images = room.images?.length ? room.images : room.image_url ? [room.image_url] : [];
   const [idx, setIdx] = useState(0);
   const band = priceBand(room);
-  const [price, setPrice] = useState(band.mid);
+  const [price, setPrice] = useState(band.actual); // start at the real price, drag down
   const has = images.length > 0;
   const go = (d: number) => setIdx((i) => (i + d + images.length) % images.length);
 
@@ -154,10 +155,7 @@ function RoomDetail({
               onChange={setPrice}
             />
             <p className="text-xs text-muted-foreground">
-              {room.avg_rate ? (
-                <>Average for this room is <span className="font-medium">{currency} ${Math.round(room.avg_rate)}</span>. </>
-              ) : null}
-              Most guests land between <span className="font-medium">{currency} ${band.sweetLo}–${band.sweetHi}</span> — drag to your number.
+              Starts at the property's price of <span className="font-medium">{currency} ${band.actual}</span> — drag down to name your offer. Most guests land between <span className="font-medium">{currency} ${band.sweetLo}–${band.sweetHi}</span>.
             </p>
           </div>
         </div>
