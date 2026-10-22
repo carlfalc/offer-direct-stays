@@ -16,6 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import BrandBackdrop from '@/components/brand/BrandBackdrop';
 import { useNotifications } from '@/hooks/useNotifications';
+import FsNotificationBell from './FsNotificationBell';
 import '@/styles/findastay-brand.css';
 
 interface AuthenticatedLayoutProps {
@@ -184,6 +185,9 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
             })}
           </nav>
           
+          {/* Offer notifications bell */}
+          <FsNotificationBell />
+
           {/* Profile dropdown (desktop/tablet) */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

@@ -1,524 +1,194 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import { MapPin, Calendar, Users, Home, ArrowLeft, MessageSquare, FlaskConical } from 'lucide-react';
-import { format, addDays } from 'date-fns';
-import { toast } from 'sonner';
-interface GuestOffer {
+import { Badge } from '@/components/ui/badge';
+import { Loader2, CalendarDays, MapPin, CheckCircle2, Clock, Send } from 'lucide-react';
+
+interface FsOffer {
   id: string;
-  offer_amount: number;
-  counter_amount: number | null;
+  nightly_offer: number;
+  counter_nightly: number | null;
+  total_offer: number;
+  nights: number;
+  check_in: string;
+  check_out: string;
   status: string;
-  check_in_date: string;
-  check_out_date: string;
-  adults: number;
-  children: number;
-  updated_at: string;
-  room_id: string | null;
-  property: {
-    id: string;
-    name: string;
-    city: string;
-    country: string;
-  } | null;
-  room: {
-    id: string;
-    name: string;
-  } | null;
+  released_at: string | null;
+  confirm_deadline_at: string | null;
+  booking_number: string | null;
+  created_at: string;
+  room?: { room_name: string | null } | null;
+  listing?: { name: string | null; city: string | null; country: string | null } | null;
 }
 
-const statusConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
-  submitted: { label: 'Offer Sent', variant: 'secondary' },
-  pending: { label: 'Offer Sent', variant: 'secondary' },
-  countered: { label: 'Countered', variant: 'outline' },
-  accepted: { label: 'Accepted', variant: 'default' },
-  confirmed: { label: 'Confirmed', variant: 'default' },
-  declined: { label: 'Declined', variant: 'destructive' },
-  cancelled: { label: 'Cancelled', variant: 'destructive' },
-};
+const fmtDate = (s: string) => new Date(s).toLocaleDateString('en-NZ', { day: 'numeric', month: 'short' });
 
-const nextActionCopy: Record<string, string> = {
-  submitted: 'Waiting for the property to respond.',
-  pending: 'Waiting for the property to respond.',
-  countered: 'Review the counter offer and respond.',
-  accepted: 'Pay the booking commitment fee to confirm.',
-  confirmed: 'Booking confirmed. You can message the property.',
-  declined: 'Offer declined. You can send a new offer anytime.',
-  cancelled: 'Offer cancelled. You can send a new offer anytime.',
-};
+function countdown(deadline: string | null): string {
+  if (!deadline) return '';
+  const ms = new Date(deadline).getTime() - Date.now();
+  if (ms <= 0) return 'expired';
+  const m = Math.floor(ms / 60000);
+  const h = Math.floor(m / 60);
+  return h > 0 ? `${h}h ${m % 60}m` : `${m}m`;
+}
 
 export default function GuestOffers() {
-  const { user, loading: authLoading } = useAuth();
+  const { user } = useAuth();
+  const { toast } = useToast();
   const navigate = useNavigate();
-  const [offers, setOffers] = useState<GuestOffer[]>([]);
+  const [offers, setOffers] = useState<FsOffer[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedOfferId, setSelectedOfferId] = useState<string | null>(null);
-  const [demoLoading, setDemoLoading] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [, setTick] = useState(0);
 
-  useEffect(() => {
-    if (!authLoading && !user) {
-      navigate('/auth?redirect=/offers');
-    }
-  }, [user, authLoading, navigate]);
-
-  useEffect(() => {
-    async function fetchOffers() {
-      if (!user) return;
-
-      try {
-        setLoading(true);
-        setError(null);
-
-        const { data, error: fetchError } = await supabase
-          .from('offers')
-          .select(`
-            id,
-            offer_amount,
-            counter_amount,
-            status,
-            check_in_date,
-            check_out_date,
-            adults,
-            children,
-            updated_at,
-            room_id,
-            property:properties(id, name, city, country),
-            room:rooms(id, name)
-          `)
-          .eq('guest_user_id', user.id)
-          .order('updated_at', { ascending: false });
-
-        if (fetchError) {
-          console.error('Error fetching offers:', fetchError);
-          setError('Failed to load offers');
-          return;
-        }
-
-        setOffers((data as unknown as GuestOffer[]) || []);
-      } catch (err) {
-        console.error('Unexpected error:', err);
-        setError('An unexpected error occurred');
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    if (user) {
-      fetchOffers();
-    }
+  const load = useCallback(async () => {
+    if (!user) return;
+    setLoading(true);
+    const { data } = await supabase
+      .from('fs_offers')
+      .select(
+        'id,nightly_offer,counter_nightly,total_offer,nights,check_in,check_out,status,released_at,confirm_deadline_at,booking_number,created_at,room:fs_listing_rooms(room_name),listing:fs_listings(name,city,country)',
+      )
+      .eq('traveller_id', user.id)
+      .order('created_at', { ascending: false });
+    setOffers(((data as any[]) || []) as FsOffer[]);
+    setLoading(false);
   }, [user]);
 
-  // Demo Tool Functions (dev only)
-  const createDemoOffer = async () => {
-    if (!user) return;
-    setDemoLoading('create');
-    try {
-      // Get first demo property + room
-      const { data: property } = await supabase
-        .from('properties')
-        .select('id')
-        .limit(1)
-        .single();
+  useEffect(() => {
+    load();
+  }, [load]);
 
-      if (!property) {
-        toast.error('No demo property found');
-        return;
-      }
+  // keep countdowns live
+  useEffect(() => {
+    const t = setInterval(() => setTick((n) => n + 1), 30000);
+    return () => clearInterval(t);
+  }, []);
 
-      const { data: room } = await supabase
-        .from('rooms')
-        .select('id')
-        .eq('property_id', property.id)
-        .limit(1)
-        .single();
+  const currencyFor = (o: FsOffer) => (o.listing?.country === 'AU' ? 'AUD' : 'NZD');
 
-      const { data: offer, error } = await supabase
-        .from('offers')
-        .insert({
-          guest_user_id: user.id,
-          property_id: property.id,
-          room_id: room?.id || null,
-          offer_amount: 150,
-          check_in_date: format(addDays(new Date(), 7), 'yyyy-MM-dd'),
-          check_out_date: format(addDays(new Date(), 10), 'yyyy-MM-dd'),
-          adults: 2,
-          children: 0,
-          status: 'submitted',
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      toast.success('Demo offer created');
-      setSelectedOfferId(offer.id);
-      // Reload offers
-      window.location.reload();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to create demo offer');
-    } finally {
-      setDemoLoading(null);
-    }
-  };
-
-  const simulateBusinessAccept = async () => {
-    if (!selectedOfferId) {
-      toast.error('Select an offer first (click on an offer card)');
+  const confirm = async (o: FsOffer) => {
+    setBusyId(o.id);
+    const { data, error } = await supabase.rpc('fs_confirm_offer', { p_offer: o.id } as any);
+    setBusyId(null);
+    if (error) {
+      toast({ title: 'Could not confirm', description: error.message || 'Please try again', variant: 'destructive' });
+      load();
       return;
     }
-    setDemoLoading('accept');
-    try {
-      const { error } = await supabase
-        .from('offers')
-        .update({ status: 'accepted' })
-        .eq('id', selectedOfferId);
-
-      if (error) throw error;
-      toast.success('Offer accepted');
-      window.location.reload();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to accept offer');
-    } finally {
-      setDemoLoading(null);
-    }
+    const bn = (data as any)?.booking_number;
+    toast({ title: 'Booking confirmed', description: bn ? `Your reference is ${bn}.` : 'Your stay is confirmed.' });
+    load();
   };
 
-  const simulateConfirmed = async () => {
-    if (!selectedOfferId) {
-      toast.error('Select an offer first (click on an offer card)');
+  const withdraw = async (o: FsOffer) => {
+    setBusyId(o.id);
+    const { error } = await supabase.rpc('fs_withdraw_offer', { p_offer: o.id } as any);
+    setBusyId(null);
+    if (error) {
+      toast({ title: 'Could not withdraw', description: error.message, variant: 'destructive' });
       return;
     }
-    setDemoLoading('confirm');
-    try {
-      // Update offer to confirmed
-      const { error: offerError } = await supabase
-        .from('offers')
-        .update({ 
-          status: 'confirmed',
-          bcf_payment_status: 'paid',
-          bcf_paid_at: new Date().toISOString()
-        })
-        .eq('id', selectedOfferId);
-
-      if (offerError) throw offerError;
-
-      // Get offer details
-      const { data: offer } = await supabase
-        .from('offers')
-        .select('guest_user_id, property_id')
-        .eq('id', selectedOfferId)
-        .single();
-
-      if (!offer) throw new Error('Offer not found');
-
-      // Get property business_id
-      const { data: property } = await supabase
-        .from('properties')
-        .select('business_id')
-        .eq('id', offer.property_id)
-        .single();
-
-      // Get business owner user_id
-      let businessUserId: string | null = null;
-      if (property?.business_id) {
-        const { data: business } = await supabase
-          .from('businesses')
-          .select('user_id')
-          .eq('id', property.business_id)
-          .single();
-        businessUserId = business?.user_id || null;
-      }
-
-      // Check for existing conversation
-      const { data: existingConv } = await supabase
-        .from('conversations')
-        .select('id')
-        .eq('offer_id', selectedOfferId)
-        .maybeSingle();
-
-      let conversationId: string | null = null;
-      const systemMessage = "Booking confirmed ✅ You can now message the property directly here.";
-
-      if (existingConv) {
-        conversationId = existingConv.id;
-        await supabase
-          .from('conversations')
-          .update({
-            is_unlocked: true,
-            business_id: property?.business_id || null,
-            business_user_id: businessUserId,
-            last_message_at: new Date().toISOString()
-          })
-          .eq('id', conversationId);
-      } else {
-        const { data: newConv, error: convError } = await supabase
-          .from('conversations')
-          .insert({
-            offer_id: selectedOfferId,
-            guest_user_id: offer.guest_user_id,
-            business_id: property?.business_id || null,
-            business_user_id: businessUserId,
-            is_unlocked: true,
-            last_message_at: new Date().toISOString()
-          })
-          .select('id')
-          .single();
-
-        if (convError) throw convError;
-        conversationId = newConv?.id || null;
-      }
-
-      // Insert system message if conversation exists
-      if (conversationId) {
-        const { data: existingMsg } = await supabase
-          .from('messages')
-          .select('id')
-          .eq('conversation_id', conversationId)
-          .eq('content', systemMessage)
-          .maybeSingle();
-
-        if (!existingMsg) {
-          await supabase
-            .from('messages')
-            .insert({
-              conversation_id: conversationId,
-              sender_user_id: offer.guest_user_id,
-              content: systemMessage,
-              is_read: false
-            });
-        }
-      }
-
-      toast.success('Offer confirmed + conversation unlocked');
-      window.location.reload();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to confirm offer');
-    } finally {
-      setDemoLoading(null);
-    }
+    toast({ title: 'Offer withdrawn' });
+    load();
   };
 
-  if (authLoading) {
+  if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
-  if (!user) {
-    return null;
+  if (offers.length === 0) {
+    return (
+      <div className="mx-auto max-w-xl px-4 py-16 text-center">
+        <Send className="mx-auto h-10 w-10 text-muted-foreground/50" />
+        <h1 className="mt-4 text-xl font-semibold text-foreground">No offers yet</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Find a place and name your price — your offers show up here.</p>
+        <Button className="mt-5" onClick={() => navigate('/explore')}>Explore stays</Button>
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-full bg-background">
-      <div className="max-w-5xl mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">My Offers</h1>
-            <p className="text-muted-foreground">Track and manage your accommodation offers</p>
-          </div>
-        </div>
+    <div className="mx-auto max-w-2xl px-4 py-8">
+      <h1 className="text-2xl font-semibold text-foreground">My offers</h1>
+      <p className="mt-1 text-sm text-muted-foreground">Track your offers and confirm the moment a property says yes.</p>
 
-        {/* Demo Tools Panel (dev only) */}
-        {import.meta.env.DEV && (
-          <Card className="mb-6 border-dashed border-2 border-amber-500/50 bg-amber-500/5">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm flex items-center gap-2 text-amber-600">
-                <FlaskConical className="h-4 w-4" />
-                Demo Tools (dev only)
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-2">
-              <div className="flex flex-wrap gap-2">
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  onClick={createDemoOffer}
-                  disabled={demoLoading !== null}
-                >
-                  {demoLoading === 'create' ? 'Creating...' : 'A) Create Demo Offer'}
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  onClick={simulateBusinessAccept}
-                  disabled={demoLoading !== null || !selectedOfferId}
-                >
-                  {demoLoading === 'accept' ? 'Accepting...' : 'B) Simulate Business Accept'}
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  onClick={simulateConfirmed}
-                  disabled={demoLoading !== null || !selectedOfferId}
-                >
-                  {demoLoading === 'confirm' ? 'Confirming...' : 'C) Simulate Confirmed (unlock chat)'}
-                </Button>
-              </div>
-              {selectedOfferId && (
-                <p className="text-xs text-muted-foreground mt-2">
-                  Selected offer: {selectedOfferId.slice(0, 8)}...
-                </p>
-              )}
-              {!selectedOfferId && offers.length > 0 && (
-                <p className="text-xs text-amber-600 mt-2">
-                  Click an offer card to select it for B & C actions
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        )}
+      <div className="mt-6 space-y-3">
+        {offers.map((o) => {
+          const cur = currencyFor(o);
+          const isCountered = o.status === 'countered';
+          const price = isCountered ? o.counter_nightly ?? o.nightly_offer : o.nightly_offer;
+          const canConfirm =
+            (o.status === 'accepted_pending_confirm' || o.status === 'countered') &&
+            !!o.released_at &&
+            !!o.confirm_deadline_at &&
+            new Date(o.confirm_deadline_at).getTime() > Date.now();
+          const awaitingRelease = o.status === 'accepted_pending_confirm' && !o.released_at;
 
-        {/* Content */}
-        {loading ? (
-          <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <Card key={i}>
-                <CardContent className="p-6">
-                  <div className="flex justify-between items-start">
-                    <div className="space-y-3 flex-1">
-                      <Skeleton className="h-6 w-48" />
-                      <Skeleton className="h-4 w-32" />
-                      <Skeleton className="h-4 w-40" />
-                    </div>
-                    <Skeleton className="h-6 w-20" />
+          return (
+            <Card key={o.id} className="p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-foreground">{o.listing?.name || 'Property'}</p>
+                  <p className="text-xs text-muted-foreground">{o.room?.room_name || 'Room'}</p>
+                  <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1"><CalendarDays className="h-3.5 w-3.5" /> {fmtDate(o.check_in)}–{fmtDate(o.check_out)} · {o.nights}n</span>
+                    {o.listing?.city && <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" /> {o.listing.city}</span>}
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : error ? (
-          <Card>
-            <CardContent className="p-8 text-center">
-              <p className="text-destructive">{error}</p>
-              <Button variant="outline" className="mt-4" onClick={() => window.location.reload()}>
-                Try Again
-              </Button>
-            </CardContent>
-          </Card>
-        ) : offers.length === 0 ? (
-          <Card>
-            <CardContent className="p-12 text-center">
-              <Home className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold text-foreground mb-2">No offers yet</h3>
-              <p className="text-muted-foreground mb-6">
-                Start exploring properties and make your first offer!
-              </p>
-              <Button onClick={() => navigate('/explore')}>
-                Explore Properties
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid gap-4 lg:grid-cols-2">
-            {offers.map((offer) => {
-              const status = statusConfig[offer.status] || statusConfig.submitted;
-              const checkIn = new Date(offer.check_in_date);
-              const checkOut = new Date(offer.check_out_date);
-              const isSelected = selectedOfferId === offer.id;
+                </div>
+                <div className="text-right">
+                  <p className="text-lg font-bold text-foreground">{cur} ${Math.round(price)}</p>
+                  <p className="text-[11px] text-muted-foreground">/night</p>
+                </div>
+              </div>
 
-              return (
-                <Card 
-                  key={offer.id} 
-                  className={`hover:shadow-md transition-shadow cursor-pointer ${isSelected ? 'ring-2 ring-primary' : ''}`}
-                  onClick={() => setSelectedOfferId(offer.id)}
-                >
-                  <CardContent className="p-6">
-                    <div className="flex flex-col sm:flex-row justify-between gap-4">
-                      <div className="space-y-2 flex-1">
-                        <div className="flex items-start justify-between">
-                          <h3 className="font-semibold text-lg text-foreground">
-                            {offer.property?.name || 'Unknown Property'}
-                          </h3>
-                          <Badge variant={status.variant} className="sm:hidden">
-                            {status.label}
-                          </Badge>
-                        </div>
-                        
-                        <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                          <MapPin className="h-4 w-4" />
-                          <span>{offer.property?.city}, {offer.property?.country}</span>
-                        </div>
-
-                        {offer.room && (
-                          <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                            <Home className="h-4 w-4" />
-                            <span>{offer.room.name}</span>
-                          </div>
-                        )}
-
-                        <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                          <Calendar className="h-4 w-4" />
-                          <span>{format(checkIn, 'MMM d')} - {format(checkOut, 'MMM d, yyyy')}</span>
-                        </div>
-
-                        <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                          <Users className="h-4 w-4" />
-                          <span>
-                            {offer.adults} adult{offer.adults !== 1 ? 's' : ''}
-                            {offer.children > 0 && `, ${offer.children} child${offer.children !== 1 ? 'ren' : ''}`}
-                          </span>
-                        </div>
-
-                        <div className="pt-2">
-                          <span className="font-semibold text-foreground">
-                            ${offer.offer_amount.toFixed(2)}
-                          </span>
-                          <span className="text-muted-foreground text-sm"> / night</span>
-                          {offer.counter_amount && (
-                            <span className="ml-2 text-sm text-primary">
-                              Counter: ${offer.counter_amount.toFixed(2)}
-                            </span>
-                          )}
-                        </div>
-
-                        <div className="pt-1 space-y-1">
-                          <p className="text-xs text-muted-foreground">
-                            Last updated: {format(new Date(offer.updated_at), 'MMM d, yyyy h:mm a')}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            <span className="font-medium text-foreground">Next:</span> {nextActionCopy[offer.status] || 'We’ll keep you posted as this updates.'}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex flex-col items-end gap-3">
-                        <Badge variant={status.variant} className="hidden sm:inline-flex">
-                          {status.label}
-                        </Badge>
-
-                        {offer.status === 'countered' && (
-                          <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); navigate(`/offer-payment?offer_id=${offer.id}`); }}>
-                            View Counter
-                          </Button>
-                        )}
-
-                        {offer.status === 'accepted' && (
-                          <Button size="sm" onClick={(e) => { e.stopPropagation(); navigate(`/offer-payment?offer_id=${offer.id}`); }}>
-                            Pay to Confirm
-                          </Button>
-                        )}
-
-                        {offer.status === 'confirmed' && (
-                          <Button size="sm" variant="secondary" onClick={(e) => { e.stopPropagation(); navigate('/messages'); }}>
-                            Message Property
-                          </Button>
-                        )}
-                      </div>
+              {/* Status + actions */}
+              <div className="mt-3 border-t border-border pt-3">
+                {o.status === 'confirmed' ? (
+                  <div className="flex items-center justify-between">
+                    <span className="flex items-center gap-1.5 text-sm font-medium text-success"><CheckCircle2 className="h-4 w-4" /> Booking confirmed</span>
+                    {o.booking_number && <Badge variant="secondary" className="bg-success/10 text-success border-success/20">{o.booking_number}</Badge>}
+                  </div>
+                ) : canConfirm ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-1.5 text-sm font-medium text-foreground">
+                      {isCountered ? `They countered at ${cur} $${Math.round(price)}/night` : 'Accepted — confirm to lock it in'}
                     </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        )}
+                    <div className="flex items-center gap-2">
+                      <Button size="sm" className="flex-1" disabled={busyId === o.id} onClick={() => confirm(o)}>
+                        {busyId === o.id ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Confirming…</> : 'Confirm booking'}
+                      </Button>
+                      <Button size="sm" variant="ghost" disabled={busyId === o.id} onClick={() => withdraw(o)}>Decline</Button>
+                    </div>
+                    <p className="flex items-center gap-1 text-xs text-amber-600"><Clock className="h-3.5 w-3.5" /> Confirm within {countdown(o.confirm_deadline_at)}</p>
+                  </div>
+                ) : awaitingRelease ? (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Offer sent — we'll let you know the moment they respond.</span>
+                    <Button size="sm" variant="ghost" disabled={busyId === o.id} onClick={() => withdraw(o)}>Withdraw</Button>
+                  </div>
+                ) : o.status === 'pending' ? (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Awaiting the property…</span>
+                    <Button size="sm" variant="ghost" disabled={busyId === o.id} onClick={() => withdraw(o)}>Withdraw</Button>
+                  </div>
+                ) : (
+                  <Badge variant="outline" className="text-muted-foreground">
+                    {o.status === 'declined' ? 'Not accepted' : o.status === 'expired' ? 'Expired' : o.status === 'withdrawn' ? 'Withdrawn' : o.status}
+                  </Badge>
+                )}
+              </div>
+            </Card>
+          );
+        })}
       </div>
     </div>
   );
