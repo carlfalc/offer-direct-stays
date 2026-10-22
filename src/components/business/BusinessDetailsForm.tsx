@@ -29,7 +29,9 @@ export default function BusinessDetailsForm({ hotel, onDone }: Props) {
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState(hotel.address || '');
   const [nzbn, setNzbn] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState<'guest_admin_fee' | 'business_invoice'>('guest_admin_fee');
+  // NOTE: payment model is a placeholder pending Carl's final who/when/how-much
+  // decision. The businesses table constrains this to 'pay_at_property' | 'pay_upfront'.
+  const [paymentMethod, setPaymentMethod] = useState<'pay_at_property' | 'pay_upfront'>('pay_at_property');
   const [terms, setTerms] = useState(false);
   const [feeAck, setFeeAck] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -134,13 +136,13 @@ export default function BusinessDetailsForm({ hotel, onDone }: Props) {
           <Label className="text-xs">How is the booking fee collected?</Label>
           <RadioGroup value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as any)} className="mt-2 space-y-2">
             <div className="flex items-start gap-2">
-              <RadioGroupItem value="guest_admin_fee" id="guest_fee" className="mt-0.5" />
+              <RadioGroupItem value="pay_at_property" id="guest_fee" className="mt-0.5" />
               <Label htmlFor="guest_fee" className="text-sm font-normal text-foreground">
                 Guest pays the {feeLabel} booking fee (recommended) — nothing to invoice you.
               </Label>
             </div>
             <div className="flex items-start gap-2">
-              <RadioGroupItem value="business_invoice" id="biz_invoice" className="mt-0.5" />
+              <RadioGroupItem value="pay_upfront" id="biz_invoice" className="mt-0.5" />
               <Label htmlFor="biz_invoice" className="text-sm font-normal text-foreground">
                 We invoice your business for the booking fee.
               </Label>
