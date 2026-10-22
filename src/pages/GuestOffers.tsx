@@ -145,8 +145,8 @@ export default function GuestOffers() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-lg font-bold text-foreground">{cur} ${Math.round(price)}</p>
-                  <p className="text-[11px] text-muted-foreground">/night</p>
+                  <p className="text-lg font-bold text-foreground">{cur} ${Math.round(o.nightly_offer)}</p>
+                  <p className="text-[11px] text-muted-foreground">your offer /night</p>
                 </div>
               </div>
 
@@ -159,9 +159,16 @@ export default function GuestOffers() {
                   </div>
                 ) : canConfirm ? (
                   <div className="space-y-2">
-                    <div className="flex items-center gap-1.5 text-sm font-medium text-foreground">
-                      {isCountered ? `They countered at ${cur} $${Math.round(price)}/night` : 'Accepted — confirm to lock it in'}
-                    </div>
+                    {isCountered ? (
+                      <div className="text-sm">
+                        <span className="text-muted-foreground">You offered </span>
+                        <span className="font-medium text-foreground">{cur} ${Math.round(o.nightly_offer)}</span>
+                        <span className="text-muted-foreground"> · they countered at </span>
+                        <span className="font-semibold text-foreground">{cur} ${Math.round(price)}/night</span>
+                      </div>
+                    ) : (
+                      <div className="text-sm font-medium text-foreground">Accepted at {cur} ${Math.round(o.nightly_offer)}/night — confirm to lock it in</div>
+                    )}
                     <div className="flex items-center gap-2">
                       <Button size="sm" className="flex-1" disabled={busyId === o.id} onClick={() => confirm(o)}>
                         {busyId === o.id ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Confirming…</> : 'Confirm booking'}

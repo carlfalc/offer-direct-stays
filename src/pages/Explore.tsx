@@ -500,6 +500,8 @@ export default function Explore() {
         property={offerProperty}
         initialAdults={trip.adults}
         initialChildren={trip.children}
+        initialCheckIn={trip.checkIn}
+        initialCheckOut={trip.checkOut}
         onOfferSent={handleOfferSent}
       />
 

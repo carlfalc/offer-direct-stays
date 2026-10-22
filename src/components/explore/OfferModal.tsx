@@ -37,6 +37,8 @@ interface OfferModalProps {
   property: Property | null;
   initialAdults?: number;
   initialChildren?: number;
+  initialCheckIn?: string;
+  initialCheckOut?: string;
   onOfferSent?: (propertyId: string) => void;
 }
 
@@ -46,6 +48,8 @@ export default function OfferModal({
   property,
   initialAdults = 2,
   initialChildren = 0,
+  initialCheckIn,
+  initialCheckOut,
   onOfferSent,
 }: OfferModalProps) {
   const { user } = useAuth();
@@ -91,13 +95,16 @@ export default function OfferModal({
       setPaymentMethod('pay_at_property');
       setError(null);
       setEngineListingId(null);
-      const d1 = new Date(Date.now() + 7 * 864e5);
-      const d2 = new Date(Date.now() + 9 * 864e5);
-      setCheckIn(d1.toISOString().slice(0, 10));
-      setCheckOut(d2.toISOString().slice(0, 10));
+      // Use the traveller's searched dates when we have them; only fall back to
+      // a default window if the search didn't carry dates.
+      const isISO = (s?: string) => !!s && /^\d{4}-\d{2}-\d{2}$/.test(s);
+      const d1 = new Date(Date.now() + 7 * 864e5).toISOString().slice(0, 10);
+      const d2 = new Date(Date.now() + 9 * 864e5).toISOString().slice(0, 10);
+      setCheckIn(isISO(initialCheckIn) ? initialCheckIn! : d1);
+      setCheckOut(isISO(initialCheckOut) ? initialCheckOut! : d2);
       loadRooms(property.id);
     }
-  }, [property, initialAdults, initialChildren]);
+  }, [property, initialAdults, initialChildren, initialCheckIn, initialCheckOut]);
 
   const loadRooms = async (propertyId: string) => {
     setLoadingRooms(true);
