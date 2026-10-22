@@ -22,7 +22,11 @@ export default function BrandBackdrop({ variant = 'night' }: { variant?: 'night'
       DPR = Math.min(window.devicePixelRatio || 1, 2);
       W = cv.clientWidth; H = cv.clientHeight;
       cv.width = W * DPR; cv.height = H * DPR; cx.setTransform(DPR, 0, 0, DPR, 0, 0);
-      const defs = [
+      const defs = isDay ? [
+        { y: .98, bw: [70, 150], bh: [.18, .42], col: "#c4d1e2", depth: 14 },
+        { y: 1.0, bw: [46, 96], bh: [.28, .6], col: "#b4c3d8", depth: 26 },
+        { y: 1.0, bw: [30, 64], bh: [.4, .86], col: "#a3b4cd", depth: 42 },
+      ] : [
         { y: .98, bw: [70, 150], bh: [.18, .42], col: "#0a1526", depth: 14 },
         { y: 1.0, bw: [46, 96], bh: [.28, .6], col: "#0b1a2e", depth: 26 },
         { y: 1.0, bw: [30, 64], bh: [.4, .86], col: "#0d2338", depth: 42 },

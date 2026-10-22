@@ -130,8 +130,8 @@
   --success-foreground: 0 0% 100%;
   --destructive: 8 70% 50%;
   --destructive-foreground: 0 0% 100%;
-  --border: 214 22% 88%;
-  --input: 214 22% 90%;
+  --border: 214 18% 76%;
+  --input: 214 18% 82%;
   --ring: 173 64% 40%;
 
   --fas-display: "Bricolage Grotesque", Georgia, serif;
@@ -150,3 +150,16 @@
 .fas-brand-day textarea { color: hsl(var(--foreground)); }
 .fas-brand-day input::placeholder,
 .fas-brand-day textarea::placeholder { color: hsl(var(--muted-foreground)); }
+
+/* Day theme: lift cards off the soft skyline with a clear frame + shadow. */
+.fas-brand-day .shadow-sm,
+.fas-brand-day [class*="rounded-xl"],
+.fas-brand-day [class*="rounded-lg"] {
+  box-shadow: 0 6px 20px -6px rgba(18, 30, 54, 0.18), 0 2px 6px -2px rgba(18, 30, 54, 0.10);
+}
+/* don't shadow small controls (buttons/badges/inputs) */
+.fas-brand-day button[class*="rounded"],
+.fas-brand-day [class*="rounded-full"],
+.fas-brand-day input[class*="rounded"] {
+  box-shadow: none;
+}
