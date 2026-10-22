@@ -5,7 +5,8 @@ import { useTrip } from '@/contexts/TripContext';
 import { supabase } from '@/integrations/supabase/client';
 import { searchListings } from '@/lib/listings';
 import { Property, ChatMessage, ShortlistItem, Room } from '@/types';
-import ChatPanel from '@/components/explore/ChatPanel';
+import SearchForm, { SearchCriteria } from '@/components/explore/SearchForm';
+import PropertyResultCard from '@/components/explore/PropertyResultCard';
 import MapPanel from '@/components/explore/MapPanel';
 import ShortlistPanel from '@/components/explore/ShortlistPanel';
 import TripSummaryBar from '@/components/explore/TripSummaryBar';
@@ -13,7 +14,7 @@ import PropertyDetailSheet from '@/components/explore/PropertyDetailSheet';
 import OfferModal from '@/components/explore/OfferModal';
 import { PostStayReviewModal, ReviewPayload } from '@/components/review';
 import { Button } from '@/components/ui/button';
-import { MapPin, LogOut, Menu, Heart, Plane, Star, Map as MapIcon, List } from 'lucide-react';
+import { MapPin, LogOut, Menu, Heart, Plane, Star, Map as MapIcon, List, Loader2, Search as SearchIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
@@ -86,6 +87,11 @@ export default function Explore() {
   const [isMobileChatOpen, setIsMobileChatOpen] = useState(false);
   const [visibleProperties, setVisibleProperties] = useState<Property[]>([]);
   const [mobileMapOpen, setMobileMapOpen] = useState(false);
+  const [results, setResults] = useState<Property[]>([]);
+  const [searched, setSearched] = useState(false);
+  const [searchCriteria, setSearchCriteria] = useState<SearchCriteria>({
+    country: 'NZ', city: '', checkIn: '', checkOut: '', adults: 2, children: 0, childAges: [],
+  });
   const [criteria, setCriteria] = useState<{
     destination?: string;
     adults?: number;
@@ -303,6 +309,29 @@ export default function Explore() {
     setIsLoading(false);
   };
 
+  const handleSearch = async (c: SearchCriteria) => {
+    setSearchCriteria(c);
+    setIsLoading(true);
+    setSearched(true);
+    const countryName = c.country === 'AU' ? 'Australia' : 'New Zealand';
+    let geo = await geocodePlace(`${c.city}, ${countryName}`, mapboxToken);
+    if (!geo) geo = await geocodePlace(c.city, mapboxToken);
+    let near: Property[] = [];
+    if (geo) {
+      setDestination({ city: geo.name, country: geo.country, latitude: geo.lat, longitude: geo.lng, radius: 50 });
+      try {
+        near = await searchListings({ name: geo.name, lat: geo.lat, lng: geo.lng, country: geo.country });
+      } catch {
+        near = [];
+      }
+      // registered/claimed businesses first
+      near = [...near].sort((a, b) => Number(b.is_claimed) - Number(a.is_claimed));
+    }
+    setResults(near);
+    setVisibleProperties(near);
+    setIsLoading(false);
+  };
+
   const handlePropertySelect = (property: Property) => {
     const isAlreadyShortlisted = shortlist.some(item => item.property.id === property.id);
     
@@ -425,20 +454,41 @@ export default function Explore() {
               isMobile ? 'flex-1 w-full' : 'flex-none w-[520px] xl:w-[600px] 2xl:w-[640px]',
             )}
           >
-            <div className="flex-1 min-h-0 overflow-hidden">
-              <ChatPanel
-                messages={messages}
-                onSendMessage={handleSendMessage}
-                isLoading={isLoading}
-                onPropertySelect={handlePropertySelect}
-                onViewDetails={handlePropertyPinClick}
-                onMakeOffer={handleMakeOffer}
-                onAddToWatchlist={handleAddToWatchlist}
-                shortlistedIds={shortlistedIds}
-                watchlistedIds={watchlistedIds}
-                tone={tone}
-                onToneChange={setTone}
-              />
+            <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+              <SearchForm initial={searchCriteria} loading={isLoading} onSearch={handleSearch} />
+              <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+                {isLoading ? (
+                  <div className="flex items-center justify-center py-16">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : !searched ? (
+                  <div className="py-16 text-center text-sm text-muted-foreground">
+                    <SearchIcon className="mx-auto mb-3 h-8 w-8 opacity-40" />
+                    Choose where and when, then search to see stays you can make an offer on.
+                  </div>
+                ) : results.length === 0 ? (
+                  <div className="py-16 text-center text-sm text-muted-foreground">
+                    No stays found for {searchCriteria.city}. Try another town or widen your dates.
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-xs font-medium text-muted-foreground">
+                      {results.length} {results.length === 1 ? 'property' : 'properties'} in {searchCriteria.city} · tap a card to see rooms
+                    </p>
+                    {results.map((property) => (
+                      <PropertyResultCard
+                        key={property.id}
+                        property={property}
+                        onViewDetails={() => handlePropertyPinClick(property)}
+                        onMakeOffer={() => handleMakeOffer(property)}
+                        onAddToWatchlist={() => handleAddToWatchlist(property)}
+                        isWatchlisted={watchlistedIds.includes(property.id)}
+                        priceEstimate={getPropertyPriceEstimate(property.id)}
+                      />
+                    ))}
+                  </>
+                )}
+              </div>
             </div>
             <div className="flex-shrink-0">
               <ShortlistPanel
@@ -499,10 +549,10 @@ export default function Explore() {
         open={offerModalOpen}
         onOpenChange={setOfferModalOpen}
         property={offerProperty}
-        initialAdults={trip.adults}
-        initialChildren={trip.children}
-        initialCheckIn={trip.checkIn}
-        initialCheckOut={trip.checkOut}
+        initialAdults={searchCriteria.adults}
+        initialChildren={searchCriteria.children}
+        initialCheckIn={searchCriteria.checkIn}
+        initialCheckOut={searchCriteria.checkOut}
         onOfferSent={handleOfferSent}
       />
 
