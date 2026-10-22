@@ -51,7 +51,48 @@ export default function ClaimPropertySearch({
   const [claiming, setClaiming] = useState(false);
   const [claimedHotel, setClaimedHotel] = useState<ClaimableHotel | null>(null);
   const [showRequest, setShowRequest] = useState(false);
+  const [checking, setChecking] = useState(true);
   const reqId = useRef(0);
+
+  // If the user already owns a listing but hasn't completed their business
+  // profile, jump straight to the details form for it (breaks the
+  // claim → dashboard → guard → onboarding loop).
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!user) {
+        setChecking(false);
+        return;
+      }
+      const { data: biz } = await supabase.from('businesses').select('id').eq('user_id', user.id).maybeSingle();
+      if (!cancelled && !biz) {
+        const { data: ls } = await supabase
+          .from('fs_listings')
+          .select('liteapi_hotel_id,name,city,country,latitude,longitude,thumbnail')
+          .eq('owner_id', user.id)
+          .limit(1);
+        const l = (ls as any[])?.[0];
+        if (!cancelled && l) {
+          setClaimedHotel({
+            id: l.liteapi_hotel_id,
+            name: l.name,
+            city: l.city,
+            country: (l.country === 'AU' ? 'AU' : 'NZ'),
+            thumbnail: l.thumbnail,
+            latitude: l.latitude,
+            longitude: l.longitude,
+            address: null,
+            claimedByOther: false,
+            claimedByMe: true,
+          });
+        }
+      }
+      if (!cancelled) setChecking(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   useEffect(() => {
     if (selected) return;
@@ -105,6 +146,14 @@ export default function ClaimPropertySearch({
       setClaimedHotel(selected); // show the details form
     }
   };
+
+  if (checking) {
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   if (claimedHotel) {
     return <BusinessDetailsForm hotel={claimedHotel} onDone={() => window.location.assign('/business/dashboard')} />;
