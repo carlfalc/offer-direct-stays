@@ -105,3 +105,48 @@
 }
 .fas-brand .fas-wm-newera.gone { transform: translateY(130vh) rotate(-680deg) scale(.35); opacity: 0; }
 @media (prefers-reduced-motion: reduce) { .fas-brand .fas-wm { transition: none; } }
+
+/* ------------------------------------------------------------------ */
+/* Day theme — business pages. Light "paper", same brand colours, the  */
+/* dark city skyline kept as a silhouette behind. Wrap a page in        */
+/* `.fas-brand-day` with <BrandBackdrop variant="day" />.               */
+/* ------------------------------------------------------------------ */
+.fas-brand-day {
+  --background: 205 30% 97%;
+  --foreground: 215 35% 15%;
+  --card: 0 0% 100%;
+  --card-foreground: 215 35% 15%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 215 35% 15%;
+  --primary: 173 64% 40%;              /* teal, darkened for white bg */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 235 45% 94%;
+  --secondary-foreground: 235 40% 28%;
+  --muted: 210 24% 93%;
+  --muted-foreground: 215 16% 42%;
+  --accent: 235 70% 60%;               /* iris */
+  --accent-foreground: 0 0% 100%;
+  --success: 150 45% 36%;
+  --success-foreground: 0 0% 100%;
+  --destructive: 8 70% 50%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 214 22% 88%;
+  --input: 214 22% 90%;
+  --ring: 173 64% 40%;
+
+  --fas-display: "Bricolage Grotesque", Georgia, serif;
+  --fas-body: "Hanken Grotesk", system-ui, sans-serif;
+  --fas-mono: "Space Mono", ui-monospace, monospace;
+
+  position: relative;
+  min-height: 100vh;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: var(--fas-body);
+  color-scheme: light;
+}
+.fas-brand-day > :not(canvas) { position: relative; z-index: 1; }
+.fas-brand-day input,
+.fas-brand-day textarea { color: hsl(var(--foreground)); }
+.fas-brand-day input::placeholder,
+.fas-brand-day textarea::placeholder { color: hsl(var(--muted-foreground)); }

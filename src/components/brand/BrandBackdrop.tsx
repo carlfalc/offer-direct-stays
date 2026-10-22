@@ -1,11 +1,13 @@
 import { useEffect, useRef } from "react";
 
-/** Animated dusk-city brand backdrop. Fixed, full-viewport, sits behind page
- *  content. Reused across landing, auth and the messaging portal. */
-export default function BrandBackdrop() {
+/** Animated city brand backdrop. Fixed, full-viewport, sits behind page content.
+ *  variant "night" (default) = dusk sky with lit windows; "day" = white sky with
+ *  the same skyline kept as a soft silhouette (for the light business theme). */
+export default function BrandBackdrop({ variant = 'night' }: { variant?: 'night' | 'day' }) {
   const ref = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
+    const isDay = variant === 'day';
     const cv = ref.current;
     if (!cv) return;
     const cx = cv.getContext("2d");
@@ -43,14 +45,21 @@ export default function BrandBackdrop() {
     }
     function draw(t: number) {
       const g = cx.createLinearGradient(0, 0, 0, H);
-      g.addColorStop(0, "#070C16"); g.addColorStop(.42, "#0C1A2E"); g.addColorStop(.72, "#163049"); g.addColorStop(.9, "#123c40"); g.addColorStop(1, "#0c5248");
+      if (isDay) {
+        g.addColorStop(0, "#f7fafc"); g.addColorStop(.45, "#eef4f9"); g.addColorStop(.75, "#e6eef4"); g.addColorStop(1, "#dfeae8");
+      } else {
+        g.addColorStop(0, "#070C16"); g.addColorStop(.42, "#0C1A2E"); g.addColorStop(.72, "#163049"); g.addColorStop(.9, "#123c40"); g.addColorStop(1, "#0c5248");
+      }
       cx.fillStyle = g; cx.fillRect(0, 0, W, H);
       const gg = cx.createRadialGradient(W * .5, H * .96, 10, W * .5, H * .96, W * .7);
-      gg.addColorStop(0, "rgba(47,214,178,.22)"); gg.addColorStop(1, "rgba(47,214,178,0)");
+      if (isDay) { gg.addColorStop(0, "rgba(47,160,178,.08)"); gg.addColorStop(1, "rgba(47,160,178,0)"); }
+      else { gg.addColorStop(0, "rgba(47,214,178,.22)"); gg.addColorStop(1, "rgba(47,214,178,0)"); }
       cx.fillStyle = gg; cx.fillRect(0, H * .5, W, H * .5);
-      cx.save();
-      stars.forEach((s: any) => { const tw = .5 + .5 * Math.sin(t * .001 + s.ph); cx.globalAlpha = tw * .8; cx.fillStyle = "#dfe9ff"; cx.beginPath(); cx.arc(s.x + tmx * .4, s.y + tmy * .3, s.r, 0, 6.3); cx.fill(); });
-      cx.restore();
+      if (!isDay) {
+        cx.save();
+        stars.forEach((s: any) => { const tw = .5 + .5 * Math.sin(t * .001 + s.ph); cx.globalAlpha = tw * .8; cx.fillStyle = "#dfe9ff"; cx.beginPath(); cx.arc(s.x + tmx * .4, s.y + tmy * .3, s.r, 0, 6.3); cx.fill(); });
+        cx.restore();
+      }
       clouds.forEach((c: any) => {
         c.x += c.sp; if (c.x - c.r > W) c.x = -c.r;
         const cg = cx.createRadialGradient(c.x, c.y, 0, c.x, c.y, c.r);
@@ -65,7 +74,10 @@ export default function BrandBackdrop() {
           b.wins.forEach((w: any) => {
             const lit = w.on ? (.55 + .45 * Math.sin(t * .0012 + w.ph)) : 0.06;
             if (Math.random() < .0007) w.on = !w.on;
-            cx.fillStyle = "rgba(150," + (220 + 30 * lit) + ",255," + lit + ")";
+            // Day: faint pale windows so the skyline reads as a clean silhouette.
+            cx.fillStyle = isDay
+              ? "rgba(228,236,244," + (lit * 0.5) + ")"
+              : "rgba(150," + (220 + 30 * lit) + ",255," + lit + ")";
             cx.fillRect(w.x, w.y, 3.2, 4.2);
           });
         });
@@ -81,7 +93,7 @@ export default function BrandBackdrop() {
     window.addEventListener("mousemove", onMove);
     start();
     return () => { window.removeEventListener("resize", onResize); window.removeEventListener("mousemove", onMove); cancelAnimationFrame(raf); };
-  }, []);
+  }, [variant]);
 
   return <canvas ref={ref} aria-hidden="true" style={{ position: "fixed", inset: 0, width: "100%", height: "100%", zIndex: 0, pointerEvents: "none" }} />;
 }

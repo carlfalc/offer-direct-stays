@@ -116,7 +116,10 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
     { label: 'Profile', path: '/profile', icon: User },
   ];
 
-  const navItems = (isBusinessRoute && !isOnboardingRoute && hasBusiness === true) ? businessNavItems : guestNavItems;
+  // Operational business pages run in the light "day" theme; travellers and
+  // the claim/onboarding flow keep the dark "night" theme.
+  const businessMode = isBusinessRoute && !isOnboardingRoute && hasBusiness === true;
+  const navItems = businessMode ? businessNavItems : guestNavItems;
 
   if (authLoading) {
     return (
@@ -131,8 +134,8 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
   const userInitial = userEmail.charAt(0).toUpperCase();
 
   return (
-    <div className={`fas-brand flex flex-col ${fullHeight ? 'h-screen overflow-hidden' : 'min-h-screen'}`}>
-      <BrandBackdrop />
+    <div className={cn(businessMode ? 'fas-brand-day' : 'fas-brand', 'flex flex-col', fullHeight ? 'h-screen overflow-hidden' : 'min-h-screen')}>
+      <BrandBackdrop variant={businessMode ? 'day' : 'night'} />
       {/* Premium Header */}
       <header className="h-16 border-b border-border/30 bg-card/80 backdrop-blur-md flex items-center justify-between px-4 md:px-6 flex-shrink-0 z-20">
         {/* Logo */}
