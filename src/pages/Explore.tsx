@@ -14,7 +14,7 @@ import PropertyDetailSheet from '@/components/explore/PropertyDetailSheet';
 import OfferModal from '@/components/explore/OfferModal';
 import { PostStayReviewModal, ReviewPayload } from '@/components/review';
 import { Button } from '@/components/ui/button';
-import { MapPin, LogOut, Menu, Heart, Plane, Star, Map as MapIcon, List, Loader2, Search as SearchIcon } from 'lucide-react';
+import { MapPin, LogOut, Menu, Heart, Plane, Star, Map as MapIcon, List, Loader2, Search as SearchIcon, Home, Building2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
@@ -89,6 +89,7 @@ export default function Explore() {
   const [mobileMapOpen, setMobileMapOpen] = useState(false);
   const [results, setResults] = useState<Property[]>([]);
   const [searched, setSearched] = useState(false);
+  const [catFilter, setCatFilter] = useState<'all' | 'homes' | 'hotels'>('all');
   const [searchCriteria, setSearchCriteria] = useState<SearchCriteria>({
     country: 'NZ', city: '', checkIn: '', checkOut: '', adults: 2, children: 0, childAges: [],
   });
@@ -470,24 +471,33 @@ export default function Explore() {
                   <div className="py-16 text-center text-sm text-muted-foreground">
                     No stays found for {searchCriteria.city}. Try another town or widen your dates.
                   </div>
-                ) : (
-                  <>
-                    <p className="text-xs font-medium text-muted-foreground">
-                      {results.length} {results.length === 1 ? 'property' : 'properties'} in {searchCriteria.city} · tap a card to see rooms
-                    </p>
-                    {results.map((property) => (
-                      <PropertyResultCard
-                        key={property.id}
-                        property={property}
-                        onViewDetails={() => handlePropertyPinClick(property)}
-                        onMakeOffer={() => handleMakeOffer(property)}
-                        onAddToWatchlist={() => handleAddToWatchlist(property)}
-                        isWatchlisted={watchlistedIds.includes(property.id)}
-                        priceEstimate={getPropertyPriceEstimate(property.id)}
-                      />
-                    ))}
-                  </>
-                )}
+                ) : (() => {
+                  const shown = results.filter((p) => catFilter === 'all' || (p.category || 'hotels') === catFilter);
+                  return (
+                    <>
+                      {/* accommodation type filter */}
+                      <div className="flex gap-1 rounded-lg bg-muted/40 p-1 text-xs font-medium">
+                        <button onClick={() => setCatFilter('all')} className={cn('flex-1 rounded-md px-2 py-1.5 transition', catFilter === 'all' ? 'bg-primary/15 text-primary' : 'text-muted-foreground hover:text-foreground')}>All</button>
+                        <button onClick={() => setCatFilter('homes')} className={cn('flex flex-1 items-center justify-center gap-1 rounded-md px-2 py-1.5 transition', catFilter === 'homes' ? 'bg-primary/15 text-primary' : 'text-muted-foreground hover:text-foreground')}><Home className="h-3.5 w-3.5" /> Homes & apartments</button>
+                        <button onClick={() => setCatFilter('hotels')} className={cn('flex flex-1 items-center justify-center gap-1 rounded-md px-2 py-1.5 transition', catFilter === 'hotels' ? 'bg-primary/15 text-primary' : 'text-muted-foreground hover:text-foreground')}><Building2 className="h-3.5 w-3.5" /> Hotels & motels</button>
+                      </div>
+                      <p className="text-xs font-medium text-muted-foreground">
+                        {shown.length} {shown.length === 1 ? 'property' : 'properties'} in {searchCriteria.city} · tap a card to see rooms
+                      </p>
+                      {shown.map((property) => (
+                        <PropertyResultCard
+                          key={property.id}
+                          property={property}
+                          onViewDetails={() => handlePropertyPinClick(property)}
+                          onMakeOffer={() => handleMakeOffer(property)}
+                          onAddToWatchlist={() => handleAddToWatchlist(property)}
+                          isWatchlisted={watchlistedIds.includes(property.id)}
+                          priceEstimate={getPropertyPriceEstimate(property.id)}
+                        />
+                      ))}
+                    </>
+                  );
+                })()}
               </div>
             </div>
             <div className="flex-shrink-0">

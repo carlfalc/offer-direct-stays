@@ -3,7 +3,7 @@ export interface Property {
   business_id: string | null;
   name: string;
   description: string | null;
-  property_type: 'hotel' | 'motel' | 'hostel' | 'apartment' | 'house' | 'cabin' | 'resort' | 'bnb';
+  property_type: 'hotel' | 'motel' | 'hostel' | 'lodge' | 'apartment' | 'home' | 'home_apartment' | 'house' | 'cabin' | 'cottage' | 'bach' | 'resort' | 'bnb' | 'holiday_park' | string;
   country: 'NZ' | 'AU';
   city: string;
   area: string | null;
@@ -14,6 +14,9 @@ export interface Property {
   registration_status: string | null;
   is_claimed: boolean | null;
   image_url: string | null;
+  category?: 'homes' | 'hotels';
+  payment_terms?: string | null;
+  payment_lead_days?: number | null;
   created_at: string;
   updated_at: string;
 }

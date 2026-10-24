@@ -1,7 +1,8 @@
 import { Property } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MapPin, Heart, Sparkles } from 'lucide-react';
+import { MapPin, Heart, Sparkles, Home, Building, Building2, Hotel, BedDouble, Tent } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { useTrip, PropertyPriceEstimate } from '@/contexts/TripContext';
 import { cn } from '@/lib/utils';
 
@@ -28,12 +29,31 @@ export default function PropertyResultCard({
     hotel: 'Hotel',
     motel: 'Motel',
     hostel: 'Hostel',
+    lodge: 'Lodge',
     apartment: 'Apartment',
+    home: 'Home',
+    home_apartment: 'Home',
     house: 'House',
     cabin: 'Cabin',
+    cottage: 'Cottage',
+    bach: 'Bach',
     resort: 'Resort',
     bnb: 'B&B',
+    holiday_park: 'Holiday park',
   };
+
+  // Dedicated icon per type — homes vs apartments read differently at a glance.
+  const typeIcon = ((): LucideIcon => {
+    const t = (property.property_type || '').toLowerCase();
+    if (['home', 'house', 'cabin', 'cottage', 'bach'].includes(t)) return Home;
+    if (['apartment', 'home_apartment'].includes(t)) return Building;
+    if (t === 'hotel') return Hotel;
+    if (['motel', 'lodge', 'resort'].includes(t)) return Building2;
+    if (t === 'bnb') return BedDouble;
+    if (t === 'holiday_park') return Tent;
+    return property.category === 'homes' ? Home : Hotel;
+  })();
+  const TypeIcon = typeIcon;
 
   const topAmenities = property.amenities?.slice(0, 3) || [];
   const currencySymbol = trip.currency === 'AUD' ? 'A$' : 'NZ$';
@@ -79,10 +99,11 @@ export default function PropertyResultCard({
               </div>
             </div>
             
-            <Badge 
-              variant="outline" 
-              className="text-xs px-2 py-0.5 border-primary/30 text-primary bg-primary/5"
+            <Badge
+              variant="outline"
+              className="text-xs px-2 py-0.5 border-primary/30 text-primary bg-primary/5 flex items-center gap-1"
             >
+              <TypeIcon className="h-3 w-3" />
               {propertyTypeLabels[property.property_type] || property.property_type}
             </Badge>
           </div>

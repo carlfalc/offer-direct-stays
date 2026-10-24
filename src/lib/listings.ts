@@ -102,6 +102,16 @@ export async function searchClaimableHotels(query: string): Promise<ClaimableHot
   }
 }
 
+// LiteAPI hotelTypeId → our rough category. Most API inventory is commercial
+// (hotels/motels/resorts/aparthotels); only a few ids read as homes/apartments.
+const LITE_HOME_TYPE_IDS = new Set([219, 220, 223]); // apartment / villa
+// Owner-declared property_type strings that belong in the "homes" group.
+const HOME_TYPES = new Set(['home', 'home_apartment', 'apartment', 'villa', 'house', 'cabin', 'cottage', 'bach']);
+
+export function categoryOf(propertyType?: string | null): 'homes' | 'hotels' {
+  return propertyType && HOME_TYPES.has(propertyType) ? 'homes' : 'hotels';
+}
+
 /** Map one LiteAPI content hotel into the app's Property shape. */
 export function mapHotelToProperty(h: any, country: 'NZ' | 'AU'): Property {
   const lat = typeof h.latitude === 'number' ? h.latitude : h.location?.latitude ?? null;
@@ -126,6 +136,7 @@ export function mapHotelToProperty(h: any, country: 'NZ' | 'AU'): Property {
     registration_status: null,
     is_claimed: false,
     image_url: h.main_photo || h.thumbnail || null,
+    category: LITE_HOME_TYPE_IDS.has(Number(h.hotelTypeId)) ? 'homes' : 'hotels',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   };
@@ -183,13 +194,17 @@ export async function searchListings(geo: GeoPoint, limit = 100): Promise<Proper
       const ids = props.map((p) => p.id);
       const { data: listings } = await supabase
         .from('fs_listings')
-        .select('liteapi_hotel_id,status')
+        .select('liteapi_hotel_id,status,property_type,payment_terms,payment_lead_days')
         .in('liteapi_hotel_id', ids);
-      const byId = new Map((listings || []).map((l: any) => [l.liteapi_hotel_id, l.status]));
+      const byId = new Map((listings || []).map((l: any) => [l.liteapi_hotel_id, l]));
       props.forEach((p) => {
-        const st = byId.get(p.id);
-        p.is_claimed = st === 'active';
-        p.registration_status = st === 'active' ? 'registered' : null;
+        const l = byId.get(p.id);
+        if (!l) return;
+        p.is_claimed = l.status === 'active';
+        p.registration_status = l.status === 'active' ? 'registered' : null;
+        if (l.property_type) p.category = categoryOf(l.property_type); // owner's declared type wins
+        p.payment_terms = l.payment_terms ?? p.payment_terms;
+        p.payment_lead_days = l.payment_lead_days ?? p.payment_lead_days;
       });
     } catch {
       /* claim status is best-effort */
@@ -200,7 +215,7 @@ export async function searchListings(geo: GeoPoint, limit = 100): Promise<Proper
   try {
     const { data: active } = await supabase
       .from('fs_listings')
-      .select('liteapi_hotel_id,name,city,country,latitude,longitude,thumbnail,status')
+      .select('liteapi_hotel_id,name,city,country,latitude,longitude,thumbnail,status,property_type,payment_terms,payment_lead_days')
       .eq('status', 'active');
     const existing = new Map(props.map((p) => [p.id, p]));
     (active || []).forEach((l: any) => {
@@ -210,6 +225,9 @@ export async function searchListings(geo: GeoPoint, limit = 100): Promise<Proper
       if (already) {
         already.is_claimed = true;
         already.registration_status = 'registered';
+        if (l.property_type) already.category = categoryOf(l.property_type);
+        already.payment_terms = l.payment_terms ?? already.payment_terms;
+        already.payment_lead_days = l.payment_lead_days ?? already.payment_lead_days;
         return;
       }
       props.unshift({
@@ -228,6 +246,9 @@ export async function searchListings(geo: GeoPoint, limit = 100): Promise<Proper
         registration_status: 'registered',
         is_claimed: true,
         image_url: l.thumbnail || null,
+        category: categoryOf(l.property_type),
+        payment_terms: l.payment_terms ?? null,
+        payment_lead_days: l.payment_lead_days ?? null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       });

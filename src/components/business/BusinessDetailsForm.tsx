@@ -10,7 +10,19 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, CheckCircle2 } from 'lucide-react';
+
+const PROPERTY_TYPES = [
+  { v: 'hotel', label: 'Hotel' },
+  { v: 'motel', label: 'Motel' },
+  { v: 'lodge', label: 'Lodge' },
+  { v: 'resort', label: 'Resort' },
+  { v: 'bnb', label: 'Bed & Breakfast' },
+  { v: 'home', label: 'Home / House' },
+  { v: 'apartment', label: 'Apartment' },
+  { v: 'holiday_park', label: 'Holiday park' },
+];
 
 interface Props {
   hotel: ClaimableHotel;
@@ -34,6 +46,9 @@ export default function BusinessDetailsForm({ hotel, onDone }: Props) {
   const [paymentMethod, setPaymentMethod] = useState<'pay_at_property' | 'pay_upfront'>('pay_at_property');
   const [terms, setTerms] = useState(false);
   const [feeAck, setFeeAck] = useState(false);
+  const [propertyType, setPropertyType] = useState('hotel');
+  const [paymentTerms, setPaymentTerms] = useState<'on_arrival' | 'days_before' | 'upfront'>('on_arrival');
+  const [leadDays, setLeadDays] = useState(10);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -80,6 +95,13 @@ export default function BusinessDetailsForm({ hotel, onDone }: Props) {
       setError(insErr.message || 'Could not save your details. Please try again.');
       return;
     }
+    // Save the listing's type + payment terms onto fs_listings (owner-only).
+    await supabase.from('fs_listings').update({
+      property_type: propertyType,
+      payment_terms: paymentTerms,
+      payment_lead_days: paymentTerms === 'days_before' ? leadDays : null,
+    } as any).eq('liteapi_hotel_id', hotel.id);
+
     toast({ title: 'Business profile saved', description: `${businessName} is all set up.` });
     finish();
   };
@@ -129,6 +151,45 @@ export default function BusinessDetailsForm({ hotel, onDone }: Props) {
             {hotel.city ? `${hotel.city}, ` : ''}
             {hotel.country}
           </p>
+        </div>
+
+        {/* Property type */}
+        <div>
+          <Label className="text-xs">Property type</Label>
+          <Select value={propertyType} onValueChange={setPropertyType}>
+            <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {PROPERTY_TYPES.map((t) => <SelectItem key={t.v} value={t.v}>{t.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <p className="mt-1 text-xs text-muted-foreground">Lets travellers filter “Homes & apartments” vs “Hotels, motels & lodges”.</p>
+        </div>
+
+        {/* Payment terms — when the guest pays the balance */}
+        <div>
+          <Label className="text-xs">When is the balance due? (after the commitment fee)</Label>
+          <RadioGroup value={paymentTerms} onValueChange={(v) => setPaymentTerms(v as any)} className="mt-2 space-y-2">
+            <div className="flex items-start gap-2">
+              <RadioGroupItem value="on_arrival" id="pt_arrival" className="mt-0.5" />
+              <Label htmlFor="pt_arrival" className="text-sm font-normal text-foreground">On arrival (you take the balance at check-in)</Label>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <RadioGroupItem value="days_before" id="pt_before" className="mt-0.5" />
+              <Label htmlFor="pt_before" className="text-sm font-normal text-foreground">A set number of days before arrival:</Label>
+              <Input
+                type="number" min={1} max={120} value={leadDays}
+                onChange={(e) => setLeadDays(Math.max(1, Math.min(120, Number(e.target.value) || 1)))}
+                onFocus={() => setPaymentTerms('days_before')}
+                className="h-8 w-20"
+              />
+              <span className="text-sm text-muted-foreground">days</span>
+            </div>
+            <div className="flex items-start gap-2">
+              <RadioGroupItem value="upfront" id="pt_upfront" className="mt-0.5" />
+              <Label htmlFor="pt_upfront" className="text-sm font-normal text-foreground">Upfront, when the booking is confirmed</Label>
+            </div>
+          </RadioGroup>
+          <p className="mt-1 text-xs text-muted-foreground">Common for homes & apartments — travellers see the exact “pay by” date on the listing.</p>
         </div>
 
         {/* Fee option */}

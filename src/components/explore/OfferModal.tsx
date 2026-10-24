@@ -26,7 +26,7 @@ import { Stepper } from '@/components/ui/stepper';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { MapPin, AlertCircle, Loader2 } from 'lucide-react';
+import { MapPin, AlertCircle, Loader2, CalendarClock } from 'lucide-react';
 import OfferSlider from './OfferSlider';
 import RoomPicker from './RoomPicker';
 import { loadLiteApiRoomContent } from '@/lib/listings';
@@ -71,9 +71,29 @@ export default function OfferModal({
   const [checkIn, setCheckIn] = useState('');
   const [checkOut, setCheckOut] = useState('');
 
-  // Currency and BCF based on property country
+  // Currency based on property country
   const currency = property?.country === 'AU' ? 'AUD' : 'NZD';
-  const bcfAmount = property?.country === 'AU' ? 12.0 : 8.99;
+  // Nights + offer total drive the banded commitment fee.
+  const nights = (() => {
+    if (!checkIn || !checkOut) return 1;
+    const n = Math.round((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 86400000);
+    return n > 0 ? n : 1;
+  })();
+  const offerTotal = (parseFloat(offerAmount) || 0) * nights;
+  // Flat bands (Carl, confirmed): first $8.99, mid $14.99, top $24.99.
+  const bcfAmount = offerTotal < 500 ? 8.99 : offerTotal <= 1500 ? 14.99 : 24.99;
+
+  // "Pay by" cue — when the balance is due, worked out from the owner's terms.
+  const payCue = (() => {
+    const t = property?.payment_terms;
+    if (t === 'days_before' && property?.payment_lead_days && checkIn) {
+      const due = new Date(new Date(checkIn).getTime() - property.payment_lead_days * 86400000);
+      const label = due.toLocaleDateString('en-NZ', { weekday: 'short', day: 'numeric', month: 'short' });
+      return { line: `Pay by ${label}`, sub: `Balance due ${property.payment_lead_days} days before you arrive — lock it in early.` };
+    }
+    if (t === 'upfront') return { line: 'Pay on confirmation', sub: 'Balance due once the property accepts your offer.' };
+    return { line: 'Pay on arrival', sub: 'Settle the balance with the property at check-in.' };
+  })();
 
   // Offer slider sweet spot — from the selected room's public guide when available.
   const selectedRoom = rooms.find((r) => r.id === selectedRoomId) || null;
@@ -472,6 +492,15 @@ export default function OfferModal({
           <p className="text-xs text-accent-foreground/70">
             This fee is deducted from what you pay the property.
           </p>
+        </div>
+
+        {/* Pay-by cue — set by the property, shown attractively */}
+        <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 flex items-start gap-2.5">
+          <CalendarClock className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+          <div>
+            <p className="text-sm font-semibold text-foreground">{payCue.line}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{payCue.sub}</p>
+          </div>
         </div>
       </div>
     </ScrollArea>
