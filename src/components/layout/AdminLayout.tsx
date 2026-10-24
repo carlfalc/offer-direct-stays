@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useIsAdmin } from '@/hooks/useIsAdmin';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { MapPin, LogOut, Shield, FileText } from 'lucide-react';
+import { MapPin, LogOut, Shield, FileText, LayoutDashboard } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface AdminLayoutProps {
@@ -57,6 +57,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   }
 
   const adminNavItems = [
+    { label: 'Console', path: '/admin/console', icon: LayoutDashboard },
     { label: 'Billing', path: '/admin/billing', icon: FileText },
   ];
 

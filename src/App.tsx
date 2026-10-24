@@ -14,6 +14,7 @@ import FindAStayLanding from "./pages/FindAStayLanding";
 import Auth from "./pages/Auth";
 import Explore from "./pages/Explore";
 import AdminBilling from "./pages/AdminBilling";
+import AdminConsole from "./pages/AdminConsole";
 import OfferPayment from "./pages/OfferPayment";
 import OfferConfirmed from "./pages/OfferConfirmed";
 import BusinessClaim from "./pages/BusinessClaim";
@@ -130,6 +131,11 @@ const App = () => (
               } />
               
               {/* Admin routes */}
+              <Route path="/admin/console" element={
+                <AdminLayout>
+                  <AdminConsole />
+                </AdminLayout>
+              } />
               <Route path="/admin/billing" element={
                 <AdminLayout>
                   <AdminBilling />
