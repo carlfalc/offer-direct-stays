@@ -8,7 +8,8 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Inbox, Clock, CheckCircle2, Users, CalendarDays, Plus, RefreshCw, SlidersHorizontal, ClipboardCheck, ClipboardList, X } from 'lucide-react';
+import { Loader2, Inbox, Clock, CheckCircle2, Users, CalendarDays, Plus, RefreshCw, SlidersHorizontal, ClipboardCheck, ClipboardList, X, Download } from 'lucide-react';
+import { exportBookingsXlsx, exportBookingsPdf, ReportRow } from '@/lib/bookingReports';
 
 interface FsOffer {
   id: string;
@@ -154,6 +155,42 @@ export default function BusinessDashboard() {
   const entered = confirmed.filter((o) => !!o.entered_at);
   const history = scope.filter((o) => ['declined', 'expired', 'withdrawn'].includes(o.status));
 
+  // The approved-bookings list the view (and any export) is showing.
+  const bookingList = filter === 'to_enter' ? toEnter : filter === 'entered' ? entered : confirmed;
+
+  const doExport = (kind: 'xlsx' | 'pdf') => {
+    const rows: ReportRow[] = bookingList.map((o) => {
+      const cur = currencyFor(o);
+      const fee = cur === 'AUD' ? 12 : 8.99;
+      return {
+        ref: o.booking_number || '—',
+        property: o.listing?.name || '',
+        room: o.room?.room_name || '',
+        checkIn: o.check_in,
+        checkOut: o.check_out,
+        nights: o.nights,
+        guests: o.adults + o.children,
+        currency: cur,
+        nightly: Math.round(o.nightly_offer),
+        total: Math.round(o.total_offer),
+        fee,
+        entered: o.entered_at ? `Yes (${fmtDate(o.entered_at)})` : 'No',
+        confirmed: fmtDate(o.created_at),
+      };
+    });
+    if (rows.length === 0) {
+      toast({ title: 'Nothing to export', description: 'No bookings in this view.' });
+      return;
+    }
+    const nameSlug = (listings[0]?.name || 'findastay').replace(/[^\w]+/g, '-');
+    const range = from || to ? `${from || 'start'}_${to || 'now'}` : 'all';
+    const base = `${nameSlug}-bookings-${range}`;
+    const title = `${listings.map((l) => l.name).join(', ')} — bookings`;
+    const subtitle = `Check-in ${from || 'earliest'} to ${to || 'latest'}`;
+    if (kind === 'xlsx') exportBookingsXlsx(rows, base);
+    else exportBookingsPdf(rows, title, subtitle, base);
+  };
+
   if (loading) {
     return <div className="flex min-h-[60vh] items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
   }
@@ -256,6 +293,14 @@ export default function BusinessDashboard() {
             <X className="mr-1 h-4 w-4" /> Clear
           </Button>
         )}
+        <div className="ml-auto flex items-end gap-2">
+          <Button variant="outline" size="sm" onClick={() => doExport('xlsx')} disabled={bookingList.length === 0} title="Export bookings to Excel">
+            <Download className="mr-1.5 h-4 w-4" /> XLSX
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => doExport('pdf')} disabled={bookingList.length === 0} title="Export bookings to PDF">
+            <Download className="mr-1.5 h-4 w-4" /> PDF
+          </Button>
+        </div>
       </div>
 
       {show('pending') && (
@@ -285,12 +330,9 @@ export default function BusinessDashboard() {
       {/* Approved bookings — confirmed, with mark-as-entered */}
       {(show('confirmed') || show('to_enter') || show('entered')) && (
         <Section title="Approved bookings" icon={<CheckCircle2 className="h-4 w-4" />}>
-          {(() => {
-            const list = filter === 'to_enter' ? toEnter : filter === 'entered' ? entered : confirmed;
-            return list.length === 0
-              ? <Empty text="Confirmed bookings appear here with their reference. Tick each once you've entered it in your own system." />
-              : <div className="space-y-2">{list.map((o) => <BookingRow key={o.id} o={o} />)}</div>;
-          })()}
+          {bookingList.length === 0
+            ? <Empty text="Confirmed bookings appear here with their reference. Tick each once you've entered it in your own system." />
+            : <div className="space-y-2">{bookingList.map((o) => <BookingRow key={o.id} o={o} />)}</div>}
         </Section>
       )}
 
