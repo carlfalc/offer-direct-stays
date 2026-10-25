@@ -257,17 +257,23 @@ export default function BusinessDashboard() {
   const show = (id: Exclude<Filter, null>) => filter === null || filter === id;
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold text-foreground">Business dashboard</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{listings.map((l) => l.name).join(' · ')}</p>
+    <>
+      {/* Hero banner — swap /hero-business.jpg per brand */}
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('/hero-business.jpg')" }} aria-hidden />
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg,rgba(8,28,38,.74),rgba(8,28,38,.28))' }} aria-hidden />
+        <div className="relative mx-auto max-w-3xl px-4 py-10">
+          <p className="font-mono text-[0.65rem] uppercase tracking-[0.18em] text-white/80">findastay for business</p>
+          <h1 className="font-display text-3xl font-bold text-white md:text-4xl">Business dashboard</h1>
+          <p className="mt-1 text-sm text-white/85">{listings.map((l) => l.name).join(' · ')}</p>
         </div>
-        <div className="flex gap-2">
+      </section>
+
+      <div className="mx-auto max-w-3xl px-4 py-8">
+        <div className="flex items-center justify-end gap-2">
           <Button variant="outline" size="sm" onClick={load}><RefreshCw className="mr-1.5 h-4 w-4" /> Refresh</Button>
           <Button variant="outline" size="sm" asChild><Link to="/business/pricing"><SlidersHorizontal className="mr-1.5 h-4 w-4" /> Pricing</Link></Button>
         </div>
-      </div>
 
       {/* Tally tiles — click to filter */}
       <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-5">
@@ -352,5 +358,6 @@ export default function BusinessDashboard() {
         </Section>
       )}
     </div>
+    </>
   );
 }
