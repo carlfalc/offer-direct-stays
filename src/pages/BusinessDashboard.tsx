@@ -8,8 +8,9 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Inbox, Clock, CheckCircle2, Users, CalendarDays, Plus, RefreshCw, SlidersHorizontal, ClipboardCheck, ClipboardList, X, Download } from 'lucide-react';
+import { Loader2, Inbox, Clock, CheckCircle2, Users, CalendarDays, Plus, RefreshCw, SlidersHorizontal, ClipboardCheck, ClipboardList, X, Download, RotateCcw } from 'lucide-react';
 import { exportBookingsXlsx, exportBookingsPdf, ReportRow } from '@/lib/bookingReports';
+import WeatherTiles from '@/components/explore/WeatherTiles';
 
 interface FsOffer {
   id: string;
@@ -103,6 +104,16 @@ export default function BusinessDashboard() {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [filter, setFilter] = useState<Filter>(null);
+  const [period, setPeriod] = useState<'month' | '6mo' | 'year'>('month');
+  const [bandColor, setBandColor] = useState<'yellow' | 'orange' | 'navy'>(() => {
+    try { return (localStorage.getItem('fs_band') as any) || 'yellow'; } catch { return 'yellow'; }
+  });
+  const pickBand = (c: 'yellow' | 'orange' | 'navy') => {
+    setBandColor(c);
+    try { localStorage.setItem('fs_band', c); } catch { /* ignore */ }
+  };
+  const BAND_BG: Record<string, string> = { yellow: '#FBEFC9', orange: '#F7D6B6', navy: '#1E2A4A' };
+  const navy = bandColor === 'navy';
 
   const load = useCallback(async () => {
     if (!user) return;
@@ -144,8 +155,10 @@ export default function BusinessDashboard() {
 
   const currencyFor = (o: FsOffer) => (o.listing?.country === 'AU' ? 'AUD' : 'NZD');
 
-  // Date filter (by check-in)
-  const inRange = (o: FsOffer) => (!from || o.check_in >= from) && (!to || o.check_in <= to);
+  // Analytics period (by when the offer came in)
+  const periodDays = period === 'month' ? 30 : period === '6mo' ? 182 : 365;
+  const sinceISO = new Date(Date.now() - periodDays * 864e5).toISOString().slice(0, 10);
+  const inRange = (o: FsOffer) => (o.created_at || '').slice(0, 10) >= sinceISO;
   const scope = offers.filter(inRange);
 
   const pending = scope.filter((o) => o.status === 'pending');
@@ -210,7 +223,7 @@ export default function BusinessDashboard() {
     <button
       onClick={() => setFilter(filter === id ? null : id)}
       className={cn(
-        'rounded-xl border p-3 text-center transition',
+        'rounded-xl border p-3 text-center transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_14px_28px_-14px_rgba(8,22,30,.45)]',
         filter === id ? 'border-primary ring-2 ring-primary' : 'border-border hover:border-primary/50',
         'bg-card',
       )}
@@ -258,22 +271,46 @@ export default function BusinessDashboard() {
 
   return (
     <>
-      {/* Hero banner — swap /hero-business.jpg per brand */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('/hero-business.jpg')" }} aria-hidden />
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg,rgba(8,28,38,.74),rgba(8,28,38,.28))' }} aria-hidden />
-        <div className="relative mx-auto max-w-3xl px-4 py-10">
-          <p className="font-mono text-[0.65rem] uppercase tracking-[0.18em] text-white/80">findastay for business</p>
-          <h1 className="font-display text-3xl font-bold text-white md:text-4xl">Business dashboard</h1>
-          <p className="mt-1 text-sm text-white/85">{listings.map((l) => l.name).join(' · ')}</p>
+      {/* Template band — business name, analytics period, weather, change-the-look */}
+      <div style={{ backgroundColor: BAND_BG[bandColor] }}>
+        <div className="mx-auto w-full max-w-3xl px-4 pb-5 pt-6">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className={cn('font-mono text-[0.65rem] uppercase tracking-[0.18em]', navy ? 'text-white/70' : 'text-foreground/70')}>Your business</p>
+              <h1 className={cn('font-display text-3xl font-extrabold tracking-tight md:text-4xl', navy ? 'text-white' : 'text-foreground')}>{listings.map((l) => l.name).join(' · ')}</h1>
+              <div className="mt-1.5 flex items-center gap-2 text-sm">
+                <span className={navy ? 'text-white/80' : 'text-muted-foreground'}>Analytics</span>
+                <select value={period} onChange={(e) => setPeriod(e.target.value as any)} className="rounded-lg border border-black/10 bg-white px-2.5 py-1 text-sm font-semibold text-foreground">
+                  <option value="month">This month</option>
+                  <option value="6mo">Last 6 months</option>
+                  <option value="year">This year</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex flex-col items-end gap-2.5">
+              <div className={cn('flex items-center gap-2 text-xs font-semibold', navy ? 'text-white/85' : 'text-muted-foreground')}>
+                Change the look
+                {(['yellow', 'orange', 'navy'] as const).map((c) => (
+                  <button key={c} type="button" onClick={() => pickBand(c)} aria-label={c}
+                    className={cn('h-5 w-5 rounded-full border-2 border-black/10', bandColor === c && (navy ? 'outline outline-2 outline-white' : 'outline outline-2 outline-foreground'))}
+                    style={{ backgroundColor: BAND_BG[c] }} />
+                ))}
+                <button type="button" onClick={() => pickBand('yellow')} title="Reset to default look"
+                  className={cn('ml-1 inline-flex items-center gap-1 rounded-md border px-2 py-1', navy ? 'border-white/30 text-white/80' : 'border-black/15 text-muted-foreground')}>
+                  <RotateCcw className="h-3 w-3" /> Reset
+                </button>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={load}><RefreshCw className="mr-1.5 h-4 w-4" /> Refresh</Button>
+                <Button variant="outline" size="sm" asChild><Link to="/business/pricing"><SlidersHorizontal className="mr-1.5 h-4 w-4" /> Pricing</Link></Button>
+              </div>
+            </div>
+          </div>
+          <div className="mt-4"><WeatherTiles /></div>
         </div>
-      </section>
+      </div>
 
-      <div className="mx-auto max-w-3xl px-4 py-8">
-        <div className="flex items-center justify-end gap-2">
-          <Button variant="outline" size="sm" onClick={load}><RefreshCw className="mr-1.5 h-4 w-4" /> Refresh</Button>
-          <Button variant="outline" size="sm" asChild><Link to="/business/pricing"><SlidersHorizontal className="mr-1.5 h-4 w-4" /> Pricing</Link></Button>
-        </div>
+      <div className="mx-auto max-w-3xl px-4 py-6">
 
       {/* Tally tiles — click to filter */}
       <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-5">
@@ -284,29 +321,19 @@ export default function BusinessDashboard() {
         <Tile id="entered" label="Entered" count={entered.length} />
       </div>
 
-      {/* Date filter */}
-      <div className="mt-4 flex flex-wrap items-end gap-3 rounded-lg border border-border bg-muted/20 p-3">
-        <div>
-          <label className="text-xs text-muted-foreground">Check-in from</label>
-          <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="mt-1 h-9 w-40" />
-        </div>
-        <div>
-          <label className="text-xs text-muted-foreground">to</label>
-          <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="mt-1 h-9 w-40" />
-        </div>
-        {(from || to || filter) && (
-          <Button variant="ghost" size="sm" onClick={() => { setFrom(''); setTo(''); setFilter(null); }}>
-            <X className="mr-1 h-4 w-4" /> Clear
+      {/* Clear filter + exports */}
+      <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
+        {filter && (
+          <Button variant="ghost" size="sm" onClick={() => setFilter(null)}>
+            <X className="mr-1 h-4 w-4" /> Clear filter
           </Button>
         )}
-        <div className="ml-auto flex items-end gap-2">
-          <Button variant="outline" size="sm" onClick={() => doExport('xlsx')} disabled={bookingList.length === 0} title="Export bookings to Excel">
-            <Download className="mr-1.5 h-4 w-4" /> XLSX
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => doExport('pdf')} disabled={bookingList.length === 0} title="Export bookings to PDF">
-            <Download className="mr-1.5 h-4 w-4" /> PDF
-          </Button>
-        </div>
+        <Button variant="outline" size="sm" onClick={() => doExport('xlsx')} disabled={bookingList.length === 0} title="Export bookings to Excel">
+          <Download className="mr-1.5 h-4 w-4" /> XLSX
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => doExport('pdf')} disabled={bookingList.length === 0} title="Export bookings to PDF">
+          <Download className="mr-1.5 h-4 w-4" /> PDF
+        </Button>
       </div>
 
       {show('pending') && (

@@ -68,7 +68,7 @@ export default function FsNotificationBell() {
       <DropdownMenuTrigger asChild>
         <button
           aria-label="Notifications"
-          className="relative flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-all duration-300 hover:bg-primary/5 hover:text-foreground"
+          className="relative flex h-9 w-9 items-center justify-center rounded-lg text-white/70 transition-all duration-300 hover:bg-white/10 hover:text-white"
         >
           <Bell className="h-[18px] w-[18px]" />
           {unread > 0 && (

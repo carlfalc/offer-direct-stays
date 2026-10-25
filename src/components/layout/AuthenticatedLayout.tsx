@@ -138,18 +138,15 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
     <div className={cn(businessMode ? 'fas-brand-day' : 'fas-brand', 'flex flex-col', fullHeight ? 'h-screen overflow-hidden' : 'min-h-screen')}>
       <BrandBackdrop variant={businessMode ? 'day' : 'night'} />
       {/* Premium Header */}
-      <header className={cn(
-        "h-16 border-b flex items-center justify-between px-4 md:px-6 flex-shrink-0 z-20",
-        businessMode ? "border-border/30 bg-card/80 backdrop-blur-md" : "border-white/5 bg-[#0C1A22]"
-      )}>
-        {/* Logo */}
+      <header className="h-16 border-b border-white/5 bg-[#0C1A22] flex items-center justify-between px-4 md:px-6 flex-shrink-0 z-20">
+        {/* Logo + (business) section label */}
         <button
-          onClick={() => navigate('/explore')}
-          aria-label="findastay — go to search"
-          className="group flex items-center"
+          onClick={() => navigate(businessMode ? '/business/dashboard' : '/explore')}
+          aria-label="findastay"
+          className="group flex items-center gap-3"
         >
           <img
-            src={businessMode ? '/findastay-logo-dark.svg' : '/findastay-logo.svg'}
+            src="/findastay-logo.svg"
             alt="findastay"
             className={cn(
               'h-9 md:h-10 w-auto select-none',
@@ -159,8 +156,13 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
             )}
             draggable={false}
           />
+          {businessMode && (
+            <span className="hidden sm:inline font-mono text-[0.7rem] uppercase tracking-[0.14em] text-white/55 border-l border-white/15 pl-3">
+              Business dashboard
+            </span>
+          )}
         </button>
-        
+
         <div className="flex items-center gap-1">
           {/* Desktop navigation - icon + label */}
           <nav className="hidden lg:flex items-center gap-1 mr-3">
@@ -172,9 +174,9 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
                   onClick={() => navigate(item.path)}
                   className={cn(
                     "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300",
-                    isActive 
-                      ? "bg-primary/15 text-primary shadow-[0_0_12px_rgba(199,167,108,0.15)]" 
-                      : "text-muted-foreground hover:text-foreground hover:bg-primary/5 hover:shadow-[0_0_8px_rgba(199,167,108,0.1)]"
+                    isActive
+                      ? "bg-white/15 text-white"
+                      : "text-white/70 hover:text-white hover:bg-white/10"
                   )}
                 >
                   <item.icon className="h-4 w-4" />
@@ -199,8 +201,8 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
                   className={cn(
                     "relative flex items-center justify-center w-10 h-10 rounded-lg transition-all duration-300",
                     isActive
-                      ? "bg-primary/15 text-primary shadow-[0_0_12px_rgba(199,167,108,0.15)]"
-                      : "text-muted-foreground hover:text-foreground hover:bg-primary/5 hover:shadow-[0_0_8px_rgba(199,167,108,0.1)]"
+                      ? "bg-white/15 text-white"
+                      : "text-white/70 hover:text-white hover:bg-white/10"
                   )}
                 >
                   <item.icon className="h-4.5 w-4.5" />
@@ -225,17 +227,13 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
             <DropdownMenuTrigger asChild>
               <button className={cn(
                 "hidden md:flex items-center gap-2 px-2.5 py-2 rounded-lg transition-all duration-300",
-                "text-muted-foreground hover:text-foreground",
-                "hover:bg-primary/5 hover:shadow-[0_0_12px_rgba(199,167,108,0.1)]",
-                "focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-2 focus:ring-offset-background"
+                "text-white/70 hover:text-white hover:bg-white/10",
+                "focus:outline-none focus:ring-2 focus:ring-white/30"
               )}>
-                <div className={cn(
-                  "w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300",
-                  "bg-gradient-to-br from-primary/25 to-accent/15 border border-primary/30"
-                )}>
-                  <span className="text-xs font-semibold text-primary">{userInitial}</span>
+                <div className="w-8 h-8 rounded-full flex items-center justify-center bg-white/10 border border-white/20">
+                  <span className="text-xs font-semibold text-white">{userInitial}</span>
                 </div>
-                <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                <ChevronDown className="h-3.5 w-3.5 text-white/60" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent 
@@ -280,8 +278,7 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
             <SheetTrigger asChild>
               <button className={cn(
                 "md:hidden flex items-center justify-center w-10 h-10 rounded-lg transition-all duration-300",
-                "text-muted-foreground hover:text-foreground",
-                "hover:bg-primary/5 hover:shadow-[0_0_8px_rgba(199,167,108,0.1)]"
+                "text-white/70 hover:text-white hover:bg-white/10"
               )}>
                 <Menu className="h-5 w-5" />
               </button>
