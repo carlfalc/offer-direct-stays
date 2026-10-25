@@ -37,7 +37,7 @@ export default function SearchForm({ initial, loading, onSearch, variant = 'defa
   const bar = variant === 'bar';
   const labelCls = hero ? 'text-xs text-white/80' : 'text-xs text-muted-foreground';
   // On the black hero panel, fields are solid white with dark text for legibility.
-  const fieldCls = hero ? 'mt-1 bg-white text-neutral-900 border-black/10 placeholder:text-neutral-500' : 'mt-1';
+  const fieldCls = (hero || bar) ? 'mt-1 bg-white text-neutral-900 border-black/10 placeholder:text-neutral-500' : 'mt-1';
   const [country, setCountry] = useState<'NZ' | 'AU'>(initial.country || 'NZ');
   const [city, setCity] = useState(initial.city || '');
   const [checkIn, setCheckIn] = useState(initial.checkIn || iso(new Date(Date.now() + 14 * 864e5)));
@@ -67,7 +67,7 @@ export default function SearchForm({ initial, loading, onSearch, variant = 'defa
     <div className={hero
       ? 'fas-hero-search space-y-3 rounded-3xl border border-white/10 bg-[#0a0d12] p-5 shadow-2xl'
       : bar
-      ? 'space-y-3 rounded-2xl border border-black/10 bg-white p-3 shadow-lg'
+      ? 'fas-bar-search space-y-3 rounded-2xl border border-black/10 bg-white p-3 shadow-lg'
       : 'space-y-3 border-b border-border/50 bg-card/40 p-4 backdrop-blur-sm'}>
       {hero && (
         <div className="flex items-center gap-2 text-white font-semibold text-sm pb-1">
@@ -140,7 +140,7 @@ export default function SearchForm({ initial, loading, onSearch, variant = 'defa
 
       {error && <p className="text-xs text-destructive">{error}</p>}
 
-      <Button className="w-full" onClick={submit} disabled={loading}>
+      <Button className={cn('w-full', (hero || bar) && 'bg-[#0C1A22] text-white hover:bg-[#0C1A22]/90')} onClick={submit} disabled={loading}>
         {loading ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Searching…
