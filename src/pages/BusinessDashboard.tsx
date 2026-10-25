@@ -8,7 +8,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Inbox, Clock, CheckCircle2, Users, CalendarDays, Plus, RefreshCw, SlidersHorizontal, ClipboardCheck, ClipboardList, X, Download, RotateCcw, Trophy, Send, DollarSign, Percent } from 'lucide-react';
+import { Loader2, Inbox, Clock, CheckCircle2, Users, CalendarDays, Plus, RefreshCw, SlidersHorizontal, ClipboardCheck, ClipboardList, X, Download, RotateCcw, Trophy, Send, DollarSign, Percent, Zap, AlertCircle, BedDouble, Circle } from 'lucide-react';
 import { exportBookingsXlsx, exportBookingsPdf, ReportRow } from '@/lib/bookingReports';
 import WeatherTiles from '@/components/explore/WeatherTiles';
 import { useTileOrder } from '@/hooks/useTileOrder';
@@ -16,6 +16,7 @@ import { useTileOrder } from '@/hooks/useTileOrder';
 interface FsOffer {
   id: string;
   listing_id: string;
+  listing_room_id: string;
   nightly_offer: number;
   total_offer: number;
   nights: number;
@@ -99,9 +100,11 @@ export default function BusinessDashboard() {
   const navigate = useNavigate();
 
   const [listings, setListings] = useState<any[]>([]);
+  const [rooms, setRooms] = useState<any[]>([]);
   const [offers, setOffers] = useState<FsOffer[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [filter, setFilter] = useState<Filter>(null);
@@ -124,18 +127,43 @@ export default function BusinessDashboard() {
       .from('fs_listings').select('id,name,city,country,status,auto_accept_enabled').eq('owner_id', user.id);
     const ls = (myListings as any[]) || [];
     setListings(ls);
-    if (ls.length === 0) { setOffers([]); setLoading(false); return; }
+    if (ls.length === 0) { setOffers([]); setRooms([]); setLoading(false); return; }
     const ids = ls.map((l) => l.id);
-    const { data: off } = await supabase
-      .from('fs_offers')
-      .select('id,listing_id,nightly_offer,total_offer,nights,adults,children,check_in,check_out,message,status,counter_nightly,confirm_deadline_at,booking_number,entered_at,created_at,room:fs_listing_rooms(room_name),listing:fs_listings(name,city,country)')
-      .in('listing_id', ids)
-      .order('created_at', { ascending: false });
+    const [{ data: off }, { data: rms }, { data: thr }] = await Promise.all([
+      supabase
+        .from('fs_offers')
+        .select('id,listing_id,listing_room_id,nightly_offer,total_offer,nights,adults,children,check_in,check_out,message,status,counter_nightly,confirm_deadline_at,booking_number,entered_at,created_at,room:fs_listing_rooms(room_name),listing:fs_listings(name,city,country)')
+        .in('listing_id', ids)
+        .order('created_at', { ascending: false }),
+      supabase.from('fs_listing_rooms').select('id,listing_id,room_name,base_guide,sort_order').in('listing_id', ids),
+      supabase.from('fs_room_thresholds').select('listing_room_id,base_auto,base_floor'),
+    ]);
     setOffers(((off as any[]) || []) as FsOffer[]);
+    const thrById = new Map((((thr as any[]) || [])).map((t) => [t.listing_room_id, t]));
+    const roomRows = (((rms as any[]) || [])).map((r) => ({
+      ...r,
+      base_auto: thrById.get(r.id)?.base_auto ?? null,
+      base_floor: thrById.get(r.id)?.base_floor ?? null,
+    }));
+    roomRows.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+    setRooms(roomRows);
     setLoading(false);
   }, [user]);
 
   useEffect(() => { load(); }, [load]);
+
+  const toggleAutoAccept = async (listingId: string, next: boolean) => {
+    setTogglingId(listingId);
+    setListings((ls) => ls.map((l) => (l.id === listingId ? { ...l, auto_accept_enabled: next } : l)));
+    const { error } = await supabase.from('fs_listings').update({ auto_accept_enabled: next } as any).eq('id', listingId);
+    setTogglingId(null);
+    if (error) {
+      setListings((ls) => ls.map((l) => (l.id === listingId ? { ...l, auto_accept_enabled: !next } : l)));
+      toast({ title: 'Could not update', description: error.message, variant: 'destructive' });
+      return;
+    }
+    toast({ title: next ? 'Auto-accept on' : 'Auto-accept off', description: next ? 'Offers at or above your auto price confirm instantly.' : 'Every offer now waits for your response.' });
+  };
 
   const respond = async (id: string, action: 'accept' | 'counter' | 'decline', counter?: number) => {
     setBusyId(id);
@@ -185,6 +213,29 @@ export default function BusinessDashboard() {
   const receivedToday = offers.filter((o) => (o.created_at || '').slice(0, 10) === todayISO).length;
   const curSym = listings[0]?.country === 'AU' ? 'A$' : 'NZ$';
   const periodLabel = period === 'month' ? 'This month' : period === '6mo' ? 'Last 6 months' : 'Year to date';
+
+  // Room performance — rank every room by bookings sold (confirmed), with nights + revenue.
+  const roomPerf = rooms.map((r) => {
+    const sold = confirmed.filter((o) => o.listing_room_id === r.id);
+    return {
+      id: r.id,
+      name: r.room_name || 'Room',
+      listingId: r.listing_id,
+      priced: r.base_guide != null,
+      bookings: sold.length,
+      nights: sold.reduce((s, o) => s + (o.nights || 0), 0),
+      revenue: sold.reduce((s, o) => s + (o.total_offer || 0), 0),
+    };
+  }).sort((a, b) => b.bookings - a.bookings || b.revenue - a.revenue);
+  const topBookings = roomPerf[0]?.bookings || 0;
+
+  // Go-live readiness — a property is "live" when approved AND every room has a guide price.
+  const totalRooms = rooms.length;
+  const pricedRooms = rooms.filter((r) => r.base_guide != null).length;
+  const roomsWithAuto = rooms.filter((r) => r.base_auto != null || r.base_floor != null).length;
+  const allActive = listings.length > 0 && listings.every((l) => l.status === 'active');
+  const allPriced = totalRooms > 0 && pricedRooms === totalRooms;
+  const isLive = allActive && allPriced;
 
   // The approved-bookings list the view (and any export) is showing.
   const bookingList = filter === 'to_enter' ? toEnter : filter === 'entered' ? entered : confirmed;
@@ -330,6 +381,74 @@ export default function BusinessDashboard() {
 
       <div className="mx-auto max-w-3xl px-4 py-6">
 
+      {/* Go-live readiness — real reads: approved status + every room priced */}
+      <section className={cn('mb-6 rounded-2xl border p-4 sm:p-5', isLive ? 'border-success/30 bg-success/[0.06]' : 'border-amber-300/50 bg-amber-50')}>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <span className={cn('inline-flex h-2.5 w-2.5 rounded-full', isLive ? 'bg-success' : 'bg-amber-500')} />
+              <h2 className="font-display text-lg font-bold text-foreground">{isLive ? 'Your business is live' : 'Finish setting up to go live'}</h2>
+            </div>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {isLive
+                ? 'Travellers can find you in search and make offers. Everything below is set.'
+                : 'Travellers only see you once your property is approved and every room has a price set.'}
+            </p>
+          </div>
+          {!isLive && (
+            <Button size="sm" className="gap-1.5 bg-[#0C1A22] text-white hover:bg-[#0C1A22]/90" asChild>
+              <Link to="/business/pricing"><SlidersHorizontal className="h-4 w-4" /> Set room prices</Link>
+            </Button>
+          )}
+        </div>
+        <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
+          {[
+            { ok: allActive, label: allActive ? 'Property approved' : 'Property awaiting approval', sub: listings.map((l) => l.name).join(', ') },
+            { ok: totalRooms > 0, label: totalRooms > 0 ? `${totalRooms} room${totalRooms === 1 ? '' : 's'} detected` : 'No rooms imported yet', sub: totalRooms > 0 ? 'From your property content' : 'Import rooms on the pricing page' },
+            { ok: allPriced, label: allPriced ? 'All rooms priced' : `${pricedRooms} of ${totalRooms || '—'} rooms priced`, sub: allPriced ? 'Guide price set on every room' : 'Set a guide price on each room' },
+          ].map((c, i) => (
+            <div key={i} className="flex items-start gap-2 rounded-xl border border-border/60 bg-card/70 p-3">
+              {c.ok ? <CheckCircle2 className="mt-0.5 h-4 w-4 flex-none text-success" /> : <Circle className="mt-0.5 h-4 w-4 flex-none text-amber-500" />}
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-foreground">{c.label}</p>
+                <p className="truncate text-xs text-muted-foreground">{c.sub}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+        {totalRooms > 0 && (
+          <p className="mt-2 text-xs text-muted-foreground">{roomsWithAuto} of {totalRooms} rooms also have an auto-accept / floor price set (optional, lets offers confirm instantly).</p>
+        )}
+      </section>
+
+      {/* Controls — flash on/off toggles per property */}
+      <section className="mb-6">
+        <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground"><Zap className="h-4 w-4" /> Controls</h2>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          {listings.map((l) => {
+            const on = !!l.auto_accept_enabled;
+            return (
+              <div key={l.id} className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card p-3">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-foreground">{l.name}</p>
+                  <p className="text-xs text-muted-foreground">Auto-accept offers at/above your auto price</p>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={on}
+                  disabled={togglingId === l.id}
+                  onClick={() => toggleAutoAccept(l.id, !on)}
+                  className={cn('relative inline-flex h-7 w-12 flex-none items-center rounded-full transition-colors', on ? 'bg-success' : 'bg-muted-foreground/30', togglingId === l.id && 'opacity-60')}
+                >
+                  <span className={cn('inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform', on ? 'translate-x-6' : 'translate-x-1')} />
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
       {/* Analytics */}
       <section className="mb-6">
         <div className="mb-3 flex items-center gap-2">
@@ -364,6 +483,39 @@ export default function BusinessDashboard() {
             <p className="mt-0.5 text-xs text-muted-foreground">Where travellers rank you across every search in your town — live ranking coming soon.</p>
           </div>
           <div className="hidden h-12 w-12 flex-none place-items-center rounded-full bg-primary/10 text-primary sm:grid"><Trophy className="h-6 w-6" /></div>
+        </div>
+
+        {/* Room performance — ranked by bookings sold (real data) */}
+        <div className="mt-3 rounded-xl border border-border bg-card p-4">
+          <div className="mb-3 flex items-center gap-2">
+            <BedDouble className="h-4 w-4 text-primary" />
+            <p className="text-sm font-semibold text-foreground">Most popular rooms</p>
+            <span className="text-xs text-muted-foreground">· {periodLabel}</span>
+          </div>
+          {roomPerf.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Rooms appear here once imported. Confirmed bookings rank them.</p>
+          ) : (
+            <div className="space-y-2">
+              {roomPerf.map((r, i) => (
+                <div key={r.id} className="flex items-center gap-3">
+                  <span className={cn('flex h-6 w-6 flex-none items-center justify-center rounded-full text-xs font-bold', i === 0 && r.bookings > 0 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground')}>{i + 1}</span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="truncate text-sm font-medium text-foreground">
+                        {r.name}
+                        {!r.priced && <span className="ml-2 align-middle text-[11px] font-semibold text-amber-600">no price set</span>}
+                      </p>
+                      <p className="flex-none text-sm font-semibold text-foreground">{r.bookings} <span className="text-xs font-normal text-muted-foreground">sold</span></p>
+                    </div>
+                    <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-muted">
+                      <div className="h-full rounded-full bg-primary" style={{ width: `${topBookings ? (r.bookings / topBookings) * 100 : 0}%` }} />
+                    </div>
+                    <p className="mt-0.5 text-[11px] text-muted-foreground">{r.nights} nights · {curSym}{Math.round(r.revenue).toLocaleString()} revenue</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
