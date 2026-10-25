@@ -123,7 +123,7 @@ export default function Explore() {
 
   const priceOf = (p: Property): number | null => {
     const e = getPropertyPriceEstimate(p.id);
-    return p.guide_price ?? e?.high ?? e?.low ?? null;
+    return p.guide_min ?? p.guide_max ?? p.guide_price ?? e?.high ?? e?.low ?? null;
   };
   const sentinelRef = useRef<HTMLDivElement>(null);
   const [results, setResults] = useState<Property[]>([]);

@@ -20,6 +20,8 @@ export interface Property {
   rating?: number | null;
   review_count?: number | null;
   guide_price?: number | null;
+  guide_min?: number | null;
+  guide_max?: number | null;
   created_at: string;
   updated_at: string;
 }

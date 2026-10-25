@@ -264,6 +264,45 @@ export async function searchListings(geo: GeoPoint, limit = 100): Promise<Proper
     /* best-effort */
   }
 
+  // Real price range: lowest–highest room GUIDE price for each claimed listing.
+  try {
+    const claimedHotelIds = props.filter((p) => p.is_claimed).map((p) => p.id);
+    if (claimedHotelIds.length) {
+      const { data: ls } = await supabase
+        .from('fs_listings')
+        .select('id,liteapi_hotel_id')
+        .in('liteapi_hotel_id', claimedHotelIds)
+        .eq('status', 'active');
+      const hotelByListing = new Map((ls || []).map((l: any) => [l.id, l.liteapi_hotel_id]));
+      const listingIds = (ls || []).map((l: any) => l.id);
+      if (listingIds.length) {
+        const { data: roomRows } = await supabase
+          .from('fs_listing_rooms')
+          .select('listing_id,base_guide')
+          .in('listing_id', listingIds);
+        const range = new Map<string, { min: number; max: number }>();
+        (roomRows || []).forEach((r: any) => {
+          if (r.base_guide == null) return;
+          const hotel = hotelByListing.get(r.listing_id);
+          if (!hotel) return;
+          const v = Number(r.base_guide);
+          const cur = range.get(hotel);
+          if (!cur) range.set(hotel, { min: v, max: v });
+          else range.set(hotel, { min: Math.min(cur.min, v), max: Math.max(cur.max, v) });
+        });
+        props.forEach((p) => {
+          const r = range.get(p.id);
+          if (r) {
+            p.guide_min = r.min;
+            p.guide_max = r.max;
+          }
+        });
+      }
+    }
+  } catch {
+    /* best-effort */
+  }
+
   return props;
 }
 

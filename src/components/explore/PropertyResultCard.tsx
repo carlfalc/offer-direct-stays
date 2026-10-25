@@ -117,7 +117,14 @@ export default function PropertyResultCard({
           ) : null}
 
           <div className="leading-tight">
-            {priceEstimate ? (
+            {property.guide_min != null ? (
+              <>
+                <div className="font-display text-xl font-extrabold text-foreground">
+                  {sym}{Math.round(property.guide_min)}{property.guide_max != null && property.guide_max !== property.guide_min ? `–${sym}${Math.round(property.guide_max)}` : ''}
+                </div>
+                <div className="text-[0.72rem] text-muted-foreground">from /night · you name it</div>
+              </>
+            ) : priceEstimate ? (
               <>
                 <div className="font-display text-xl font-extrabold text-foreground">{sym}{priceEstimate.low}–{priceEstimate.high}</div>
                 <div className="text-[0.72rem] text-muted-foreground">typical /night · you name it</div>
