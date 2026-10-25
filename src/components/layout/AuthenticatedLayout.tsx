@@ -139,20 +139,22 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
       {/* Premium Header */}
       <header className="h-16 border-b border-border/30 bg-card/80 backdrop-blur-md flex items-center justify-between px-4 md:px-6 flex-shrink-0 z-20">
         {/* Logo */}
-        <button 
+        <button
           onClick={() => navigate('/explore')}
-          className="flex items-center gap-2.5 group"
+          aria-label="findastay — go to search"
+          className="group flex items-center"
         >
-          <div className={cn(
-            "w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-300",
-            "bg-gradient-to-br from-primary/20 to-accent/10 border border-primary/20",
-            "group-hover:shadow-[0_0_16px_rgba(199,167,108,0.3)] group-hover:border-primary/40"
-          )}>
-            <MapPin className="h-4.5 w-4.5 text-primary" />
-          </div>
-          <span className="font-display font-semibold text-lg text-foreground tracking-tight hidden sm:block">
-            findastay
-          </span>
+          <img
+            src={businessMode ? '/findastay-logo-dark.svg' : '/findastay-logo.svg'}
+            alt="findastay"
+            className={cn(
+              'h-9 md:h-10 w-auto select-none',
+              'origin-left transition-transform duration-300 ease-out',
+              'group-hover:scale-110 group-hover:drop-shadow-[0_0_14px_rgba(46,211,192,0.55)]',
+              'active:scale-95 motion-reduce:transition-none motion-reduce:group-hover:scale-100',
+            )}
+            draggable={false}
+          />
         </button>
         
         <div className="flex items-center gap-1">
