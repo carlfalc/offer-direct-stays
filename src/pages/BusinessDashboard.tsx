@@ -8,7 +8,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Inbox, Clock, CheckCircle2, Users, CalendarDays, Plus, RefreshCw, SlidersHorizontal, ClipboardCheck, ClipboardList, X, Download, RotateCcw } from 'lucide-react';
+import { Loader2, Inbox, Clock, CheckCircle2, Users, CalendarDays, Plus, RefreshCw, SlidersHorizontal, ClipboardCheck, ClipboardList, X, Download, RotateCcw, Trophy, Send, DollarSign, Percent } from 'lucide-react';
 import { exportBookingsXlsx, exportBookingsPdf, ReportRow } from '@/lib/bookingReports';
 import WeatherTiles from '@/components/explore/WeatherTiles';
 import { useTileOrder } from '@/hooks/useTileOrder';
@@ -107,11 +107,11 @@ export default function BusinessDashboard() {
   const [filter, setFilter] = useState<Filter>(null);
   const [period, setPeriod] = useState<'month' | '6mo' | 'year'>('month');
   const [bandColor, setBandColor] = useState<'yellow' | 'orange' | 'navy'>(() => {
-    try { return (localStorage.getItem('fs_band') as any) || 'yellow'; } catch { return 'yellow'; }
+    try { return (localStorage.getItem('fs_band_biz') as any) || 'navy'; } catch { return 'navy'; }
   });
   const pickBand = (c: 'yellow' | 'orange' | 'navy') => {
     setBandColor(c);
-    try { localStorage.setItem('fs_band', c); } catch { /* ignore */ }
+    try { localStorage.setItem('fs_band_biz', c); } catch { /* ignore */ }
   };
   const BAND_BG: Record<string, string> = { yellow: '#FBEFC9', orange: '#F7D6B6', navy: '#1E2A4A' };
   const navy = bandColor === 'navy';
@@ -169,6 +169,12 @@ export default function BusinessDashboard() {
   const toEnter = confirmed.filter((o) => !o.entered_at);
   const entered = confirmed.filter((o) => !!o.entered_at);
   const history = scope.filter((o) => ['declined', 'expired', 'withdrawn'].includes(o.status));
+
+  // Analytics for the selected period
+  const revenue = confirmed.reduce((s, o) => s + (o.total_offer || 0), 0);
+  const acceptanceRate = scope.length ? Math.round((confirmed.length / scope.length) * 100) : 0;
+  const curSym = listings[0]?.country === 'AU' ? 'A$' : 'NZ$';
+  const periodLabel = period === 'month' ? 'This month' : period === '6mo' ? 'Last 6 months' : 'This year';
 
   // The approved-bookings list the view (and any export) is showing.
   const bookingList = filter === 'to_enter' ? toEnter : filter === 'entered' ? entered : confirmed;
@@ -297,7 +303,7 @@ export default function BusinessDashboard() {
                     className={cn('h-5 w-5 rounded-full border-2 border-black/10', bandColor === c && (navy ? 'outline outline-2 outline-white' : 'outline outline-2 outline-foreground'))}
                     style={{ backgroundColor: BAND_BG[c] }} />
                 ))}
-                <button type="button" onClick={() => { pickBand('yellow'); resetTiles(); }} title="Reset look & tile layout to default"
+                <button type="button" onClick={() => { pickBand('navy'); resetTiles(); }} title="Reset look & tile layout to default"
                   className={cn('ml-1 inline-flex items-center gap-1 rounded-md border px-2 py-1', navy ? 'border-white/30 text-white/80' : 'border-black/15 text-muted-foreground')}>
                   <RotateCcw className="h-3 w-3" /> Reset
                 </button>
@@ -313,6 +319,46 @@ export default function BusinessDashboard() {
       </div>
 
       <div className="mx-auto max-w-3xl px-4 py-6">
+
+      {/* Analytics */}
+      <section className="mb-6">
+        <div className="mb-3 flex items-center gap-2">
+          <h2 className="font-display text-lg font-bold text-foreground">Analytics</h2>
+          <span className="text-sm text-muted-foreground">· {periodLabel}</span>
+        </div>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="rounded-xl border border-border bg-card p-4 transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_14px_28px_-14px_rgba(8,22,30,.45)]">
+            <Send className="h-4 w-4 text-primary" />
+            <p className="mt-2 font-display text-2xl font-extrabold text-foreground">{scope.length}</p>
+            <p className="text-xs text-muted-foreground">Offers received</p>
+          </div>
+          <div className="rounded-xl border border-border bg-card p-4 transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_14px_28px_-14px_rgba(8,22,30,.45)]">
+            <CheckCircle2 className="h-4 w-4 text-success" />
+            <p className="mt-2 font-display text-2xl font-extrabold text-foreground">{confirmed.length}</p>
+            <p className="text-xs text-muted-foreground">Confirmed bookings</p>
+          </div>
+          <div className="rounded-xl border border-border bg-card p-4 transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_14px_28px_-14px_rgba(8,22,30,.45)]">
+            <Percent className="h-4 w-4 text-primary" />
+            <p className="mt-2 font-display text-2xl font-extrabold text-foreground">{acceptanceRate}%</p>
+            <p className="text-xs text-muted-foreground">Acceptance rate</p>
+          </div>
+          <div className="rounded-xl border border-border bg-card p-4 transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_14px_28px_-14px_rgba(8,22,30,.45)]">
+            <DollarSign className="h-4 w-4 text-primary" />
+            <p className="mt-2 font-display text-2xl font-extrabold text-foreground">{curSym}{Math.round(revenue).toLocaleString()}</p>
+            <p className="text-xs text-muted-foreground">Confirmed revenue</p>
+          </div>
+        </div>
+
+        {/* Ranking — UI now, live data wired later */}
+        <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-border bg-card p-4">
+          <div className="min-w-0">
+            <p className="font-mono text-[0.62rem] uppercase tracking-[0.14em] text-muted-foreground">Your ranking in {listings[0]?.city || 'your area'}</p>
+            <p className="mt-1 font-display text-2xl font-extrabold text-foreground">#— <span className="text-base font-medium text-muted-foreground">of all local properties</span></p>
+            <p className="mt-0.5 text-xs text-muted-foreground">Where travellers rank you across every search in your town — live ranking coming soon.</p>
+          </div>
+          <div className="hidden h-12 w-12 flex-none place-items-center rounded-full bg-primary/10 text-primary sm:grid"><Trophy className="h-6 w-6" /></div>
+        </div>
+      </section>
 
       {/* Tally tiles — click to filter, drag to rearrange */}
       <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-5">
