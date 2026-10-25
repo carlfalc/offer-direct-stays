@@ -87,6 +87,7 @@ export default function Explore() {
   const [isMobileChatOpen, setIsMobileChatOpen] = useState(false);
   const [visibleProperties, setVisibleProperties] = useState<Property[]>([]);
   const [mobileMapOpen, setMobileMapOpen] = useState(false);
+  const [mapOpen, setMapOpen] = useState(false);
   const [results, setResults] = useState<Property[]>([]);
   const [searched, setSearched] = useState(false);
   const [catFilter, setCatFilter] = useState<'all' | 'homes' | 'hotels'>('all');
@@ -432,32 +433,33 @@ export default function Explore() {
   const shortlistedIds = shortlist.map(item => item.property.id);
 
   return (
-    <div className="h-full flex flex-col overflow-hidden bg-background">
+    <div className="fas-brand-day min-h-screen bg-background text-foreground">
       {/* Demo: Post-stay review trigger button (floating) */}
       <button
         onClick={() => setReviewModalOpen(true)}
-        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-2.5 rounded-full bg-gradient-to-r from-gold to-gold/80 text-charcoal font-medium shadow-lg hover:shadow-xl hover:shadow-gold/20 transition-all duration-300"
+        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-2.5 rounded-full bg-gradient-to-r from-gold to-gold/80 text-charcoal font-medium shadow-lg hover:shadow-xl transition-all duration-300"
       >
         <Star className="w-4 h-4" />
         <span className="hidden sm:inline">Demo Review</span>
       </button>
 
-      {/* Trip Summary Bar */}
-      <TripSummaryBar />
+      {/* HERO — photo behind a translucent glass search panel. Swap /hero-search.jpg per page. */}
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-cover" style={{ backgroundImage: "url('/hero-search.jpg')", backgroundPosition: 'center 38%' }} aria-hidden />
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg,rgba(6,22,28,.62),rgba(6,22,28,.18) 32%,rgba(6,22,28,.55))' }} aria-hidden />
+        <div className="relative mx-auto grid w-full max-w-6xl gap-8 px-4 py-10 md:grid-cols-2 md:items-center md:py-16">
+          <div className="max-w-[30ch] text-white">
+            <p className="mb-3 font-mono text-xs uppercase tracking-[0.18em] text-primary">A new era in accommodation pricing</p>
+            <h1 className="font-display text-4xl font-extrabold leading-[0.98] tracking-tight md:text-6xl">Name your price. <span className="text-primary">They'll answer.</span></h1>
+            <p className="mt-4 text-white/85">Tell a place what you'd pay — they accept, counter, or pass. Direct to the owner, flat fee, no commission.</p>
+          </div>
+          <SearchForm variant="hero" initial={searchCriteria} loading={isLoading} onSearch={handleSearch} />
+        </div>
+      </section>
 
-      {/* Main content - list-first; map is on-demand and lazy-mounted */}
-      <div className="flex-1 flex min-h-0 relative">
-        {/* Left: chat/results — hidden on mobile while the map is open */}
-        {(!isMobile || !mobileMapOpen) && (
-          <div
-            className={cn(
-              'flex flex-col overflow-hidden border-r border-border/50',
-              isMobile ? 'flex-1 w-full' : 'flex-none w-[520px] xl:w-[600px] 2xl:w-[640px]',
-            )}
-          >
-            <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
-              <SearchForm initial={searchCriteria} loading={isLoading} onSearch={handleSearch} />
-              <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+      {/* RESULTS */}
+      <section className="mx-auto w-full max-w-6xl px-4 py-8">
+        <div className="space-y-3">
                 {isLoading ? (
                   <div className="flex items-center justify-center py-16">
                     <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -475,15 +477,25 @@ export default function Explore() {
                   const shown = results.filter((p) => catFilter === 'all' || (p.category || 'hotels') === catFilter);
                   return (
                     <>
-                      {/* accommodation type filter */}
-                      <div className="flex gap-1 rounded-lg bg-muted/40 p-1 text-xs font-medium">
-                        <button onClick={() => setCatFilter('all')} className={cn('flex-1 rounded-md px-2 py-1.5 transition', catFilter === 'all' ? 'bg-primary/15 text-primary' : 'text-muted-foreground hover:text-foreground')}>All</button>
-                        <button onClick={() => setCatFilter('homes')} className={cn('flex flex-1 items-center justify-center gap-1 rounded-md px-2 py-1.5 transition', catFilter === 'homes' ? 'bg-primary/15 text-primary' : 'text-muted-foreground hover:text-foreground')}><Home className="h-3.5 w-3.5" /> Homes & apartments</button>
-                        <button onClick={() => setCatFilter('hotels')} className={cn('flex flex-1 items-center justify-center gap-1 rounded-md px-2 py-1.5 transition', catFilter === 'hotels' ? 'bg-primary/15 text-primary' : 'text-muted-foreground hover:text-foreground')}><Building2 className="h-3.5 w-3.5" /> Hotels & motels</button>
+                      <div className="mb-1">
+                        <p className="font-mono text-[0.65rem] uppercase tracking-[0.18em] text-primary">Make an offer on</p>
+                        <h2 className="font-display text-2xl font-bold tracking-tight">Stays in {searchCriteria.city}</h2>
+                        <p className="mt-0.5 text-sm text-muted-foreground">{shown.length} {shown.length === 1 ? 'property' : 'properties'} · tap a card to see rooms</p>
                       </div>
-                      <p className="text-xs font-medium text-muted-foreground">
-                        {shown.length} {shown.length === 1 ? 'property' : 'properties'} in {searchCriteria.city} · tap a card to see rooms
-                      </p>
+
+                      {/* accommodation type filter + map view tile */}
+                      <div className="flex flex-wrap items-center gap-2">
+                        <div className="flex flex-1 gap-1 rounded-lg bg-muted/50 p-1 text-xs font-medium">
+                          <button onClick={() => setCatFilter('all')} className={cn('flex-1 rounded-md px-2 py-1.5 transition', catFilter === 'all' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground')}>All</button>
+                          <button onClick={() => setCatFilter('homes')} className={cn('flex flex-1 items-center justify-center gap-1 rounded-md px-2 py-1.5 transition', catFilter === 'homes' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground')}><Home className="h-3.5 w-3.5" /> Homes & apartments</button>
+                          <button onClick={() => setCatFilter('hotels')} className={cn('flex flex-1 items-center justify-center gap-1 rounded-md px-2 py-1.5 transition', catFilter === 'hotels' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground')}><Building2 className="h-3.5 w-3.5" /> Hotels & motels</button>
+                        </div>
+                        <button onClick={() => setMapOpen(true)} className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground shadow-sm transition hover:border-primary/40">
+                          <MapIcon className="h-4 w-4 text-primary" /> Map view
+                        </button>
+                      </div>
+
+                      <div className="grid gap-4 sm:grid-cols-2">
                       {shown.map((property) => (
                         <PropertyResultCard
                           key={property.id}
@@ -495,54 +507,42 @@ export default function Explore() {
                           priceEstimate={getPropertyPriceEstimate(property.id)}
                         />
                       ))}
+                      </div>
                     </>
                   );
                 })()}
-              </div>
-            </div>
-            <div className="flex-shrink-0">
-              <ShortlistPanel
-                items={shortlist}
-                onRemove={handleRemoveFromShortlist}
-                onMakeOffer={(p) => handleMakeOffer(p)}
-                sentOfferIds={sentOfferIds}
-              />
-            </div>
-          </div>
-        )}
+        </div>
 
-        {/* Map — desktop always; mobile only when toggled. Mounted only when visible, so
-            Mapbox never initialises (and never costs a map load) for list-only users. */}
-        {(!isMobile || mobileMapOpen) && (
-          <div className="flex-1 relative min-w-0">
-            <MapPanel
-              properties={visibleProperties}
-              selectedPropertyId={selectedPropertyId}
-              shortlistedIds={shortlistedIds}
-              watchlistedIds={watchlistedIds}
-              onPropertySelect={handlePropertySelect}
-              onPropertyClick={handlePropertyPinClick}
-              mapboxToken={mapboxToken}
-              onTokenChange={setMapboxToken}
+        {shortlist.length > 0 && (
+          <div className="mt-6">
+            <ShortlistPanel
+              items={shortlist}
+              onRemove={handleRemoveFromShortlist}
+              onMakeOffer={(p) => handleMakeOffer(p)}
+              sentOfferIds={sentOfferIds}
             />
-            {isMobile && (
-              <Button onClick={() => setMobileMapOpen(false)} size="sm" className="absolute top-4 left-4 z-20 shadow-lg gap-2">
-                <List className="h-4 w-4" /> List
-              </Button>
-            )}
           </div>
         )}
+      </section>
 
-        {/* Mobile "Map" toggle while viewing the list */}
-        {isMobile && !mobileMapOpen && (
-          <Button
-            onClick={() => setMobileMapOpen(true)}
-            className="fixed bottom-24 left-1/2 -translate-x-1/2 z-40 rounded-full px-5 shadow-xl gap-2"
-          >
-            <MapIcon className="h-4 w-4" /> Map
+      {/* MAP OVERLAY — on-demand, opened from the "Map view" tile */}
+      {mapOpen && (
+        <div className="fixed inset-0 bg-background" style={{ zIndex: 50 }}>
+          <Button onClick={() => setMapOpen(false)} size="sm" className="absolute left-4 top-20 z-10 gap-2 shadow-lg">
+            <List className="h-4 w-4" /> Back to list
           </Button>
-        )}
-      </div>
+          <MapPanel
+            properties={visibleProperties}
+            selectedPropertyId={selectedPropertyId}
+            shortlistedIds={shortlistedIds}
+            watchlistedIds={watchlistedIds}
+            onPropertySelect={handlePropertySelect}
+            onPropertyClick={handlePropertyPinClick}
+            mapboxToken={mapboxToken}
+            onTokenChange={setMapboxToken}
+          />
+        </div>
+      )}
 
       {/* Property Detail Sheet (for pin clicks) */}
       <PropertyDetailSheet

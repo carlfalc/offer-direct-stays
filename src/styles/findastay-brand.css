@@ -163,3 +163,8 @@
 .fas-brand-day input[class*="rounded"] {
   box-shadow: none;
 }
+
+/* day-theme font helpers (brand display / mono faces inside light pages) */
+.fas-brand-day .font-display,
+.fas-brand-day .fas-display { font-family: var(--fas-display); letter-spacing: -.02em; }
+.fas-brand-day .font-mono { font-family: var(--fas-mono); }

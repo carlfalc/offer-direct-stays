@@ -53,7 +53,7 @@ const App = () => (
               
               {/* Authenticated routes with shared layout */}
               <Route path="/explore" element={
-                <AuthenticatedLayout fullHeight>
+                <AuthenticatedLayout>
                   <Explore />
                 </AuthenticatedLayout>
               } />

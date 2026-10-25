@@ -26,11 +26,14 @@ interface Props {
   initial: SearchCriteria;
   loading?: boolean;
   onSearch: (c: SearchCriteria) => void;
+  variant?: 'default' | 'hero';
 }
 
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 
-export default function SearchForm({ initial, loading, onSearch }: Props) {
+export default function SearchForm({ initial, loading, onSearch, variant = 'default' }: Props) {
+  const hero = variant === 'hero';
+  const labelCls = hero ? 'text-xs text-white/80' : 'text-xs text-muted-foreground';
   const [country, setCountry] = useState<'NZ' | 'AU'>(initial.country || 'NZ');
   const [city, setCity] = useState(initial.city || '');
   const [checkIn, setCheckIn] = useState(initial.checkIn || iso(new Date(Date.now() + 14 * 864e5)));
@@ -57,10 +60,17 @@ export default function SearchForm({ initial, loading, onSearch }: Props) {
   };
 
   return (
-    <div className="space-y-3 border-b border-border/50 bg-card/40 p-4 backdrop-blur-sm">
+    <div className={hero
+      ? 'space-y-3 rounded-3xl border border-white/40 bg-white/15 p-5 backdrop-blur-xl shadow-2xl'
+      : 'space-y-3 border-b border-border/50 bg-card/40 p-4 backdrop-blur-sm'}>
+      {hero && (
+        <div className="flex items-center gap-2 text-white font-semibold text-sm pb-1">
+          <Search className="h-4 w-4 text-primary" /> Where to?
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <Label className="text-xs text-muted-foreground">Country</Label>
+          <Label className={labelCls}>Country</Label>
           <Select value={country} onValueChange={(v) => setCountry(v as 'NZ' | 'AU')}>
             <SelectTrigger className="mt-1">
               <SelectValue />
@@ -72,7 +82,7 @@ export default function SearchForm({ initial, loading, onSearch }: Props) {
           </Select>
         </div>
         <div>
-          <Label className="text-xs text-muted-foreground">Town / city</Label>
+          <Label className={labelCls}>Town / city</Label>
           <Input
             value={city}
             onChange={(e) => setCity(e.target.value)}
@@ -85,11 +95,11 @@ export default function SearchForm({ initial, loading, onSearch }: Props) {
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <Label className="text-xs text-muted-foreground">Check-in</Label>
+          <Label className={labelCls}>Check-in</Label>
           <Input type="date" value={checkIn} onChange={(e) => setCheckIn(e.target.value)} className="mt-1" />
         </div>
         <div>
-          <Label className="text-xs text-muted-foreground">Check-out</Label>
+          <Label className={labelCls}>Check-out</Label>
           <Input type="date" value={checkOut} onChange={(e) => setCheckOut(e.target.value)} className="mt-1" />
         </div>
       </div>
@@ -101,7 +111,7 @@ export default function SearchForm({ initial, loading, onSearch }: Props) {
 
       {children > 0 && (
         <div>
-          <Label className="text-xs text-muted-foreground">Age of each child at check-out</Label>
+          <Label className={labelCls}>Age of each child at check-out</Label>
           <div className="mt-1 flex flex-wrap gap-2">
             {childAges.map((age, i) => (
               <Input
