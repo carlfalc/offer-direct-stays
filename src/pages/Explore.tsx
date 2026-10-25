@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useTrip } from '@/contexts/TripContext';
 import { supabase } from '@/integrations/supabase/client';
 import { searchListings } from '@/lib/listings';
+import { getSavedPropertyIds } from '@/lib/trips';
 import { Property, ChatMessage, ShortlistItem, Room } from '@/types';
 import SearchForm, { SearchCriteria } from '@/components/explore/SearchForm';
 import PropertyResultCard from '@/components/explore/PropertyResultCard';
@@ -88,6 +89,10 @@ export default function Explore() {
   const [visibleProperties, setVisibleProperties] = useState<Property[]>([]);
   const [mobileMapOpen, setMobileMapOpen] = useState(false);
   const [mapOpen, setMapOpen] = useState(false);
+  const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
+  const refreshSaved = () => {
+    if (user) getSavedPropertyIds(user.id).then(setSavedIds).catch(() => {});
+  };
   const [results, setResults] = useState<Property[]>([]);
   const [searched, setSearched] = useState(false);
   const [catFilter, setCatFilter] = useState<'all' | 'homes' | 'hotels'>('all');
@@ -129,6 +134,7 @@ export default function Explore() {
     if (user) {
       loadProperties();
       loadWatchlist();
+      getSavedPropertyIds(user.id).then(setSavedIds).catch(() => {});
     }
   }, [user]);
 
@@ -502,8 +508,8 @@ export default function Explore() {
                           property={property}
                           onViewDetails={() => handlePropertyPinClick(property)}
                           onMakeOffer={() => handleMakeOffer(property)}
-                          onAddToWatchlist={() => handleAddToWatchlist(property)}
-                          isWatchlisted={watchlistedIds.includes(property.id)}
+                          saved={savedIds.has(property.id)}
+                          onSavedChange={refreshSaved}
                           priceEstimate={getPropertyPriceEstimate(property.id)}
                         />
                       ))}

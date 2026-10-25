@@ -13,6 +13,7 @@ import Index from "./pages/Index";
 import FindAStayLanding from "./pages/FindAStayLanding";
 import Auth from "./pages/Auth";
 import Explore from "./pages/Explore";
+import TravellerDashboard from "./pages/TravellerDashboard";
 import AdminBilling from "./pages/AdminBilling";
 import AdminConsole from "./pages/AdminConsole";
 import OfferPayment from "./pages/OfferPayment";
@@ -52,6 +53,11 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               
               {/* Authenticated routes with shared layout */}
+              <Route path="/dashboard" element={
+                <AuthenticatedLayout>
+                  <TravellerDashboard />
+                </AuthenticatedLayout>
+              } />
               <Route path="/explore" element={
                 <AuthenticatedLayout>
                   <Explore />

@@ -1,17 +1,22 @@
 import { Property } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MapPin, Heart, Sparkles, Home, Building, Building2, Hotel, BedDouble, Tent } from 'lucide-react';
+import { MapPin, Sparkles, Home, Building, Building2, Hotel, BedDouble, Tent } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useTrip, PropertyPriceEstimate } from '@/contexts/TripContext';
 import { cn } from '@/lib/utils';
+import SaveToTripButton from './SaveToTripButton';
 
 interface PropertyResultCardProps {
   property: Property;
   onMakeOffer: () => void;
   onViewDetails: () => void;
-  onAddToWatchlist: () => void;
-  isWatchlisted: boolean;
+  onAddToWatchlist?: () => void;
+  isWatchlisted?: boolean;
+  /** True when this property is already saved in one of the traveller's trips. */
+  saved?: boolean;
+  /** Refresh hook after the saved state changes. */
+  onSavedChange?: () => void;
   priceEstimate?: PropertyPriceEstimate;
 }
 
@@ -19,8 +24,8 @@ export default function PropertyResultCard({
   property,
   onMakeOffer,
   onViewDetails,
-  onAddToWatchlist,
-  isWatchlisted,
+  saved,
+  onSavedChange,
   priceEstimate,
 }: PropertyResultCardProps) {
   const { trip } = useTrip();
@@ -65,10 +70,17 @@ export default function PropertyResultCard({
       onClick={onViewDetails}
       onKeyDown={(e) => { if (e.key === 'Enter') onViewDetails(); }}
       className={cn(
-        "premium-card overflow-hidden group cursor-pointer",
+        "premium-card overflow-hidden group cursor-pointer relative",
         "hover:border-primary/40"
       )}
     >
+      {/* Save to a trip — heart, top-right */}
+      <SaveToTripButton
+        property={property}
+        saved={saved}
+        onChange={onSavedChange}
+        className="absolute right-3 top-3 z-10"
+      />
       <div className="flex gap-4 p-4">
         {/* Image */}
         {property.image_url && (
@@ -88,7 +100,7 @@ export default function PropertyResultCard({
         
         <div className="flex-1 min-w-0">
           {/* Header */}
-          <div className="flex items-start justify-between gap-2 mb-2">
+          <div className="flex items-start justify-between gap-2 mb-2 pr-9">
             <div className="min-w-0">
               <h4 className="font-semibold text-foreground truncate">{property.name}</h4>
               <div className="flex items-center gap-1.5 text-sm text-muted-foreground mt-0.5">
@@ -141,8 +153,8 @@ export default function PropertyResultCard({
 
           {/* Actions */}
           <div className="flex gap-2">
-            <Button 
-              size="sm" 
+            <Button
+              size="sm"
               className={cn(
                 "flex-1 text-sm h-9 font-medium",
                 "bg-primary hover:bg-primary/90 text-primary-foreground"
@@ -150,22 +162,6 @@ export default function PropertyResultCard({
               onClick={(e) => { e.stopPropagation(); onMakeOffer(); }}
             >
               Make an offer
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className={cn(
-                "h-9 px-3",
-                isWatchlisted 
-                  ? "bg-accent/10 border-accent/30 text-accent hover:bg-accent/20" 
-                  : "hover:border-primary/30 hover:bg-primary/5"
-              )}
-              onClick={(e) => { e.stopPropagation(); onAddToWatchlist(); }}
-            >
-              <Heart className={cn(
-                "h-4 w-4",
-                isWatchlisted && "fill-current text-accent"
-              )} />
             </Button>
           </div>
         </div>

@@ -98,6 +98,7 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
   };
 
   const guestNavItems = [
+    { label: 'Home', path: '/dashboard', icon: LayoutDashboard },
     { label: 'My Offers', path: '/offers', icon: Send },
     { label: 'Watchlist', path: '/watchlist', icon: Heart },
     { label: 'Trips', path: '/trips', icon: Plane },
