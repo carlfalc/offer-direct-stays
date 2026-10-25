@@ -105,7 +105,7 @@ export default function BusinessDashboard() {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [filter, setFilter] = useState<Filter>(null);
-  const [period, setPeriod] = useState<'month' | '6mo' | 'year'>('month');
+  const [period, setPeriod] = useState<'month' | '6mo' | 'ytd'>('month');
   const [bandColor, setBandColor] = useState<'yellow' | 'orange' | 'navy'>(() => {
     try { return (localStorage.getItem('fs_band_biz') as any) || 'navy'; } catch { return 'navy'; }
   });
@@ -158,8 +158,12 @@ export default function BusinessDashboard() {
   const currencyFor = (o: FsOffer) => (o.listing?.country === 'AU' ? 'AUD' : 'NZD');
 
   // Analytics period (by when the offer came in)
-  const periodDays = period === 'month' ? 30 : period === '6mo' ? 182 : 365;
-  const sinceISO = new Date(Date.now() - periodDays * 864e5).toISOString().slice(0, 10);
+  const now = new Date();
+  const periodSince =
+    period === 'month' ? new Date(now.getFullYear(), now.getMonth(), 1)
+    : period === '6mo' ? new Date(Date.now() - 182 * 864e5)
+    : new Date(now.getFullYear(), 0, 1); // ytd
+  const sinceISO = periodSince.toISOString().slice(0, 10);
   const inRange = (o: FsOffer) => (o.created_at || '').slice(0, 10) >= sinceISO;
   const scope = offers.filter(inRange);
 
@@ -173,8 +177,14 @@ export default function BusinessDashboard() {
   // Analytics for the selected period
   const revenue = confirmed.reduce((s, o) => s + (o.total_offer || 0), 0);
   const acceptanceRate = scope.length ? Math.round((confirmed.length / scope.length) * 100) : 0;
+  const nightsSold = confirmed.reduce((s, o) => s + (o.nights || 0), 0);
+  const avgNightly = confirmed.length ? Math.round(confirmed.reduce((s, o) => s + (o.nightly_offer || 0), 0) / confirmed.length) : 0;
+  const avgStay = confirmed.length ? (confirmed.reduce((s, o) => s + (o.nights || 0), 0) / confirmed.length) : 0;
+  const declinedCount = scope.filter((o) => o.status === 'declined').length;
+  const todayISO = new Date().toISOString().slice(0, 10);
+  const receivedToday = offers.filter((o) => (o.created_at || '').slice(0, 10) === todayISO).length;
   const curSym = listings[0]?.country === 'AU' ? 'A$' : 'NZ$';
-  const periodLabel = period === 'month' ? 'This month' : period === '6mo' ? 'Last 6 months' : 'This year';
+  const periodLabel = period === 'month' ? 'This month' : period === '6mo' ? 'Last 6 months' : 'Year to date';
 
   // The approved-bookings list the view (and any export) is showing.
   const bookingList = filter === 'to_enter' ? toEnter : filter === 'entered' ? entered : confirmed;
@@ -291,7 +301,7 @@ export default function BusinessDashboard() {
                 <select value={period} onChange={(e) => setPeriod(e.target.value as any)} className="rounded-lg border border-black/10 bg-white px-2.5 py-1 text-sm font-semibold text-foreground">
                   <option value="month">This month</option>
                   <option value="6mo">Last 6 months</option>
-                  <option value="year">This year</option>
+                  <option value="ytd">Year to date</option>
                 </select>
               </div>
             </div>
@@ -327,27 +337,24 @@ export default function BusinessDashboard() {
           <span className="text-sm text-muted-foreground">· {periodLabel}</span>
         </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <div className="rounded-xl border border-border bg-card p-4 transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_14px_28px_-14px_rgba(8,22,30,.45)]">
-            <Send className="h-4 w-4 text-primary" />
-            <p className="mt-2 font-display text-2xl font-extrabold text-foreground">{scope.length}</p>
-            <p className="text-xs text-muted-foreground">Offers received</p>
-          </div>
-          <div className="rounded-xl border border-border bg-card p-4 transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_14px_28px_-14px_rgba(8,22,30,.45)]">
-            <CheckCircle2 className="h-4 w-4 text-success" />
-            <p className="mt-2 font-display text-2xl font-extrabold text-foreground">{confirmed.length}</p>
-            <p className="text-xs text-muted-foreground">Confirmed bookings</p>
-          </div>
-          <div className="rounded-xl border border-border bg-card p-4 transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_14px_28px_-14px_rgba(8,22,30,.45)]">
-            <Percent className="h-4 w-4 text-primary" />
-            <p className="mt-2 font-display text-2xl font-extrabold text-foreground">{acceptanceRate}%</p>
-            <p className="text-xs text-muted-foreground">Acceptance rate</p>
-          </div>
-          <div className="rounded-xl border border-border bg-card p-4 transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_14px_28px_-14px_rgba(8,22,30,.45)]">
-            <DollarSign className="h-4 w-4 text-primary" />
-            <p className="mt-2 font-display text-2xl font-extrabold text-foreground">{curSym}{Math.round(revenue).toLocaleString()}</p>
-            <p className="text-xs text-muted-foreground">Confirmed revenue</p>
-          </div>
+          {[
+            { icon: <Send className="h-4 w-4 text-primary" />, value: scope.length, label: 'Offers received' },
+            { icon: <CheckCircle2 className="h-4 w-4 text-success" />, value: confirmed.length, label: 'Bookings confirmed' },
+            { icon: <Percent className="h-4 w-4 text-primary" />, value: `${acceptanceRate}%`, label: 'Acceptance rate' },
+            { icon: <DollarSign className="h-4 w-4 text-primary" />, value: `${curSym}${Math.round(revenue).toLocaleString()}`, label: 'Confirmed revenue' },
+            { icon: <CalendarDays className="h-4 w-4 text-primary" />, value: nightsSold, label: 'Nights sold' },
+            { icon: <DollarSign className="h-4 w-4 text-primary" />, value: `${curSym}${avgNightly}`, label: 'Avg nightly rate' },
+            { icon: <Clock className="h-4 w-4 text-primary" />, value: avgStay ? `${avgStay.toFixed(1)}n` : '—', label: 'Avg length of stay' },
+            { icon: <X className="h-4 w-4 text-muted-foreground" />, value: declinedCount, label: 'Declined' },
+          ].map((s, i) => (
+            <div key={i} className="rounded-xl border border-border bg-card p-4 transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_14px_28px_-14px_rgba(8,22,30,.45)]">
+              {s.icon}
+              <p className="mt-2 font-display text-2xl font-extrabold text-foreground">{s.value}</p>
+              <p className="text-xs text-muted-foreground">{s.label}</p>
+            </div>
+          ))}
         </div>
+        <p className="mt-2 text-xs text-muted-foreground">Today: <span className="font-semibold text-foreground">{receivedToday}</span> new offer{receivedToday === 1 ? '' : 's'} received.</p>
 
         {/* Ranking — UI now, live data wired later */}
         <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-border bg-card p-4">
