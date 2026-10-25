@@ -172,4 +172,9 @@
 /* Hero search panel: solid black card, white labels, white fields */
 .fas-hero-search { color: #fff; }
 .fas-hero-search .text-foreground { color: #fff !important; }   /* stepper labels/value */
+/* force every field solid white with dark text (beats the .fas-brand input rule) */
+.fas-hero-search input,
+.fas-hero-search [role="combobox"],
+.fas-hero-search button[role="combobox"] { background: #ffffff !important; color: #0c1a22 !important; border-color: rgba(0,0,0,.12) !important; }
+.fas-hero-search input::placeholder { color: #5f6f77 !important; }
 .fas-hero-search input[type="date"] { color-scheme: light; }    /* dark native date glyph on white */

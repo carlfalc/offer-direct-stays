@@ -167,6 +167,21 @@ export default function Explore() {
     return () => io.disconnect();
   }, [isMobile, searched, resultView, catFilter, results.length, mobileCount]);
 
+  // Land straight on results: auto-run a default search once on arrival.
+  const didAutoSearch = useRef(false);
+  useEffect(() => {
+    if (authLoading || !user || didAutoSearch.current) return;
+    didAutoSearch.current = true;
+    if (searched) return;
+    const isoD = (ms: number) => new Date(ms).toISOString().slice(0, 10);
+    handleSearch({
+      country: 'NZ', city: 'Whanganui',
+      checkIn: isoD(Date.now() + 14 * 864e5), checkOut: isoD(Date.now() + 16 * 864e5),
+      adults: 2, children: 0, childAges: [],
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, authLoading]);
+
   // Redirect if not authenticated
   useEffect(() => {
     if (!authLoading && !user) {
@@ -527,22 +542,7 @@ export default function Explore() {
         <span className="hidden sm:inline">Demo Review</span>
       </button>
 
-      {!searched ? (
-        /* HERO — pre-search landing. Swap /hero-search.jpg per page. */
-        <section className="relative overflow-hidden md:flex md:min-h-[calc(100vh-4rem)] md:items-center">
-          <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('/hero-search.jpg')" }} aria-hidden />
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg,rgba(6,22,28,.62),rgba(6,22,28,.18) 32%,rgba(6,22,28,.55))' }} aria-hidden />
-          <div className="relative mx-auto grid w-full max-w-6xl gap-8 px-4 py-10 md:grid-cols-2 md:items-center md:py-16">
-            <div className="max-w-[30ch] text-white">
-              <p className="mb-3 font-mono text-xs uppercase tracking-[0.18em] text-primary">A new era in accommodation pricing</p>
-              <h1 className="font-display text-4xl font-extrabold leading-[0.98] tracking-tight md:text-6xl">Name your price. <span className="text-primary">They'll answer.</span></h1>
-              <p className="mt-4 text-white/85">Tell a place what you'd pay — they accept, counter, or pass. Direct to the owner, flat fee, no commission.</p>
-            </div>
-            <SearchForm variant="hero" initial={searchCriteria} loading={isLoading} onSearch={handleSearch} />
-          </div>
-        </section>
-      ) : (
-        <>
+      <>
           {/* COLOURED BAND — search + breadcrumb + change-the-look + weather + map + property type */}
           <div style={{ backgroundColor: bandBg }}>
             <div className="mx-auto w-full max-w-6xl px-4 pb-5">
@@ -696,7 +696,6 @@ export default function Explore() {
 
           <ResultsFooter />
         </>
-      )}
 
       {/* MAP OVERLAY — on-demand, opened from the "Map view" tile */}
       {mapOpen && (
