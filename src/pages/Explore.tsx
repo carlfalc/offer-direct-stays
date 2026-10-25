@@ -125,19 +125,7 @@ export default function Explore() {
     const e = getPropertyPriceEstimate(p.id);
     return p.guide_price ?? e?.high ?? e?.low ?? null;
   };
-
-  // Infinite scroll (mobile): load another batch when the sentinel scrolls into view
   const sentinelRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!isMobile || !searched) return;
-    const el = sentinelRef.current;
-    if (!el) return;
-    const io = new IntersectionObserver((entries) => {
-      if (entries[0]?.isIntersecting) setMobileCount((c) => c + 20);
-    }, { rootMargin: '400px' });
-    io.observe(el);
-    return () => io.disconnect();
-  }, [isMobile, searched, resultView, catFilter, results.length, mobileCount]);
   const [results, setResults] = useState<Property[]>([]);
   const [searched, setSearched] = useState(false);
   const [catFilter, setCatFilter] = useState<'all' | 'homes' | 'hotels' | 'parks'>('all');
@@ -166,6 +154,18 @@ export default function Explore() {
 
   // Post-stay review modal (demo trigger)
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
+
+  // Infinite scroll (mobile): load another batch when the sentinel scrolls into view
+  useEffect(() => {
+    if (!isMobile || !searched) return;
+    const el = sentinelRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver((entries) => {
+      if (entries[0]?.isIntersecting) setMobileCount((c) => c + 20);
+    }, { rootMargin: '400px' });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [isMobile, searched, resultView, catFilter, results.length, mobileCount]);
 
   // Redirect if not authenticated
   useEffect(() => {
