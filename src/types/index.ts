@@ -14,9 +14,12 @@ export interface Property {
   registration_status: string | null;
   is_claimed: boolean | null;
   image_url: string | null;
-  category?: 'homes' | 'hotels';
+  category?: 'homes' | 'hotels' | 'parks';
   payment_terms?: string | null;
   payment_lead_days?: number | null;
+  rating?: number | null;
+  review_count?: number | null;
+  guide_price?: number | null;
   created_at: string;
   updated_at: string;
 }

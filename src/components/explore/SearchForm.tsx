@@ -27,13 +27,14 @@ interface Props {
   initial: SearchCriteria;
   loading?: boolean;
   onSearch: (c: SearchCriteria) => void;
-  variant?: 'default' | 'hero';
+  variant?: 'default' | 'hero' | 'bar';
 }
 
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 
 export default function SearchForm({ initial, loading, onSearch, variant = 'default' }: Props) {
   const hero = variant === 'hero';
+  const bar = variant === 'bar';
   const labelCls = hero ? 'text-xs text-white/80' : 'text-xs text-muted-foreground';
   // On the black hero panel, fields are solid white with dark text for legibility.
   const fieldCls = hero ? 'mt-1 bg-white text-neutral-900 border-black/10 placeholder:text-neutral-500' : 'mt-1';
@@ -65,6 +66,8 @@ export default function SearchForm({ initial, loading, onSearch, variant = 'defa
   return (
     <div className={hero
       ? 'fas-hero-search space-y-3 rounded-3xl border border-white/10 bg-[#0a0d12] p-5 shadow-2xl'
+      : bar
+      ? 'space-y-3 rounded-2xl border border-black/10 bg-white p-3 shadow-lg'
       : 'space-y-3 border-b border-border/50 bg-card/40 p-4 backdrop-blur-sm'}>
       {hero && (
         <div className="flex items-center gap-2 text-white font-semibold text-sm pb-1">

@@ -138,7 +138,10 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
     <div className={cn(businessMode ? 'fas-brand-day' : 'fas-brand', 'flex flex-col', fullHeight ? 'h-screen overflow-hidden' : 'min-h-screen')}>
       <BrandBackdrop variant={businessMode ? 'day' : 'night'} />
       {/* Premium Header */}
-      <header className="h-16 border-b border-border/30 bg-card/80 backdrop-blur-md flex items-center justify-between px-4 md:px-6 flex-shrink-0 z-20">
+      <header className={cn(
+        "h-16 border-b flex items-center justify-between px-4 md:px-6 flex-shrink-0 z-20",
+        businessMode ? "border-border/30 bg-card/80 backdrop-blur-md" : "border-white/5 bg-[#0C1A22]"
+      )}>
         {/* Logo */}
         <button
           onClick={() => navigate('/explore')}

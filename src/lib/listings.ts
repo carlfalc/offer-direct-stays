@@ -107,9 +107,13 @@ export async function searchClaimableHotels(query: string): Promise<ClaimableHot
 const LITE_HOME_TYPE_IDS = new Set([219, 220, 223]); // apartment / villa
 // Owner-declared property_type strings that belong in the "homes" group.
 const HOME_TYPES = new Set(['home', 'home_apartment', 'apartment', 'villa', 'house', 'cabin', 'cottage', 'bach']);
+const PARK_TYPES = new Set(['holiday_park', 'holiday park', 'caravan', 'campground', 'camp', 'motor_camp']);
 
-export function categoryOf(propertyType?: string | null): 'homes' | 'hotels' {
-  return propertyType && HOME_TYPES.has(propertyType) ? 'homes' : 'hotels';
+export function categoryOf(propertyType?: string | null): 'homes' | 'hotels' | 'parks' {
+  if (!propertyType) return 'hotels';
+  if (PARK_TYPES.has(propertyType)) return 'parks';
+  if (HOME_TYPES.has(propertyType)) return 'homes';
+  return 'hotels';
 }
 
 /** Map one LiteAPI content hotel into the app's Property shape. */
@@ -137,6 +141,9 @@ export function mapHotelToProperty(h: any, country: 'NZ' | 'AU'): Property {
     is_claimed: false,
     image_url: h.main_photo || h.thumbnail || null,
     category: LITE_HOME_TYPE_IDS.has(Number(h.hotelTypeId)) ? 'homes' : 'hotels',
+    rating: typeof h.rating === 'number' ? h.rating : null,
+    review_count: typeof h.reviewCount === 'number' ? h.reviewCount : null,
+    guide_price: null,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   };

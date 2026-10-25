@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useTrip } from '@/contexts/TripContext';
@@ -8,6 +8,8 @@ import { getSavedPropertyIds } from '@/lib/trips';
 import { Property, ChatMessage, ShortlistItem, Room } from '@/types';
 import SearchForm, { SearchCriteria } from '@/components/explore/SearchForm';
 import PropertyResultCard from '@/components/explore/PropertyResultCard';
+import WeatherTiles from '@/components/explore/WeatherTiles';
+import ResultsFooter from '@/components/explore/ResultsFooter';
 import MapPanel from '@/components/explore/MapPanel';
 import ShortlistPanel from '@/components/explore/ShortlistPanel';
 import TripSummaryBar from '@/components/explore/TripSummaryBar';
@@ -15,7 +17,7 @@ import PropertyDetailSheet from '@/components/explore/PropertyDetailSheet';
 import OfferModal from '@/components/explore/OfferModal';
 import { PostStayReviewModal, ReviewPayload } from '@/components/review';
 import { Button } from '@/components/ui/button';
-import { MapPin, LogOut, Menu, Heart, Plane, Star, Map as MapIcon, List, Loader2, Search as SearchIcon, Home, Building2 } from 'lucide-react';
+import { MapPin, LogOut, Menu, Heart, Plane, Star, Map as MapIcon, List, Loader2, Search as SearchIcon, Home, Building2, Tent, LayoutGrid } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
@@ -93,9 +95,52 @@ export default function Explore() {
   const refreshSaved = () => {
     if (user) getSavedPropertyIds(user.id).then(setSavedIds).catch(() => {});
   };
+
+  // Results-page controls
+  const [bandColor, setBandColor] = useState<'yellow' | 'orange' | 'navy'>(() => {
+    try { return (localStorage.getItem('fs_band') as any) || 'yellow'; } catch { return 'yellow'; }
+  });
+  const pickBand = (c: 'yellow' | 'orange' | 'navy') => {
+    setBandColor(c);
+    try { localStorage.setItem('fs_band', c); } catch { /* ignore */ }
+  };
+  const [resultView, setResultView] = useState<'list' | 'grid'>('list');
+  const [sortBy, setSortBy] = useState<'price_desc' | 'price_asc' | 'recommended'>('price_desc');
+  const [perPage, setPerPage] = useState(20);
+  const [page, setPage] = useState(1);
+  const [maxBudget, setMaxBudget] = useState<number | null>(null); // null = no cap
+  const [mobileCount, setMobileCount] = useState(20);
+
+  const BUDGET_MAX: Record<string, number> = { all: 20000, homes: 20000, hotels: 1000, parks: 500 };
+  const BUDGET_MIN: Record<string, number> = { all: 20, homes: 50, hotels: 50, parks: 20 };
+
+  const chooseCat = (c: 'all' | 'homes' | 'hotels' | 'parks') => {
+    setCatFilter(c);
+    setMaxBudget(null);
+    setPage(1);
+    setMobileCount(20);
+  };
+
+  const priceOf = (p: Property): number | null => {
+    const e = getPropertyPriceEstimate(p.id);
+    return p.guide_price ?? e?.high ?? e?.low ?? null;
+  };
+
+  // Infinite scroll (mobile): load another batch when the sentinel scrolls into view
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!isMobile || !searched) return;
+    const el = sentinelRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver((entries) => {
+      if (entries[0]?.isIntersecting) setMobileCount((c) => c + 20);
+    }, { rootMargin: '400px' });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [isMobile, searched, resultView, catFilter, results.length, mobileCount]);
   const [results, setResults] = useState<Property[]>([]);
   const [searched, setSearched] = useState(false);
-  const [catFilter, setCatFilter] = useState<'all' | 'homes' | 'hotels'>('all');
+  const [catFilter, setCatFilter] = useState<'all' | 'homes' | 'hotels' | 'parks'>('all');
   const [searchCriteria, setSearchCriteria] = useState<SearchCriteria>({
     country: 'NZ', city: '', checkIn: '', checkOut: '', adults: 2, children: 0, childAges: [],
   });
@@ -438,6 +483,39 @@ export default function Explore() {
 
   const shortlistedIds = shortlist.map(item => item.property.id);
 
+  // Derived results list (category + budget filter, then sort, then paginate)
+  const BAND_BG: Record<string, string> = { yellow: '#FBEFC9', orange: '#F7D6B6', navy: '#1E2A4A' };
+  const bandBg = BAND_BG[bandColor];
+  const navy = bandColor === 'navy';
+  const sym = trip.currency === 'AUD' ? 'A$' : 'NZ$';
+
+  const filteredList = (() => {
+    let list = results.filter((p) => catFilter === 'all' || (p.category || 'hotels') === catFilter);
+    if (maxBudget != null) list = list.filter((p) => { const pr = priceOf(p); return pr == null || pr <= maxBudget; });
+    list = [...list].sort((a, b) => {
+      if (sortBy === 'recommended') return Number(b.is_claimed) - Number(a.is_claimed);
+      const pa = priceOf(a); const pb = priceOf(b);
+      if (pa == null && pb == null) return 0;
+      if (pa == null) return 1;
+      if (pb == null) return -1;
+      return sortBy === 'price_asc' ? pa - pb : pb - pa;
+    });
+    return list;
+  })();
+  const totalResults = filteredList.length;
+  const pageCount = Math.max(1, Math.ceil(totalResults / perPage));
+  const curPage = Math.min(page, pageCount);
+  const shownResults = isMobile
+    ? filteredList.slice(0, mobileCount)
+    : filteredList.slice((curPage - 1) * perPage, curPage * perPage);
+
+  const catButtons: { id: 'all' | 'homes' | 'hotels' | 'parks'; label: string; Icon?: any }[] = [
+    { id: 'all', label: 'All' },
+    { id: 'homes', label: 'Homes & apartments', Icon: Home },
+    { id: 'hotels', label: 'Hotels & motels', Icon: Building2 },
+    { id: 'parks', label: 'Holiday parks', Icon: Tent },
+  ];
+
   return (
     <div className="fas-brand-day min-h-screen bg-background text-foreground">
       {/* Demo: Post-stay review trigger button (floating) */}
@@ -449,87 +527,176 @@ export default function Explore() {
         <span className="hidden sm:inline">Demo Review</span>
       </button>
 
-      {/* HERO — photo fills the screen on desktop; scrolls on mobile. Swap /hero-search.jpg per page. */}
-      <section className="relative overflow-hidden md:flex md:min-h-[calc(100vh-4rem)] md:items-center">
-        <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('/hero-search.jpg')" }} aria-hidden />
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg,rgba(6,22,28,.62),rgba(6,22,28,.18) 32%,rgba(6,22,28,.55))' }} aria-hidden />
-        <div className="relative mx-auto grid w-full max-w-6xl gap-8 px-4 py-10 md:grid-cols-2 md:items-center md:py-16">
-          <div className="max-w-[30ch] text-white">
-            <p className="mb-3 font-mono text-xs uppercase tracking-[0.18em] text-primary">A new era in accommodation pricing</p>
-            <h1 className="font-display text-4xl font-extrabold leading-[0.98] tracking-tight md:text-6xl">Name your price. <span className="text-primary">They'll answer.</span></h1>
-            <p className="mt-4 text-white/85">Tell a place what you'd pay — they accept, counter, or pass. Direct to the owner, flat fee, no commission.</p>
+      {!searched ? (
+        /* HERO — pre-search landing. Swap /hero-search.jpg per page. */
+        <section className="relative overflow-hidden md:flex md:min-h-[calc(100vh-4rem)] md:items-center">
+          <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('/hero-search.jpg')" }} aria-hidden />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg,rgba(6,22,28,.62),rgba(6,22,28,.18) 32%,rgba(6,22,28,.55))' }} aria-hidden />
+          <div className="relative mx-auto grid w-full max-w-6xl gap-8 px-4 py-10 md:grid-cols-2 md:items-center md:py-16">
+            <div className="max-w-[30ch] text-white">
+              <p className="mb-3 font-mono text-xs uppercase tracking-[0.18em] text-primary">A new era in accommodation pricing</p>
+              <h1 className="font-display text-4xl font-extrabold leading-[0.98] tracking-tight md:text-6xl">Name your price. <span className="text-primary">They'll answer.</span></h1>
+              <p className="mt-4 text-white/85">Tell a place what you'd pay — they accept, counter, or pass. Direct to the owner, flat fee, no commission.</p>
+            </div>
+            <SearchForm variant="hero" initial={searchCriteria} loading={isLoading} onSearch={handleSearch} />
           </div>
-          <SearchForm variant="hero" initial={searchCriteria} loading={isLoading} onSearch={handleSearch} />
-        </div>
-      </section>
+        </section>
+      ) : (
+        <>
+          {/* COLOURED BAND — search + breadcrumb + change-the-look + weather + map + property type */}
+          <div style={{ backgroundColor: bandBg }}>
+            <div className="mx-auto w-full max-w-6xl px-4 pb-5">
+              <div className="pt-4">
+                <SearchForm variant="bar" initial={searchCriteria} loading={isLoading} onSearch={handleSearch} />
+              </div>
 
-      {/* RESULTS */}
-      <section className="mx-auto w-full max-w-6xl px-4 py-8">
-        <div className="space-y-3">
-                {isLoading ? (
-                  <div className="flex items-center justify-center py-16">
-                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                  </div>
-                ) : !searched ? (
-                  <div className="py-16 text-center text-sm text-muted-foreground">
-                    <SearchIcon className="mx-auto mb-3 h-8 w-8 opacity-40" />
-                    Choose where and when, then search to see stays you can make an offer on.
-                  </div>
-                ) : results.length === 0 ? (
-                  <div className="py-16 text-center text-sm text-muted-foreground">
-                    No stays found for {searchCriteria.city}. Try another town or widen your dates.
-                  </div>
-                ) : (() => {
-                  const shown = results.filter((p) => catFilter === 'all' || (p.category || 'hotels') === catFilter);
-                  return (
-                    <>
-                      <div className="mb-1">
-                        <p className="font-mono text-[0.65rem] uppercase tracking-[0.18em] text-primary">Make an offer on</p>
-                        <h2 className="font-display text-2xl font-bold tracking-tight">Stays in {searchCriteria.city}</h2>
-                        <p className="mt-0.5 text-sm text-muted-foreground">{shown.length} {shown.length === 1 ? 'property' : 'properties'} · tap a card to see rooms</p>
-                      </div>
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-4">
+                <div className={cn('text-sm', navy ? 'text-white/85' : 'text-foreground')}>
+                  <span className="opacity-70">Home › {searchCriteria.country === 'AU' ? 'Australia' : 'New Zealand'} › </span>
+                  <span className="font-bold">{searchCriteria.city || 'Search'}</span>
+                </div>
+                <div className={cn('flex items-center gap-2 text-xs font-semibold', navy ? 'text-white/85' : 'text-muted-foreground')}>
+                  Change the look
+                  {(['yellow', 'orange', 'navy'] as const).map((c) => (
+                    <button key={c} type="button" onClick={() => pickBand(c)} aria-label={c}
+                      className={cn('h-5 w-5 rounded-full border-2 border-black/10', bandColor === c && (navy ? 'outline outline-2 outline-white' : 'outline outline-2 outline-foreground'))}
+                      style={{ backgroundColor: BAND_BG[c] }} />
+                  ))}
+                </div>
+              </div>
 
-                      {/* accommodation type filter + map view tile */}
-                      <div className="flex flex-wrap items-center gap-2">
-                        <div className="flex flex-1 gap-1 rounded-lg bg-muted/50 p-1 text-xs font-medium">
-                          <button onClick={() => setCatFilter('all')} className={cn('flex-1 rounded-md px-2 py-1.5 transition', catFilter === 'all' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground')}>All</button>
-                          <button onClick={() => setCatFilter('homes')} className={cn('flex flex-1 items-center justify-center gap-1 rounded-md px-2 py-1.5 transition', catFilter === 'homes' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground')}><Home className="h-3.5 w-3.5" /> Homes & apartments</button>
-                          <button onClick={() => setCatFilter('hotels')} className={cn('flex flex-1 items-center justify-center gap-1 rounded-md px-2 py-1.5 transition', catFilter === 'hotels' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground')}><Building2 className="h-3.5 w-3.5" /> Hotels & motels</button>
-                        </div>
-                        <button onClick={() => setMapOpen(true)} className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground shadow-sm transition hover:border-primary/40">
-                          <MapIcon className="h-4 w-4 text-primary" /> Map view
-                        </button>
-                      </div>
+              <div className="flex flex-wrap items-end justify-between gap-3 py-3">
+                <h1 className={cn('font-display text-2xl font-extrabold tracking-tight', navy ? 'text-white' : 'text-foreground')}>
+                  {searchCriteria.city || 'Stays'} <span className={cn('text-base font-medium', navy ? 'text-white/70' : 'text-muted-foreground')}>· {totalResults} stays you can make an offer on</span>
+                </h1>
+                <div className="flex items-center gap-2">
+                  <select value={sortBy} onChange={(e) => setSortBy(e.target.value as any)}
+                    className="rounded-lg border border-border bg-card px-3 py-2 text-sm font-semibold text-foreground">
+                    <option value="price_desc">Sort: Price (high → low)</option>
+                    <option value="price_asc">Sort: Price (low → high)</option>
+                    <option value="recommended">Sort: Recommended</option>
+                  </select>
+                  <div className="inline-flex overflow-hidden rounded-lg border border-border">
+                    <button type="button" onClick={() => setResultView('list')} className={cn('flex items-center gap-1 px-3 py-2 text-sm font-semibold', resultView === 'list' ? 'bg-foreground text-background' : 'bg-card text-muted-foreground')}><List className="h-4 w-4" /> List</button>
+                    <button type="button" onClick={() => setResultView('grid')} className={cn('flex items-center gap-1 px-3 py-2 text-sm font-semibold', resultView === 'grid' ? 'bg-foreground text-background' : 'bg-card text-muted-foreground')}><LayoutGrid className="h-4 w-4" /> Grid</button>
+                  </div>
+                </div>
+              </div>
 
-                      <div className="grid gap-4 sm:grid-cols-2">
-                      {shown.map((property) => (
-                        <PropertyResultCard
-                          key={property.id}
-                          property={property}
-                          onViewDetails={() => handlePropertyPinClick(property)}
-                          onMakeOffer={() => handleMakeOffer(property)}
-                          saved={savedIds.has(property.id)}
-                          onSavedChange={refreshSaved}
-                          priceEstimate={getPropertyPriceEstimate(property.id)}
-                        />
+              <WeatherTiles />
+
+              <div className="grid gap-4 md:grid-cols-[1.25fr_1fr]">
+                <button type="button" onClick={() => setMapOpen(true)}
+                  className="relative flex min-h-[150px] items-center justify-center overflow-hidden rounded-2xl border border-black/10 bg-gradient-to-br from-[#d7e6e4] to-[#c2d6e4]">
+                  <span className="flex items-center gap-2 rounded-full border border-border bg-white px-4 py-2 text-sm font-bold text-foreground shadow"><MapIcon className="h-4 w-4" /> Show on map</span>
+                </button>
+                <div className="rounded-2xl border border-black/10 bg-white p-4">
+                  <h4 className="font-display text-base font-bold text-foreground">Property type</h4>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {catButtons.filter((c) => c.id !== 'all').map((c) => (
+                      <button key={c.id} type="button" onClick={() => chooseCat(catFilter === c.id ? 'all' : c.id)}
+                        className={cn('inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-semibold',
+                          catFilter === c.id ? 'border-foreground bg-foreground text-background' : 'border-border text-muted-foreground')}>
+                        {c.Icon && <c.Icon className="h-3.5 w-3.5" />} {c.label}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="mt-4 text-xs text-muted-foreground">Your budget (per night)</div>
+                  <input type="range" min={BUDGET_MIN[catFilter]} max={BUDGET_MAX[catFilter]} step={10}
+                    value={maxBudget ?? BUDGET_MAX[catFilter]}
+                    onChange={(e) => { const v = Number(e.target.value); setMaxBudget(v >= BUDGET_MAX[catFilter] ? null : v); setPage(1); setMobileCount(20); }}
+                    className="mt-2 w-full accent-[#0C1A22]" />
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>{sym}{BUDGET_MIN[catFilter]}</span>
+                    <span>Up to {sym}{(maxBudget ?? BUDGET_MAX[catFilter]).toLocaleString()}{maxBudget == null ? '+' : ''}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* RESULTS (white) */}
+          <div className="mx-auto w-full max-w-6xl px-4 py-6">
+            <div className="mb-4 flex items-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground">
+              <SearchIcon className="h-4 w-4 flex-none" /> You set the price — make an offer and the property accepts, counters, or passes.
+            </div>
+
+            <div className="mb-4 flex flex-wrap items-center gap-2">
+              <div className="flex flex-1 gap-0.5 rounded-lg border border-border bg-muted/50 p-1 text-xs font-semibold">
+                {catButtons.map((c) => (
+                  <button key={c.id} type="button" onClick={() => chooseCat(c.id)}
+                    className={cn('flex flex-1 items-center justify-center gap-1 rounded-md px-2 py-1.5 transition', catFilter === c.id ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground')}>
+                    {c.Icon && <c.Icon className="h-3.5 w-3.5" />} {c.label}
+                  </button>
+                ))}
+              </div>
+              <button type="button" onClick={() => setMapOpen(true)} className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground shadow-sm transition hover:border-primary/40">
+                <MapIcon className="h-4 w-4 text-primary" /> Map view
+              </button>
+            </div>
+
+            {isLoading ? (
+              <div className="flex items-center justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+            ) : totalResults === 0 ? (
+              <div className="py-16 text-center text-sm text-muted-foreground">
+                <SearchIcon className="mx-auto mb-3 h-8 w-8 opacity-40" />
+                No stays found for {searchCriteria.city}. Try another town, category, or widen your budget.
+              </div>
+            ) : (
+              <>
+                <div className={resultView === 'grid' ? 'grid gap-4 sm:grid-cols-2 lg:grid-cols-3' : 'flex flex-col gap-4'}>
+                  {shownResults.map((property) => (
+                    <PropertyResultCard
+                      key={property.id}
+                      property={property}
+                      view={resultView}
+                      onViewDetails={() => handlePropertyPinClick(property)}
+                      onMakeOffer={() => handleMakeOffer(property)}
+                      saved={savedIds.has(property.id)}
+                      onSavedChange={refreshSaved}
+                      priceEstimate={getPropertyPriceEstimate(property.id)}
+                    />
+                  ))}
+                </div>
+
+                {!isMobile && (
+                  <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex items-center gap-1">
+                      <button className="h-9 min-w-9 rounded-lg border border-border bg-card px-2 font-semibold disabled:opacity-40" disabled={curPage <= 1} onClick={() => setPage(curPage - 1)}>‹</button>
+                      {Array.from({ length: Math.min(pageCount, 6) }, (_, i) => i + 1).map((n) => (
+                        <button key={n} onClick={() => setPage(n)} className={cn('h-9 min-w-9 rounded-lg border px-2 font-semibold', n === curPage ? 'border-foreground bg-foreground text-background' : 'border-border bg-card text-foreground')}>{n}</button>
                       ))}
+                      <button className="h-9 min-w-9 rounded-lg border border-border bg-card px-2 font-semibold disabled:opacity-40" disabled={curPage >= pageCount} onClick={() => setPage(curPage + 1)}>›</button>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+                      Results per page
+                      <div className="inline-flex overflow-hidden rounded-lg border border-border">
+                        {[20, 50, 100].map((n) => (
+                          <button key={n} onClick={() => { setPerPage(n); setPage(1); }} className={cn('px-2.5 py-1.5 text-sm font-bold', perPage === n ? 'bg-foreground text-background' : 'bg-card text-muted-foreground')}>{n}</button>
+                        ))}
                       </div>
-                    </>
-                  );
-                })()}
-        </div>
+                    </div>
+                  </div>
+                )}
 
-        {shortlist.length > 0 && (
-          <div className="mt-6">
-            <ShortlistPanel
-              items={shortlist}
-              onRemove={handleRemoveFromShortlist}
-              onMakeOffer={(p) => handleMakeOffer(p)}
-              sentOfferIds={sentOfferIds}
-            />
+                {isMobile && mobileCount < totalResults && (
+                  <div ref={sentinelRef} className="mt-5 flex flex-col items-center gap-2 rounded-xl bg-primary px-4 py-3 text-center text-sm font-semibold text-primary-foreground">
+                    <span className="h-[3px] w-9 rounded bg-white/50" /> Keep scrolling — more stays load automatically
+                  </div>
+                )}
+              </>
+            )}
+
+            {shortlist.length > 0 && (
+              <div className="mt-6">
+                <ShortlistPanel items={shortlist} onRemove={handleRemoveFromShortlist} onMakeOffer={(p) => handleMakeOffer(p)} sentOfferIds={sentOfferIds} />
+              </div>
+            )}
           </div>
-        )}
-      </section>
+
+          <ResultsFooter />
+        </>
+      )}
 
       {/* MAP OVERLAY — on-demand, opened from the "Map view" tile */}
       {mapOpen && (
