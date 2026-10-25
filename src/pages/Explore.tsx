@@ -705,7 +705,7 @@ export default function Explore() {
             <List className="h-4 w-4" /> Back to list
           </Button>
           <MapPanel
-            properties={visibleProperties}
+            properties={filteredList.length ? filteredList : visibleProperties}
             selectedPropertyId={selectedPropertyId}
             shortlistedIds={shortlistedIds}
             watchlistedIds={watchlistedIds}
