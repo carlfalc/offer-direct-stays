@@ -5,7 +5,12 @@ import { useFsCounts } from '@/hooks/useFsCounts';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { FsTrip, FsTripItem, listTrips, listTripItems } from '@/lib/trips';
-import { Search, Send, MessageSquare, Heart, MapPin, Loader2, ArrowRight } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import WeatherTiles from '@/components/explore/WeatherTiles';
+import { useTileOrder } from '@/hooks/useTileOrder';
+import { Search, Send, MessageSquare, Heart, MapPin, Loader2, ArrowRight, RotateCcw } from 'lucide-react';
+
+const BAND_BG: Record<string, string> = { yellow: '#FBEFC9', orange: '#F7D6B6', navy: '#1E2A4A' };
 
 export default function TravellerDashboard() {
   const { user, loading: authLoading } = useAuth();
@@ -16,6 +21,16 @@ export default function TravellerDashboard() {
   const [items, setItems] = useState<FsTripItem[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [bandColor, setBandColor] = useState<'yellow' | 'orange' | 'navy'>(() => {
+    try { return (localStorage.getItem('fs_band') as any) || 'yellow'; } catch { return 'yellow'; }
+  });
+  const pickBand = (c: 'yellow' | 'orange' | 'navy') => {
+    setBandColor(c);
+    try { localStorage.setItem('fs_band', c); } catch { /* ignore */ }
+  };
+  const navy = bandColor === 'navy';
+  const { order, reset: resetTiles, dragProps } = useTileOrder('fs_trav_tiles', ['offers', 'messages', 'browse']);
+
   useEffect(() => {
     if (!authLoading && !user) navigate('/auth');
   }, [user, authLoading, navigate]);
@@ -23,42 +38,75 @@ export default function TravellerDashboard() {
   useEffect(() => {
     if (!user) return;
     Promise.all([listTrips(user.id), listTripItems(user.id)])
-      .then(([t, i]) => {
-        setTrips(t);
-        setItems(i);
-      })
+      .then(([t, i]) => { setTrips(t); setItems(i); })
       .finally(() => setLoading(false));
   }, [user]);
 
   const itemsByTrip = (tripId: string) => items.filter((i) => i.trip_id === tripId);
   const firstName = (user?.email || 'there').split('@')[0];
 
+  const tileCfg: Record<string, { icon: React.ReactNode; label: string; sub: string; badge?: number; to: string }> = {
+    offers: { icon: <Send className="h-5 w-5" />, label: 'My offers', sub: toConfirm > 0 ? `${toConfirm} to confirm` : 'Track your offers', badge: toConfirm, to: '/offers' },
+    messages: { icon: <MessageSquare className="h-5 w-5" />, label: 'Messages', sub: 'Chat with hosts', to: '/messages' },
+    browse: { icon: <Search className="h-5 w-5" />, label: 'Browse stays', sub: 'Name your price', to: '/explore' },
+  };
+
   return (
     <div className="fas-brand-day min-h-screen bg-background text-foreground">
-      {/* Villa hero */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('/hero-traveller.jpg')" }} aria-hidden />
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg,rgba(6,22,28,.55),rgba(6,22,28,.15) 35%,rgba(6,22,28,.55))' }} aria-hidden />
-        <div className="relative mx-auto w-full max-w-5xl px-4 py-12 md:py-16">
-          <p className="mb-2 font-mono text-xs uppercase tracking-[0.18em] text-primary">Welcome back</p>
-          <h1 className="font-display text-3xl font-extrabold capitalize tracking-tight text-white md:text-5xl">
-            Hi {firstName} — where to next?
-          </h1>
-          <p className="mt-3 max-w-[46ch] text-white/85">
-            Name your price on stays across New Zealand &amp; Australia. Save the ones you love into trips, and track your offers all in one place.
-          </p>
-          <Button size="lg" className="mt-5 gap-2" onClick={() => navigate('/explore')}>
-            <Search className="h-4 w-4" /> Find a stay
-          </Button>
+      {/* Template band — welcome, change-the-look + reset, weather */}
+      <div style={{ backgroundColor: BAND_BG[bandColor] }}>
+        <div className="mx-auto w-full max-w-5xl px-4 pb-5 pt-6">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className={cn('mb-1 font-mono text-[0.65rem] uppercase tracking-[0.18em]', navy ? 'text-white/70' : 'text-foreground/70')}>Welcome back</p>
+              <h1 className={cn('font-display text-3xl font-extrabold capitalize tracking-tight md:text-4xl', navy ? 'text-white' : 'text-foreground')}>
+                Hi {firstName} — where to next?
+              </h1>
+              <Button size="sm" className="mt-3 gap-2 bg-[#0C1A22] text-white hover:bg-[#0C1A22]/90" onClick={() => navigate('/explore')}>
+                <Search className="h-4 w-4" /> Find a stay
+              </Button>
+            </div>
+            <div className={cn('flex items-center gap-2 text-xs font-semibold', navy ? 'text-white/85' : 'text-muted-foreground')}>
+              Change the look
+              {(['yellow', 'orange', 'navy'] as const).map((c) => (
+                <button key={c} type="button" onClick={() => pickBand(c)} aria-label={c}
+                  className={cn('h-5 w-5 rounded-full border-2 border-black/10', bandColor === c && (navy ? 'outline outline-2 outline-white' : 'outline outline-2 outline-foreground'))}
+                  style={{ backgroundColor: BAND_BG[c] }} />
+              ))}
+              <button type="button" onClick={() => { pickBand('yellow'); resetTiles(); }} title="Reset look & tile layout to default"
+                className={cn('ml-1 inline-flex items-center gap-1 rounded-md border px-2 py-1', navy ? 'border-white/30 text-white/80' : 'border-black/15 text-muted-foreground')}>
+                <RotateCcw className="h-3 w-3" /> Reset
+              </button>
+            </div>
+          </div>
+          <div className="mt-4"><WeatherTiles /></div>
         </div>
-      </section>
+      </div>
 
-      <div className="mx-auto w-full max-w-5xl px-4 py-8">
-        {/* Quick links */}
+      <div className="mx-auto w-full max-w-5xl px-4 py-6">
+        {/* Quick tiles — hover to lift, drag to rearrange */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          <QuickTile icon={<Send className="h-5 w-5" />} label="My offers" sub={toConfirm > 0 ? `${toConfirm} to confirm` : 'Track your offers'} badge={toConfirm} onClick={() => navigate('/offers')} />
-          <QuickTile icon={<MessageSquare className="h-5 w-5" />} label="Messages" sub="Chat with hosts" onClick={() => navigate('/messages')} />
-          <QuickTile icon={<Search className="h-5 w-5" />} label="Browse stays" sub="Name your price" onClick={() => navigate('/explore')} />
+          {order.map((id) => {
+            const c = tileCfg[id];
+            if (!c) return null;
+            return (
+              <button
+                key={id}
+                {...dragProps(id)}
+                onClick={() => navigate(c.to)}
+                className="group relative flex cursor-grab flex-col items-start gap-1.5 rounded-xl border border-border bg-card p-4 text-left shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-primary/40 hover:shadow-[0_14px_28px_-14px_rgba(8,22,30,.45)] active:cursor-grabbing"
+              >
+                {c.badge && c.badge > 0 ? (
+                  <span className="absolute right-3 top-3 inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1 text-[11px] font-bold text-white">
+                    {c.badge > 99 ? '99+' : c.badge}
+                  </span>
+                ) : null}
+                <span className="text-primary">{c.icon}</span>
+                <span className="font-semibold text-foreground">{c.label}</span>
+                <span className="text-xs text-muted-foreground">{c.sub}</span>
+              </button>
+            );
+          })}
         </div>
 
         {/* Your trips */}
@@ -80,9 +128,7 @@ export default function TravellerDashboard() {
           ) : trips.length === 0 ? (
             <Card className="flex flex-col items-center gap-3 p-10 text-center">
               <Heart className="h-8 w-8 text-muted-foreground/50" />
-              <p className="text-sm text-muted-foreground">
-                No saved trips yet. Tap the heart on any stay to start a trip like “Noosa”.
-              </p>
+              <p className="text-sm text-muted-foreground">No saved trips yet. Tap the heart on any stay to start a trip like “Noosa”.</p>
               <Button size="sm" className="gap-2" onClick={() => navigate('/explore')}>
                 <Search className="h-4 w-4" /> Find a stay
               </Button>
@@ -102,14 +148,12 @@ export default function TravellerDashboard() {
                     ) : (
                       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
                         {its.map((it) => (
-                          <Card key={it.id} className="overflow-hidden">
+                          <Card key={it.id} className="overflow-hidden transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_14px_28px_-14px_rgba(8,22,30,.45)]">
                             <div className="aspect-[4/3] bg-muted">
                               {it.image_url ? (
                                 <img src={it.image_url} alt={it.name || 'Stay'} className="h-full w-full object-cover" />
                               ) : (
-                                <div className="flex h-full items-center justify-center text-muted-foreground/40">
-                                  <MapPin className="h-6 w-6" />
-                                </div>
+                                <div className="flex h-full items-center justify-center text-muted-foreground/40"><MapPin className="h-6 w-6" /></div>
                               )}
                             </div>
                             <div className="p-2.5">
@@ -128,35 +172,5 @@ export default function TravellerDashboard() {
         </div>
       </div>
     </div>
-  );
-}
-
-function QuickTile({
-  icon,
-  label,
-  sub,
-  badge,
-  onClick,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  sub: string;
-  badge?: number;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className="relative flex flex-col items-start gap-1.5 rounded-xl border border-border bg-card p-4 text-left shadow-sm transition hover:border-primary/40"
-    >
-      {badge && badge > 0 ? (
-        <span className="absolute right-3 top-3 inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1 text-[11px] font-bold text-white">
-          {badge > 99 ? '99+' : badge}
-        </span>
-      ) : null}
-      <span className="text-primary">{icon}</span>
-      <span className="font-semibold text-foreground">{label}</span>
-      <span className="text-xs text-muted-foreground">{sub}</span>
-    </button>
   );
 }

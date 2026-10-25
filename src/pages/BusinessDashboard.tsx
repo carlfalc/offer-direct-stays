@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2, Inbox, Clock, CheckCircle2, Users, CalendarDays, Plus, RefreshCw, SlidersHorizontal, ClipboardCheck, ClipboardList, X, Download, RotateCcw } from 'lucide-react';
 import { exportBookingsXlsx, exportBookingsPdf, ReportRow } from '@/lib/bookingReports';
 import WeatherTiles from '@/components/explore/WeatherTiles';
+import { useTileOrder } from '@/hooks/useTileOrder';
 
 interface FsOffer {
   id: string;
@@ -114,6 +115,7 @@ export default function BusinessDashboard() {
   };
   const BAND_BG: Record<string, string> = { yellow: '#FBEFC9', orange: '#F7D6B6', navy: '#1E2A4A' };
   const navy = bandColor === 'navy';
+  const { order: tileOrder, reset: resetTiles, dragProps } = useTileOrder('fs_biz_tiles', ['pending', 'awaiting', 'confirmed', 'to_enter', 'entered']);
 
   const load = useCallback(async () => {
     if (!user) return;
@@ -295,7 +297,7 @@ export default function BusinessDashboard() {
                     className={cn('h-5 w-5 rounded-full border-2 border-black/10', bandColor === c && (navy ? 'outline outline-2 outline-white' : 'outline outline-2 outline-foreground'))}
                     style={{ backgroundColor: BAND_BG[c] }} />
                 ))}
-                <button type="button" onClick={() => pickBand('yellow')} title="Reset to default look"
+                <button type="button" onClick={() => { pickBand('yellow'); resetTiles(); }} title="Reset look & tile layout to default"
                   className={cn('ml-1 inline-flex items-center gap-1 rounded-md border px-2 py-1', navy ? 'border-white/30 text-white/80' : 'border-black/15 text-muted-foreground')}>
                   <RotateCcw className="h-3 w-3" /> Reset
                 </button>
@@ -312,13 +314,24 @@ export default function BusinessDashboard() {
 
       <div className="mx-auto max-w-3xl px-4 py-6">
 
-      {/* Tally tiles — click to filter */}
+      {/* Tally tiles — click to filter, drag to rearrange */}
       <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-5">
-        <Tile id="pending" label="Need response" count={pending.length} tone={pending.length ? 'alert' : 'default'} />
-        <Tile id="awaiting" label="Awaiting guest" count={awaiting.length} />
-        <Tile id="confirmed" label="Confirmed" count={confirmed.length} tone="success" />
-        <Tile id="to_enter" label="To enter" count={toEnter.length} tone={toEnter.length ? 'alert' : 'default'} />
-        <Tile id="entered" label="Entered" count={entered.length} />
+        {tileOrder.map((id) => {
+          const cfg: Record<string, { label: string; count: number; tone?: 'alert' | 'success' | 'default' }> = {
+            pending: { label: 'Need response', count: pending.length, tone: pending.length ? 'alert' : 'default' },
+            awaiting: { label: 'Awaiting guest', count: awaiting.length },
+            confirmed: { label: 'Confirmed', count: confirmed.length, tone: 'success' },
+            to_enter: { label: 'To enter', count: toEnter.length, tone: toEnter.length ? 'alert' : 'default' },
+            entered: { label: 'Entered', count: entered.length },
+          };
+          const c = cfg[id];
+          if (!c) return null;
+          return (
+            <div key={id} {...dragProps(id)} className="cursor-grab active:cursor-grabbing">
+              <Tile id={id as Filter} label={c.label} count={c.count} tone={c.tone} />
+            </div>
+          );
+        })}
       </div>
 
       {/* Clear filter + exports */}
