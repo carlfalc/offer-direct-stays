@@ -14,7 +14,6 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import BrandBackdrop from '@/components/brand/BrandBackdrop';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useFsCounts } from '@/hooks/useFsCounts';
 import FsNotificationBell from './FsNotificationBell';
@@ -125,7 +124,6 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
   if (authLoading) {
     return (
       <div className="fas-brand flex items-center justify-center">
-        <BrandBackdrop />
         <div className="animate-pulse text-muted-foreground">Loading...</div>
       </div>
     );
@@ -136,7 +134,6 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
 
   return (
     <div className={cn(businessMode ? 'fas-brand-day' : 'fas-brand', 'flex flex-col', fullHeight ? 'h-screen overflow-hidden' : 'min-h-screen')}>
-      <BrandBackdrop variant={businessMode ? 'day' : 'night'} />
       {/* Premium Header */}
       <header className="h-16 border-b border-white/5 bg-[#0C1A22] flex items-center justify-between px-4 md:px-6 flex-shrink-0 z-20">
         {/* Logo + (business) section label */}
