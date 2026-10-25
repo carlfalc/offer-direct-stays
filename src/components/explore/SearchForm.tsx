@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Search, Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export interface SearchCriteria {
   country: 'NZ' | 'AU';
@@ -34,6 +35,8 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
 export default function SearchForm({ initial, loading, onSearch, variant = 'default' }: Props) {
   const hero = variant === 'hero';
   const labelCls = hero ? 'text-xs text-white/80' : 'text-xs text-muted-foreground';
+  // On the black hero panel, fields are solid white with dark text for legibility.
+  const fieldCls = hero ? 'mt-1 bg-white text-neutral-900 border-black/10 placeholder:text-neutral-500' : 'mt-1';
   const [country, setCountry] = useState<'NZ' | 'AU'>(initial.country || 'NZ');
   const [city, setCity] = useState(initial.city || '');
   const [checkIn, setCheckIn] = useState(initial.checkIn || iso(new Date(Date.now() + 14 * 864e5)));
@@ -61,7 +64,7 @@ export default function SearchForm({ initial, loading, onSearch, variant = 'defa
 
   return (
     <div className={hero
-      ? 'space-y-3 rounded-3xl border border-white/40 bg-white/15 p-5 backdrop-blur-xl shadow-2xl'
+      ? 'fas-hero-search space-y-3 rounded-3xl border border-white/10 bg-[#0a0d12] p-5 shadow-2xl'
       : 'space-y-3 border-b border-border/50 bg-card/40 p-4 backdrop-blur-sm'}>
       {hero && (
         <div className="flex items-center gap-2 text-white font-semibold text-sm pb-1">
@@ -72,7 +75,7 @@ export default function SearchForm({ initial, loading, onSearch, variant = 'defa
         <div>
           <Label className={labelCls}>Country</Label>
           <Select value={country} onValueChange={(v) => setCountry(v as 'NZ' | 'AU')}>
-            <SelectTrigger className="mt-1">
+            <SelectTrigger className={fieldCls}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -88,7 +91,7 @@ export default function SearchForm({ initial, loading, onSearch, variant = 'defa
             onChange={(e) => setCity(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && submit()}
             placeholder="e.g. Whanganui"
-            className="mt-1"
+            className={fieldCls}
           />
         </div>
       </div>
@@ -96,11 +99,11 @@ export default function SearchForm({ initial, loading, onSearch, variant = 'defa
       <div className="grid grid-cols-2 gap-3">
         <div>
           <Label className={labelCls}>Check-in</Label>
-          <Input type="date" value={checkIn} onChange={(e) => setCheckIn(e.target.value)} className="mt-1" />
+          <Input type="date" value={checkIn} onChange={(e) => setCheckIn(e.target.value)} className={fieldCls} />
         </div>
         <div>
           <Label className={labelCls}>Check-out</Label>
-          <Input type="date" value={checkOut} onChange={(e) => setCheckOut(e.target.value)} className="mt-1" />
+          <Input type="date" value={checkOut} onChange={(e) => setCheckOut(e.target.value)} className={fieldCls} />
         </div>
       </div>
 

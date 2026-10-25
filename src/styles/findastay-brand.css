@@ -168,3 +168,8 @@
 .fas-brand-day .font-display,
 .fas-brand-day .fas-display { font-family: var(--fas-display); letter-spacing: -.02em; }
 .fas-brand-day .font-mono { font-family: var(--fas-mono); }
+
+/* Hero search panel: solid black card, white labels, white fields */
+.fas-hero-search { color: #fff; }
+.fas-hero-search .text-foreground { color: #fff !important; }   /* stepper labels/value */
+.fas-hero-search input[type="date"] { color-scheme: light; }    /* dark native date glyph on white */

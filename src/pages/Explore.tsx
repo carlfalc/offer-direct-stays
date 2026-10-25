@@ -449,9 +449,9 @@ export default function Explore() {
         <span className="hidden sm:inline">Demo Review</span>
       </button>
 
-      {/* HERO — photo behind a translucent glass search panel. Swap /hero-search.jpg per page. */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-cover" style={{ backgroundImage: "url('/hero-search.jpg')", backgroundPosition: 'center 38%' }} aria-hidden />
+      {/* HERO — photo fills the screen on desktop; scrolls on mobile. Swap /hero-search.jpg per page. */}
+      <section className="relative overflow-hidden md:flex md:min-h-[calc(100vh-4rem)] md:items-center">
+        <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('/hero-search.jpg')" }} aria-hidden />
         <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg,rgba(6,22,28,.62),rgba(6,22,28,.18) 32%,rgba(6,22,28,.55))' }} aria-hidden />
         <div className="relative mx-auto grid w-full max-w-6xl gap-8 px-4 py-10 md:grid-cols-2 md:items-center md:py-16">
           <div className="max-w-[30ch] text-white">
