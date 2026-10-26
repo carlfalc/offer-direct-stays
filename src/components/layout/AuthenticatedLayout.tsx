@@ -64,13 +64,14 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
         return;
       }
       
+      // Business identity = you own at least one findastay listing (fs_listings).
       const { data } = await supabase
-        .from('businesses')
+        .from('fs_listings')
         .select('id')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      
-      setHasBusiness(!!data);
+        .eq('owner_id', user.id)
+        .limit(1);
+
+      setHasBusiness((data?.length ?? 0) > 0);
     };
     
     checkBusiness();
@@ -78,18 +79,18 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
 
   const isBusinessRoute = location.pathname.startsWith('/business');
   const isOnboardingRoute = location.pathname === '/business/onboarding';
-  
+  // Entry pages a business can be on BEFORE they own a listing.
+  const businessEntry = ['/business/claim', '/business/register'];
+  const isBusinessEntry = businessEntry.includes(location.pathname);
+
   useEffect(() => {
     if (hasBusiness === null || authLoading) return;
-    
-    if (isBusinessRoute && !isOnboardingRoute && hasBusiness === false) {
-      toast({
-        title: 'Complete Your Setup',
-        description: 'Let\'s finish setting up your business profile.',
-      });
-      navigate('/business/onboarding');
+    // A business that hasn't claimed a property yet belongs on the claim page,
+    // not a deep business page.
+    if (isBusinessRoute && !isBusinessEntry && !isOnboardingRoute && hasBusiness === false) {
+      navigate('/business/claim');
     }
-  }, [hasBusiness, isBusinessRoute, isOnboardingRoute, location.pathname, authLoading, navigate, toast]);
+  }, [hasBusiness, isBusinessRoute, isBusinessEntry, isOnboardingRoute, authLoading, navigate]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -118,7 +119,9 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
 
   // Operational business pages run in the light "day" theme; travellers and
   // the claim/onboarding flow keep the dark "night" theme.
-  const businessMode = isBusinessRoute && !isOnboardingRoute && hasBusiness === true;
+  // Any business route (including the pre-claim claim/register pages) gets the
+  // business chrome, so a new owner sees the business experience immediately.
+  const businessMode = isBusinessRoute && !isOnboardingRoute;
   const navItems = businessMode ? businessNavItems : guestNavItems;
 
   if (authLoading) {
