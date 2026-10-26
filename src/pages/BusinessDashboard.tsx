@@ -8,7 +8,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Inbox, Clock, CheckCircle2, Users, CalendarDays, Plus, RefreshCw, SlidersHorizontal, ClipboardCheck, ClipboardList, X, Download, RotateCcw, Trophy, Send, DollarSign, Percent, Zap, BedDouble, Circle, Rocket } from 'lucide-react';
+import { Loader2, Inbox, Clock, CheckCircle2, Users, CalendarDays, Plus, RefreshCw, SlidersHorizontal, ClipboardCheck, ClipboardList, X, Download, RotateCcw, Trophy, Send, DollarSign, Percent, Zap, BedDouble, Circle, Rocket, Image as ImageIcon } from 'lucide-react';
 import { exportBookingsXlsx, exportBookingsPdf, ReportRow } from '@/lib/bookingReports';
 import WeatherTiles from '@/components/explore/WeatherTiles';
 import { useTileOrder } from '@/hooks/useTileOrder';
@@ -119,11 +119,16 @@ function ReadinessCard({ r, busy, onGoLive, onTakeOffline }: {
             {r.published ? 'Travellers can find you in search and make offers.' : 'Travellers only see you once you review your content and go live.'}
           </p>
         </div>
-        {!r.published && !r.ready && (
-          <Button size="sm" className="gap-1.5 bg-[#0C1A22] text-white hover:bg-[#0C1A22]/90" asChild>
-            <Link to="/business/pricing"><SlidersHorizontal className="h-4 w-4" /> Set room prices</Link>
+        <div className="flex flex-none gap-2">
+          <Button size="sm" variant="outline" className="gap-1.5" asChild>
+            <Link to="/business/content"><ImageIcon className="h-4 w-4" /> Rooms & photos</Link>
           </Button>
-        )}
+          {!r.published && !r.ready && (
+            <Button size="sm" className="gap-1.5 bg-[#0C1A22] text-white hover:bg-[#0C1A22]/90" asChild>
+              <Link to="/business/pricing"><SlidersHorizontal className="h-4 w-4" /> Set prices</Link>
+            </Button>
+          )}
+        </div>
       </div>
       <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
         {checks.map((c, i) => (

@@ -328,7 +328,7 @@ function roomImages(r: any): string[] {
  */
 export async function loadLiteApiRoomContent(
   hotelId: string,
-): Promise<Record<string, { images: string[]; size_sqm: number | null; max_occupancy: number | null; description: string | null }>> {
+): Promise<Record<string, { images: string[]; size_sqm: number | null; max_occupancy: number | null; description: string | null; amenities: string | null; beds: string | null }>> {
   try {
     const { data } = await supabase.functions.invoke('liteapi-content-ts', {
       body: { action: 'hotelDetails', hotelId },
@@ -341,12 +341,31 @@ export async function loadLiteApiRoomContent(
         size_sqm: r.roomSizeSquare ?? null,
         max_occupancy: r.maxOccupancy ?? null,
         description: stripHtml(r.description) || null,
+        amenities: (r.roomAmenities || []).map((a: any) => a?.name).filter(Boolean).join(', ') || null,
+        beds: (r.bedTypes || []).map((b: any) => `${b.quantity}× ${b.bedType}`).join(', ') || null,
       };
     }
     return out;
   } catch {
     return {};
   }
+}
+
+/**
+ * Upload an owner photo for a room to the `room-photos` bucket and return its
+ * public URL. Paths are namespaced by listing + room so they're easy to find.
+ */
+export async function uploadRoomPhoto(file: File, listingId: string, roomId: string): Promise<string> {
+  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
+  const path = `${listingId}/${roomId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  const { error } = await supabase.storage.from('room-photos').upload(path, file, {
+    cacheControl: '3600',
+    upsert: false,
+    contentType: file.type || undefined,
+  });
+  if (error) throw error;
+  const { data } = supabase.storage.from('room-photos').getPublicUrl(path);
+  return data.publicUrl;
 }
 
 /** Load a LiteAPI hotel's room types, mapped to the app's Room shape. */
