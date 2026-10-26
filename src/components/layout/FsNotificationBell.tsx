@@ -89,7 +89,7 @@ export default function FsNotificationBell() {
             {items.map((n) => (
               <button
                 key={n.id}
-                onClick={() => navigate(BUSINESS_KINDS.has(n.kind) ? '/business/dashboard' : '/offers')}
+                onClick={() => navigate(n.kind === 'message' ? '/messages' : BUSINESS_KINDS.has(n.kind) ? '/business/dashboard' : '/offers')}
                 className={cn(
                   'block w-full border-b border-border/30 px-3 py-2.5 text-left transition hover:bg-primary/5',
                   !n.read_at && 'bg-primary/[0.04]',
