@@ -11,14 +11,16 @@ create table if not exists public.admin_users (
 );
 alter table public.admin_users enable row level security;
 
-drop policy if exists "Admins can view admin users" on public.admin_users;
-create policy "Admins can view admin users" on public.admin_users for select
-  using (exists (select 1 from public.admin_users au where au.user_id = auth.uid()));
-
 create or replace function public.is_admin()
 returns boolean language sql stable security definer set search_path = public as $$
   select exists (select 1 from public.admin_users au where au.user_id = auth.uid());
 $$;
+
+-- NB: use is_admin() (SECURITY DEFINER, bypasses RLS) here — a subquery back to
+-- admin_users in this policy causes infinite recursion (42P17).
+drop policy if exists "Admins can view admin users" on public.admin_users;
+create policy "Admins can view admin users" on public.admin_users for select
+  using (public.is_admin());
 
 -- 2) Admin read/update access to the console tables ---------------------------
 drop policy if exists fs_onboarding_admin_read   on fs_onboarding_requests;
