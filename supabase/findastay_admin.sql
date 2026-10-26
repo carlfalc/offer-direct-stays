@@ -1,33 +1,47 @@
 -- ============================================================
--- Admin console read-access + make yourself an admin.
--- Admins are rows in public.admin_users; public.is_admin() checks it.
--- Run once in the Supabase SQL editor (findastay project).
+-- findastay — admin console access + make yourself an admin.
+-- Self-contained: creates the admin table/function if missing, sets the
+-- read policies, then makes you an admin. Run once in the Supabase SQL editor.
 -- ============================================================
 
--- Onboarding requests: admins read + update status
-drop policy if exists fs_onboarding_admin_read on fs_onboarding_requests;
-create policy fs_onboarding_admin_read on fs_onboarding_requests for select using (public.is_admin());
+-- 1) Admin allowlist table + helper (idempotent) ------------------------------
+create table if not exists public.admin_users (
+  user_id    uuid primary key references auth.users(id) on delete cascade,
+  created_at timestamptz not null default now()
+);
+alter table public.admin_users enable row level security;
+
+drop policy if exists "Admins can view admin users" on public.admin_users;
+create policy "Admins can view admin users" on public.admin_users for select
+  using (exists (select 1 from public.admin_users au where au.user_id = auth.uid()));
+
+create or replace function public.is_admin()
+returns boolean language sql stable security definer set search_path = public as $$
+  select exists (select 1 from public.admin_users au where au.user_id = auth.uid());
+$$;
+
+-- 2) Admin read/update access to the console tables ---------------------------
+drop policy if exists fs_onboarding_admin_read   on fs_onboarding_requests;
+create policy fs_onboarding_admin_read   on fs_onboarding_requests for select using (public.is_admin());
 drop policy if exists fs_onboarding_admin_update on fs_onboarding_requests;
 create policy fs_onboarding_admin_update on fs_onboarding_requests for update using (public.is_admin());
-grant select, update on fs_onboarding_requests to authenticated;  -- RLS still limits rows to admins
+grant select, update on fs_onboarding_requests to authenticated;   -- RLS still limits rows to admins
 
--- Claim / nudge leads: admins read
 drop policy if exists fs_leads_admin_read on fs_listing_leads;
 create policy fs_leads_admin_read on fs_listing_leads for select using (public.is_admin());
-grant select on fs_listing_leads to authenticated;                -- RLS still limits rows to admins
+grant select on fs_listing_leads to authenticated;                 -- RLS still limits rows to admins
 
--- Offers/bookings: admins can read all (for the all-bookings view)
 drop policy if exists fs_offers_admin_read on fs_offers;
 create policy fs_offers_admin_read on fs_offers for select using (public.is_admin());
 
 notify pgrst, 'reload schema';
 
--- ------------------------------------------------------------
--- Make YOURSELF an admin: replace the email with the one you log in with,
--- then run this block.
--- ------------------------------------------------------------
+-- 3) Make YOURSELF an admin ---------------------------------------------------
+-- This is set to your Claude account email. If you log in to findastay with a
+-- DIFFERENT email, change it below before running. You must have signed in to
+-- findastay at least once so the account exists in auth.users.
 insert into public.admin_users(user_id)
-  select id from auth.users where lower(email) = lower('REPLACE_WITH_YOUR_LOGIN_EMAIL')
+  select id from auth.users where lower(email) = lower('falconercarlandrew@gmail.com')
   on conflict (user_id) do nothing;
 
 do $$
