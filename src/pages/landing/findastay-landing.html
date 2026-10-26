@@ -173,7 +173,7 @@
       <div class="capture">
         <span class="eyebrow">For accommodation owners</span>
         <h2 style="margin-top:14px">List your property. No commission — ever.</h2>
-        <p>Stop handing 17% to a booking giant. findastay <b>never takes a commission</b> — just one small flat fee per confirmed booking. You set your prices and stay in control.</p>
+        <p>Stop handing 17% to a booking giant. The <b>traveller</b> pays one small fee per confirmed booking — you pay no commission and keep control of your prices. <a href="#faq" data-nav data-view="faq" data-faqrole="business" class="readmore">Read more →</a></p>
         <div style="display:flex;gap:13px;flex-wrap:wrap;margin-top:18px">
           <button class="big-solid" type="button" data-go="/business/register">Register your business</button>
           <button class="big-ghost" type="button" data-go="/auth">Log in</button>
@@ -265,23 +265,33 @@
     </div>
   </section>
   <section class="band">
-    <div class="wrap faq-group">
-      <h3>For travellers</h3>
-      <details open><summary>How is this different from Booking.com or Airbnb?</summary><div class="ans">There you accept a fixed price with commission built in. Here <b>you make the offer</b> — your price, your dates — and the property accepts, counters once, or declines. You deal with the owner directly, not a call centre.</div></details>
-      <details><summary>Is making an offer free?</summary><div class="ans">Browsing and making offers cost nothing. If an offer is accepted and you confirm, you pay a small <b>flat $9.99 commitment fee</b> to lock it in — the rest of your payment goes to the property for the stay.</div></details>
-      <details><summary>What if they say no?</summary><div class="ans">Then that's that — no obligation, no fee. Offer on another property, or come back with a different number. Most owners counter rather than flat-out decline if you're close.</div></details>
-      <details><summary>How do I know a fair price to offer?</summary><div class="ans">The AI concierge suggests a sensible figure from the dates, the property and typical rates — so you're not lowballing or overpaying. Adjust it before it sends.</div></details>
-      <details><summary>How do I pay?</summary><div class="ans">Your choice: securely online when the offer's accepted, or <b>pay at the property</b> on arrival where the owner allows it. Your contact details stay private until a booking is confirmed.</div></details>
+    <div class="wrap faq-toggle" id="faq-roletoggle">
+      <button type="button" data-faqrole="traveller" class="active">For travellers</button>
+      <button type="button" data-faqrole="business">For business</button>
     </div>
-  </section>
-  <section class="band">
-    <div class="wrap faq-group">
-      <h3>For properties</h3>
-      <details><summary>What does it cost to list?</summary><div class="ans">Listing is free and there's no commission or percentage of your rate — just a small commitment fee per confirmed booking, taken from the booking total: <b>$9.99 under $500, $14.99 up to $1,000, $24.99 over $1,000</b>. Travellers pay this when they confirm; there's never a separate bill.</div></details>
-      <details><summary>Do I have to accept low offers?</summary><div class="ans">Never. You set your floor. Every offer hits your dashboard and you accept, counter once, or decline. You're always in control of rates and availability.</div></details>
-      <details><summary>Won't this undercut my normal rates?</summary><div class="ans">It fills nights you'd otherwise leave empty. A room sold at a fair offer beats a room sold at nothing — and with no 17% commission you often <b>net more</b> than a full-price booking-site sale.</div></details>
-      <details><summary>How long does setup take?</summary><div class="ans">Minutes. Guided onboarding collects your business details, NZBN or ABN, and payout preference. If your property's already in our directory, claim it in a tap.</div></details>
-      <details><summary>Can I still use other channels?</summary><div class="ans">Yes. findastay is one more channel for filling rooms — run it alongside whatever you use now. Keep an eye on your own availability so you don't double-book while we build out calendar sync.</div></details>
+    <div id="faq-roles" data-role="traveller">
+      <div class="faq-group role-traveller">
+        <details open><summary>How is findastay different from Booking.com or Airbnb?</summary><div class="ans">There you accept a fixed price with commission built in. Here <b>you make the offer</b> — your price, your dates — and the property accepts, counters once, or declines. You deal with the owner directly.</div></details>
+        <details><summary>Who pays for what?</summary><div class="ans">You pay the property for your stay, and you pay findastay one small <b>commitment fee</b> when you confirm a booking. That's it — no booking fees, no markup on the rate.</div></details>
+        <details><summary>What is the commitment fee, and how much?</summary><div class="ans">It's a small fee that locks in a confirmed booking. It depends on your booking total: <b>$9.99 under $500, $14.99 up to $1,000, $24.99 over $1,000</b>. It comes out of the booking total — the property receives the rest.<br><br><b>Example:</b> you offer $150/night for 2 nights = <b>$300</b>. On confirming you pay findastay the <b>$9.99</b> fee and the property <b>$290.01</b> for your stay — $300 in total, nothing extra.</div></details>
+        <details><summary>Is making an offer free?</summary><div class="ans">Yes. Browsing and making offers cost nothing. You only pay the commitment fee if an offer is accepted and <b>you choose to confirm</b>.</div></details>
+        <details><summary>Is the commitment fee refundable?</summary><div class="ans">It's non-refundable once the property accepts and you confirm — that's what secures the booking for you. If the property says no, you pay nothing.</div></details>
+        <details><summary>How do I pay for the stay itself?</summary><div class="ans">The property collects the stay balance <b>directly</b> — by bank transfer, on arrival, or their own method. findastay only ever takes the commitment fee; we never hold your stay payment.</div></details>
+        <details><summary>How do I know a fair price to offer?</summary><div class="ans">The AI concierge suggests a sensible figure from your dates, the property and typical rates — so you're not lowballing or overpaying. Adjust it before it sends.</div></details>
+        <details><summary>When do I get the property's details, and can I message them?</summary><div class="ans">The moment your booking is confirmed, a <b>private chat</b> opens with the property and your contact details are shared so they can book you in. The thread stays open until 10 days after checkout.</div></details>
+      </div>
+      <div class="faq-group role-business">
+        <details open><summary>What does my business pay?</summary><div class="ans"><b>No commission, no subscription, no listing fee.</b> The traveller pays a small commitment fee that findastay retains, and it comes off the final payment that reaches you — that's the only deduction, and you never get a bill from us.<br><br><b>Example:</b> a booking totals <b>$300</b>. findastay keeps the <b>$9.99</b> fee and you receive <b>$290.01</b>. On a $600 booking the fee is $14.99 (you net $585.01); over $1,000 it's $24.99 (you net the total − $24.99).</div></details>
+        <details><summary>Who pays for what?</summary><div class="ans">The traveller pays <b>you</b> for the stay (directly, by your own method) and pays <b>findastay</b> the commitment fee. Two separate things — and none of it is a commission on your rate.</div></details>
+        <details><summary>How much is the fee, and who pays it?</summary><div class="ans">The <b>traveller</b> pays it, based on the booking total: <b>$9.99 under $500, $14.99 up to $1,000, $24.99 over $1,000</b>. It's taken from the booking total, so you net the rest.</div></details>
+        <details><summary>How do I get paid?</summary><div class="ans">You collect the stay balance <b>directly</b> from the guest, your way: bank transfer/deposit, on arrival, card on your own terminal, or your own payment link. findastay never holds your money.</div></details>
+        <details><summary>Can I choose which payment methods I accept?</summary><div class="ans">Yes. Tick the methods you take when you set up — and change them any time from your dashboard.</div></details>
+        <details><summary>Do I have to accept low offers?</summary><div class="ans">Never. You set your floor. Every offer hits your dashboard and you accept, counter once, or decline. You're always in control of rates and availability.</div></details>
+        <details><summary>Won't this undercut my normal rates?</summary><div class="ans">It fills nights you'd otherwise leave empty. A room sold at a fair offer beats an empty room — and with no commission you often <b>net more</b> than a full-price booking-site sale.</div></details>
+        <details><summary>When do I get the guest's contact details?</summary><div class="ans">The moment a booking confirms you get the guest's name, email, phone and preferred contact method — plus a private chat thread — so you can book them straight in.</div></details>
+        <details><summary>How long does setup take?</summary><div class="ans">Minutes. Register, search and claim your property (or create it), check your rooms &amp; photos, set your prices, and go live.</div></details>
+        <details><summary>Can I still use other channels?</summary><div class="ans">Yes. findastay is one more channel for filling rooms — run it alongside whatever you use now. Keep an eye on your availability so you don't double-book while we build calendar sync.</div></details>
+      </div>
     </div>
   </section>
   <section>

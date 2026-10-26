@@ -194,10 +194,20 @@ export function initLanding(
     if (scrollTo) { const el = $('#' + scrollTo); setTimeout(() => { if (el) el.scrollIntoView({ behavior: 'smooth' }); }, 60); }
     else window.scrollTo({ top: 0, behavior: 'auto' });
   }
+  const faqWrap = $('#faq-roles');
+  const roleBtns = $$('#faq-roletoggle [data-faqrole]');
+  function setFaqRole(role: string) {
+    if (faqWrap) faqWrap.dataset.role = role;
+    roleBtns.forEach((b: any) => b.classList.toggle('active', b.dataset.faqrole === role));
+  }
+
   const onClick = (e: any) => {
-    const t = e.target.closest('[data-nav],[data-go]'); if (!t) return;
+    const t = e.target.closest('[data-nav],[data-go],[data-faqrole]'); if (!t) return;
     e.preventDefault();
+    // FAQ role toggle button (no navigation)
+    if (t.dataset.faqrole && !t.dataset.view && !t.dataset.go) { setFaqRole(t.dataset.faqrole); return; }
     if (t.dataset.go) { navigate(t.dataset.go); return; }
+    if (t.dataset.faqrole) setFaqRole(t.dataset.faqrole); // e.g. "Read more" → FAQ, business tab
     show(t.dataset.view || 'home', t.dataset.scroll);
   };
   root.addEventListener('click', onClick);
