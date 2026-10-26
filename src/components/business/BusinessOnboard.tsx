@@ -65,6 +65,7 @@ export default function BusinessOnboard() {
     }
     setBusy(false);
     if (error) { toast({ title: 'Could not claim', description: error.message || 'Please try again', variant: 'destructive' }); return; }
+    window.dispatchEvent(new Event('fs-business-changed'));
     setCelebrate(true);
   };
 
@@ -79,10 +80,11 @@ export default function BusinessOnboard() {
     } as any);
     setBusy(false);
     if (error) { toast({ title: 'Could not create', description: error.message || 'Please try again', variant: 'destructive' }); return; }
+    window.dispatchEvent(new Event('fs-business-changed'));
     setCelebrate(true);
   };
 
-  const cele = <FsCelebration show={celebrate} onDone={() => navigate('/business/content')} />;
+  const cele = <FsCelebration show={celebrate} onDone={() => navigate('/business/dashboard')} />;
 
   if (mode === 'create') {
     return <>{cele}<BusinessClaimForm mode="create" busy={busy} onBack={() => setMode('search')} onSubmit={create} /></>;

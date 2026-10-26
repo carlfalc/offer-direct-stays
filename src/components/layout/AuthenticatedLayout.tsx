@@ -1,4 +1,4 @@
-import { ReactNode, useState, useEffect } from 'react';
+import { ReactNode, useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { MapPin, LogOut, Heart, Plane, MessageSquare, Send, LayoutDashboard, Settings, Building2, User, ChevronDown, Menu } from 'lucide-react';
@@ -58,25 +58,29 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
       </span>
     ) : null;
 
-  useEffect(() => {
-    const checkBusiness = async () => {
-      if (!user) {
-        setHasBusiness(null);
-        return;
-      }
-      
-      // Business identity = you own at least one findastay listing (fs_listings).
-      const { data } = await supabase
-        .from('fs_listings')
-        .select('id')
-        .eq('owner_id', user.id)
-        .limit(1);
-
-      setHasBusiness((data?.length ?? 0) > 0);
-    };
-    
-    checkBusiness();
+  const checkBusiness = useCallback(async () => {
+    if (!user) {
+      setHasBusiness(null);
+      return;
+    }
+    // Business identity = you own at least one findastay listing (fs_listings).
+    const { data } = await supabase
+      .from('fs_listings')
+      .select('id')
+      .eq('owner_id', user.id)
+      .limit(1);
+    setHasBusiness((data?.length ?? 0) > 0);
   }, [user]);
+
+  useEffect(() => { checkBusiness(); }, [checkBusiness]);
+
+  // When a claim/create succeeds elsewhere, flip ownership on immediately so
+  // the route guard below doesn't bounce the fresh owner back to /business/claim.
+  useEffect(() => {
+    const onChanged = () => setHasBusiness(true);
+    window.addEventListener('fs-business-changed', onChanged);
+    return () => window.removeEventListener('fs-business-changed', onChanged);
+  }, []);
 
   const isBusinessRoute = location.pathname.startsWith('/business');
   const isOnboardingRoute = location.pathname === '/business/onboarding';
