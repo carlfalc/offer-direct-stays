@@ -1,16 +1,17 @@
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Loader2, ShieldCheck, AlertCircle, ArrowLeft } from 'lucide-react';
+import { Loader2, ShieldCheck, AlertCircle } from 'lucide-react';
 import { PAYMENT_METHODS, PaymentMethodId } from '@/lib/paymentMethods';
+import '@/styles/findastay-onboard.css';
 
 const PROPERTY_TYPES = [
   { v: 'hotel', label: 'Hotel' }, { v: 'motel', label: 'Motel' }, { v: 'lodge', label: 'Lodge' },
-  { v: 'resort', label: 'Resort' }, { v: 'bnb', label: 'Bed & Breakfast' }, { v: 'home', label: 'Home / House' },
-  { v: 'apartment', label: 'Apartment' }, { v: 'holiday_park', label: 'Holiday park' },
+  { v: 'resort', label: 'Resort' }, { v: 'bnb', label: 'Bed & Breakfast' }, { v: 'apartment', label: 'Apartment' },
+  { v: 'house', label: 'House' }, { v: 'holiday_home', label: 'Holiday home' }, { v: 'small_holiday_home', label: 'Small holiday home' },
+  { v: 'beach_bach', label: 'Beach bach' }, { v: 'cabin', label: 'Cabin' }, { v: 'cottage', label: 'Cottage' },
+  { v: 'villa', label: 'Villa' }, { v: 'unit', label: 'Unit / studio' }, { v: 'room', label: 'Room' },
+  { v: 'caravan', label: 'Caravan' }, { v: 'holiday_park', label: 'Holiday park' }, { v: 'hostel', label: 'Hostel' },
+  { v: 'farmstay', label: 'Farmstay' }, { v: 'glamping', label: 'Glamping' }, { v: 'other', label: 'Other' },
 ];
 
 const AGREEMENTS = [
@@ -46,7 +47,7 @@ export default function BusinessClaimForm({ mode, hotel, busy, onBack, onSubmit 
   const [businessEmail, setBusinessEmail] = useState(user?.email || '');
   const [phone, setPhone] = useState('');
   const [nzbn, setNzbn] = useState('');
-  const [propertyType, setPropertyType] = useState('hotel');
+  const [propertyType, setPropertyType] = useState('motel');
   const [paymentTerms, setPaymentTerms] = useState<'on_arrival' | 'days_before' | 'upfront'>('on_arrival');
   const [leadDays, setLeadDays] = useState(10);
   const [agree, setAgree] = useState<Record<string, boolean>>({});
@@ -71,93 +72,77 @@ export default function BusinessClaimForm({ mode, hotel, busy, onBack, onSubmit 
   };
 
   return (
-    <div className="space-y-5">
-      <button onClick={onBack} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="h-4 w-4" /> Back
-      </button>
+    <div>
+      <button className="fo-backlink" onClick={onBack}>← Back</button>
+      <div className="fo-mark2 fo-disp">Great — you're just about signed up!</div>
+      <p className="fo-lead2">You're nearly live{mode === 'claim' && hotel?.name ? ` with ${hotel.name}` : ''}. Confirm your details and tick the agreements, and we'll fire up your dashboard.</p>
 
-      <div>
-        <h2 className="font-display text-xl font-bold text-foreground">{mode === 'claim' ? `Confirm & claim ${hotel?.name || 'your business'}` : 'Create your business'}</h2>
-        <p className="mt-1 text-sm font-medium text-foreground">Enter your business details and accept the agreements to {mode === 'claim' ? 'claim this property' : 'create your business'}. You’ll set rooms, photos and prices next.</p>
-      </div>
-
-      {/* Create-only identity fields */}
-      {mode === 'create' && (
-        <div className="space-y-3 rounded-xl border border-border p-3">
-          <Label className="text-xs font-semibold">Business name *</Label>
-          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Aotea Motor Lodge" />
-          <Label className="text-xs font-semibold">Address</Label>
-          <Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Street address" />
-          <div className="grid grid-cols-2 gap-3">
-            <div><Label className="text-xs font-semibold">Town / city</Label><Input value={city} onChange={(e) => setCity(e.target.value)} className="mt-1" placeholder="e.g. Whanganui" /></div>
-            <div><Label className="text-xs font-semibold">Country</Label>
-              <select value={country} onChange={(e) => setCountry(e.target.value as 'NZ' | 'AU')} className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
-                <option value="NZ">New Zealand</option><option value="AU">Australia</option>
-              </select>
+      <div className="fo-card">
+        {/* Create-only identity fields */}
+        {mode === 'create' && (
+          <div className="fo-field"><label>Business name *</label><input className="fo-input" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Aotea Motor Lodge" /></div>
+        )}
+        {mode === 'create' && (
+          <>
+            <div className="fo-field"><label>Address</label><input className="fo-input" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Street address" /></div>
+            <div className="fo-row2 fo-field">
+              <div><label>Town / city</label><input className="fo-input" value={city} onChange={(e) => setCity(e.target.value)} placeholder="e.g. Whanganui" /></div>
+              <div><label>Country</label>
+                <select className="fo-select" value={country} onChange={(e) => setCountry(e.target.value as 'NZ' | 'AU')}><option value="NZ">New Zealand</option><option value="AU">Australia</option></select>
+              </div>
             </div>
-          </div>
+          </>
+        )}
+
+        <div className="fo-row2 fo-field">
+          <div><label>Contact name *</label><input className="fo-input" value={contactName} onChange={(e) => setContactName(e.target.value)} placeholder="Who we reach about offers" /></div>
+          <div><label>Business email *</label><input className="fo-input" type="email" value={businessEmail} onChange={(e) => setBusinessEmail(e.target.value)} /></div>
+          <div><label>Phone</label><input className="fo-input" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+64 21 123 4567" /></div>
+          <div><label>NZBN / ABN (optional)</label><input className="fo-input" value={nzbn} onChange={(e) => setNzbn(e.target.value)} /></div>
         </div>
-      )}
 
-      {/* Shared business details */}
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div><Label className="text-xs font-semibold">Contact name *</Label><Input value={contactName} onChange={(e) => setContactName(e.target.value)} className="mt-1" placeholder="Who we reach about offers" /></div>
-        <div><Label className="text-xs font-semibold">Business email *</Label><Input type="email" value={businessEmail} onChange={(e) => setBusinessEmail(e.target.value)} className="mt-1" /></div>
-        <div><Label className="text-xs font-semibold">Phone</Label><Input value={phone} onChange={(e) => setPhone(e.target.value)} className="mt-1" placeholder="+64 21 123 4567" /></div>
-        <div><Label className="text-xs font-semibold">NZBN / ABN (optional)</Label><Input value={nzbn} onChange={(e) => setNzbn(e.target.value)} className="mt-1" /></div>
-      </div>
-
-      <div>
-        <Label className="text-xs font-semibold">Property type</Label>
-        <select value={propertyType} onChange={(e) => setPropertyType(e.target.value)} className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
-          {PROPERTY_TYPES.map((t) => <option key={t.v} value={t.v}>{t.label}</option>)}
-        </select>
-      </div>
-
-      {/* When is the balance due */}
-      <div>
-        <Label className="text-xs font-semibold">When is the balance due? (after the commitment fee)</Label>
-        <div className="mt-2 space-y-2 text-sm">
-          <label className="flex items-center gap-2"><input type="radio" name="pt" checked={paymentTerms === 'on_arrival'} onChange={() => setPaymentTerms('on_arrival')} /> On arrival</label>
-          <label className="flex flex-wrap items-center gap-2"><input type="radio" name="pt" checked={paymentTerms === 'days_before'} onChange={() => setPaymentTerms('days_before')} /> A set number of days before arrival:
-            <Input type="number" min={1} max={120} value={leadDays} onFocus={() => setPaymentTerms('days_before')} onChange={(e) => setLeadDays(Math.max(1, Math.min(120, Number(e.target.value) || 1)))} className="h-8 w-20" /></label>
-          <label className="flex items-center gap-2"><input type="radio" name="pt" checked={paymentTerms === 'upfront'} onChange={() => setPaymentTerms('upfront')} /> Upfront when the offer is accepted</label>
+        <div className="fo-field">
+          <label className="fo-ptlabel">Property type</label>
+          <select className="fo-select" value={propertyType} onChange={(e) => setPropertyType(e.target.value)}>
+            {PROPERTY_TYPES.map((t) => <option key={t.v} value={t.v}>{t.label}</option>)}
+          </select>
         </div>
-      </div>
 
-      {/* Payment methods */}
-      <div>
-        <Label className="text-xs font-semibold">How do you want to receive payment?</Label>
-        <p className="mb-2 text-xs text-muted-foreground">Tick all you accept — change any time. findastay only ever takes the commitment fee.</p>
-        <div className="space-y-2">
-          {PAYMENT_METHODS.map((m) => (
-            <label key={m.id} className="flex cursor-pointer items-start gap-2.5 rounded-lg border border-border p-2.5 hover:border-primary/40">
-              <input type="checkbox" checked={methods.has(m.id)} onChange={() => toggleMethod(m.id)} className="mt-0.5 h-4 w-4 flex-none" />
-              <span className="min-w-0"><span className="text-sm font-medium text-foreground">{m.label}</span><span className="block text-xs text-muted-foreground">{m.hint}</span></span>
-            </label>
-          ))}
-        </div>
-        {methods.has('payment_link') && <Textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="Paste your payment link or notes for guests" className="mt-2 min-h-[52px]" />}
-      </div>
+        {/* When is the balance due */}
+        <div className="fo-sech">When is the balance due? <span>(after the commitment fee)</span></div>
+        <label className="fo-radio"><input type="radio" name="pt" checked={paymentTerms === 'on_arrival'} onChange={() => setPaymentTerms('on_arrival')} /> On arrival</label>
+        <label className="fo-radio"><input type="radio" name="pt" checked={paymentTerms === 'days_before'} onChange={() => setPaymentTerms('days_before')} /> A set number of days before arrival:
+          <input className="fo-mini" type="number" min={1} max={120} value={leadDays} onFocus={() => setPaymentTerms('days_before')} onChange={(e) => setLeadDays(Math.max(1, Math.min(120, Number(e.target.value) || 1)))} /></label>
+        <label className="fo-radio"><input type="radio" name="pt" checked={paymentTerms === 'upfront'} onChange={() => setPaymentTerms('upfront')} /> Upfront when the offer is accepted</label>
 
-      {/* Agreements — all required */}
-      <div className="rounded-xl border border-amber-300/50 bg-amber-50 p-3.5">
-        <p className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-foreground"><ShieldCheck className="h-4 w-4 text-primary" /> Agreements (all required)</p>
-        <div className="space-y-2.5">
+        {/* Payment methods */}
+        <div className="fo-sech">How do you want to receive payment?</div>
+        <p className="fo-sechsub">Tick all you accept — change any time. findastay only ever takes the commitment fee.</p>
+        {PAYMENT_METHODS.map((m) => (
+          <label key={m.id} className="fo-pm">
+            <input type="checkbox" checked={methods.has(m.id)} onChange={() => toggleMethod(m.id)} />
+            <span><b>{m.label}</b><i>{m.hint}</i></span>
+          </label>
+        ))}
+        {methods.has('payment_link') && <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="Paste your payment link or notes for guests" className="fo-input" style={{ marginTop: 10, minHeight: 56 }} />}
+
+        {/* Agreements — brand green box */}
+        <div className="fo-agbox">
+          <div className="fo-agtitle"><ShieldCheck className="h-5 w-5" /> Agreements <span className="req">(all required)</span></div>
           {AGREEMENTS.map((a) => (
-            <label key={a.id} className="flex cursor-pointer items-start gap-2.5 text-sm text-foreground">
-              <input type="checkbox" checked={!!agree[a.id]} onChange={(e) => setAgree((s) => ({ ...s, [a.id]: e.target.checked }))} className="mt-0.5 h-4 w-4 flex-none" />
+            <label key={a.id} className="fo-agcheck">
+              <input type="checkbox" checked={!!agree[a.id]} onChange={(e) => setAgree((s) => ({ ...s, [a.id]: e.target.checked }))} />
               <span>{a.label}</span>
             </label>
           ))}
         </div>
+
+        {error && <p className="fo-err"><AlertCircle className="h-4 w-4" /> {error}</p>}
+
+        <button className="fo-btn teal big" onClick={submit} disabled={busy || !allAgreed}>
+          {busy ? <><Loader2 className="h-4 w-4 animate-spin" /> {mode === 'claim' ? 'Claiming…' : 'Creating…'}</> : (mode === 'claim' ? 'Claim this business 🎉' : 'Create business 🎉')}
+        </button>
       </div>
-
-      {error && <p className="flex items-center gap-1.5 text-sm text-red-600"><AlertCircle className="h-4 w-4" /> {error}</p>}
-
-      <Button className="w-full" onClick={submit} disabled={busy || !allAgreed}>
-        {busy ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {mode === 'claim' ? 'Claiming…' : 'Creating…'}</> : (mode === 'claim' ? 'Claim this business' : 'Create business')}
-      </Button>
     </div>
   );
 }

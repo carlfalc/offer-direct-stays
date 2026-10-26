@@ -81,16 +81,9 @@ export default function BusinessRegister() {
           ) : null}
         </div>
 
-        {/* Find your business — same style, with the hype line */}
+        {/* Find your business / claim / create — BusinessOnboard carries the styling */}
         {!authLoading && user && (
-          <div className="mt-8">
-            <p className="fo-hype fo-disp">This is getting exciting — we're right behind you.<span className="sub">Let's find your business</span></p>
-            <div className="fo-card mt-4">
-              <h2 className="fo-h1 fo-disp" style={{ fontSize: 'clamp(1.6rem,5vw,2.2rem)' }}>Is your property on here?</h2>
-              <p className="fo-lead" style={{ marginBottom: '6px' }}>Search your business and check it's available. If it's not listed yet, you can add it in a tap.</p>
-              <div className="mt-3"><BusinessOnboard /></div>
-            </div>
-          </div>
+          <div className="mt-8"><BusinessOnboard /></div>
         )}
       </main>
 

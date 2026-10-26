@@ -1,9 +1,10 @@
-/* findastay business onboarding — the "jazzy" branded look (approved mockup).
-   Scoped under .fo-root so nothing leaks into the rest of the app. */
-.fo-root{
+/* findastay business onboarding — the "jazzy" branded look (approved mockup). */
+:root{
   --fo-ink:#0C1A22; --fo-paper:#EAF0F0; --fo-card:#FFFFFF;
   --fo-teal:#0C9C8E; --fo-teal-br:#19C9B4; --fo-mint:#D9F3EE;
   --fo-amber:#F4B24A; --fo-muted:#46606a; --fo-line:rgba(12,26,34,.12);
+}
+.fo-root{
   position:relative; min-height:100vh; background:var(--fo-paper); color:var(--fo-ink);
   font-family:var(--fas-body,'Hanken Grotesk',system-ui,sans-serif);
 }
@@ -80,3 +81,35 @@
 .fo-input{width:100%;padding:13px 15px;border:1.5px solid var(--fo-line);border-radius:13px;font:inherit;font-size:1rem;background:#fff;color:var(--fo-ink)}
 .fo-input:focus{outline:none;border-color:var(--fo-teal);box-shadow:0 0 0 4px rgba(12,156,142,.14)}
 .fo-field{margin-top:16px}
+
+/* details step */
+.fo-row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:460px){.fo-row2{grid-template-columns:1fr}}
+.fo-select{width:100%;padding:13px 15px;border:1.5px solid var(--fo-line);border-radius:13px;font:inherit;font-size:1.08rem;background:#fff;color:var(--fo-ink)}
+.fo-select:focus{outline:none;border-color:var(--fo-teal);box-shadow:0 0 0 4px rgba(12,156,142,.14)}
+.fo-select option{font-size:1.05rem}
+.fo-ptlabel{font-size:1.05rem!important;font-weight:800!important}
+.fo-backlink{display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:1.15rem;color:var(--fo-ink);cursor:pointer;background:none;border:0;margin-bottom:14px}
+.fo-backlink:hover{color:var(--fo-teal)}
+.fo-mark2{font-weight:800;font-size:clamp(1.9rem,5.6vw,2.6rem);letter-spacing:-.03em;line-height:1.02;color:var(--fo-ink);text-align:center;margin-bottom:10px;text-wrap:balance}
+.fo-lead2{text-align:center;color:#1c3139;font-size:1.04rem;line-height:1.5;max-width:46ch;margin:0 auto 18px}
+.fo-sech{margin-top:22px;font-weight:800;font-size:1.05rem;color:var(--fo-ink)}
+.fo-sech span{font-weight:500;color:#2a4049;font-size:.92rem}
+.fo-sechsub{font-size:.92rem;color:#2a4049;margin:4px 0 10px}
+.fo-radio{display:flex;align-items:center;gap:11px;font-size:1.02rem;font-weight:600;color:var(--fo-ink);padding:8px 0;flex-wrap:wrap}
+.fo-radio input[type=radio]{width:19px;height:19px;accent-color:var(--fo-teal)}
+.fo-mini{width:78px;margin-left:4px;padding:8px 10px;border:1.5px solid var(--fo-line);border-radius:10px;font:inherit}
+.fo-pm{display:flex;gap:12px;align-items:flex-start;padding:14px 15px;border:1.5px solid var(--fo-line);border-radius:14px;margin-top:10px;cursor:pointer}
+.fo-pm:hover{border-color:var(--fo-teal)}
+.fo-pm input{width:20px;height:20px;margin-top:2px;flex:none;accent-color:var(--fo-teal)}
+.fo-pm b{display:block;font-size:1.05rem;font-weight:700;color:var(--fo-ink)}
+.fo-pm i{display:block;font-style:normal;font-size:.94rem;color:#2a4049;margin-top:3px;line-height:1.4}
+.fo-agbox{margin-top:22px;background:linear-gradient(160deg,var(--fo-mint),#eafaf7);border:1.6px solid rgba(12,156,142,.5);border-radius:18px;padding:16px 17px}
+.fo-agtitle{font-weight:800;font-size:1.1rem;color:var(--fo-ink);margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.fo-agtitle .req{font-weight:500;color:#2a4049;font-size:.9rem}
+.fo-agtitle svg{width:19px;height:19px;color:var(--fo-teal);flex:none}
+.fo-agcheck{display:flex;gap:12px;align-items:flex-start;font-size:1.02rem;color:var(--fo-ink);padding:9px 0;cursor:pointer;line-height:1.42;font-weight:500}
+.fo-agcheck input{width:20px;height:20px;margin-top:2px;flex:none;accent-color:var(--fo-teal)}
+.fo-btn.big{font-size:1.2rem;padding:18px}
+.fo-err{color:#c0392b;font-weight:600;font-size:.95rem;margin-top:12px;display:flex;align-items:center;gap:6px}
+.fo-field label{font-size:.92rem}

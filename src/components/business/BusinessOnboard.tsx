@@ -92,7 +92,11 @@ export default function BusinessOnboard() {
   }
 
   return (
-    <div>
+    <>
+    <p className="fo-hype fo-disp">This is getting exciting — we're right behind you.<span className="sub">Let's find your business</span></p>
+    <div className="fo-card mt-4">
+      <h2 className="fo-h1 fo-disp" style={{ fontSize: 'clamp(1.6rem,5vw,2.2rem)' }}>Is your property on here?</h2>
+      <p className="fo-lead" style={{ marginBottom: '14px' }}>Search your business and check it's available. If it's not listed yet, you can add it in a tap.</p>
       <div className="relative">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input autoFocus value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Start typing your business name… e.g. Aotea Motor Lodge" className="pl-10" />
@@ -129,5 +133,6 @@ export default function BusinessOnboard() {
         <Button variant="outline" size="sm" className="mt-2 gap-1.5" onClick={() => setMode('create')}><Plus className="h-4 w-4" /> Create your business here</Button>
       </div>
     </div>
+    </>
   );
 }
