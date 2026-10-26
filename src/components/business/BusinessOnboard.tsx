@@ -4,6 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { searchClaimableHotels, ClaimableHotel } from '@/lib/listings';
 import BusinessClaimForm, { ClaimPayload } from './BusinessClaimForm';
+import FsCelebration from './FsCelebration';
+import '@/styles/findastay-onboard.css';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -31,6 +33,7 @@ export default function BusinessOnboard() {
   const [selected, setSelected] = useState<ClaimableHotel | null>(null);
   const [busy, setBusy] = useState(false);
   const [mode, setMode] = useState<'search' | 'create'>('search');
+  const [celebrate, setCelebrate] = useState(false);
   const reqId = useRef(0);
 
   useEffect(() => {
@@ -62,8 +65,7 @@ export default function BusinessOnboard() {
     }
     setBusy(false);
     if (error) { toast({ title: 'Could not claim', description: error.message || 'Please try again', variant: 'destructive' }); return; }
-    toast({ title: 'Business claimed 🎉', description: `${selected.name} is now yours. Let's set up your rooms.` });
-    navigate('/business/content');
+    setCelebrate(true);
   };
 
   const create = async (p: ClaimPayload) => {
@@ -77,15 +79,16 @@ export default function BusinessOnboard() {
     } as any);
     setBusy(false);
     if (error) { toast({ title: 'Could not create', description: error.message || 'Please try again', variant: 'destructive' }); return; }
-    toast({ title: 'Business created 🎉', description: `${p.name} is set up. Let's add your rooms.` });
-    navigate('/business/content');
+    setCelebrate(true);
   };
 
+  const cele = <FsCelebration show={celebrate} onDone={() => navigate('/business/content')} />;
+
   if (mode === 'create') {
-    return <BusinessClaimForm mode="create" busy={busy} onBack={() => setMode('search')} onSubmit={create} />;
+    return <>{cele}<BusinessClaimForm mode="create" busy={busy} onBack={() => setMode('search')} onSubmit={create} /></>;
   }
   if (selected) {
-    return <BusinessClaimForm mode="claim" hotel={selected} busy={busy} onBack={() => setSelected(null)} onSubmit={claim} />;
+    return <>{cele}<BusinessClaimForm mode="claim" hotel={selected} busy={busy} onBack={() => setSelected(null)} onSubmit={claim} /></>;
   }
 
   return (
