@@ -1,14 +1,7 @@
 // findastay messenger helpers — one thread per confirmed offer.
 
-/** Commitment fee findastay takes (the only money we touch). */
-export function commitmentFee(currency: string): number {
-  return currency === 'AUD' ? 12 : 8.99;
-}
-
-/** Balance the property collects directly = agreed total − commitment fee. */
-export function balancePayable(total: number, currency: string): number {
-  return Math.max(0, total - commitmentFee(currency));
-}
+// Fee logic lives in ./fees (tiered by booking total); re-exported for callers.
+export { commitmentFee, balancePayable } from './fees';
 
 /**
  * Composer guard. The only thing we never allow through the chat is a card

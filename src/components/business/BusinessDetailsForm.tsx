@@ -52,7 +52,7 @@ export default function BusinessDetailsForm({ hotel, onDone }: Props) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const feeLabel = hotel.country === 'AU' ? 'A$12.00' : 'NZ$8.99';
+  const feeLabel = hotel.country === 'AU' ? 'A$12.00' : 'NZ$9.99';
 
   const save = async () => {
     if (!user) return;

@@ -491,7 +491,7 @@ export default function BusinessSettings() {
                       <div className="flex-1">
                         <p className="font-medium text-foreground">Guest pays admin fee on acceptance</p>
                         <p className="mt-1 text-sm text-muted-foreground">
-                          Guest pays {normalizeCountryCode(addressData.country) === 'AU' ? 'AUD $12.00' : 'NZD $8.99'} when offer is accepted. Not included in monthly invoice.
+                          Guest pays {normalizeCountryCode(addressData.country) === 'AU' ? 'AUD $12.00' : 'NZD $9.99'} when offer is accepted. Not included in monthly invoice.
                         </p>
                       </div>
                     </div>
@@ -517,7 +517,7 @@ export default function BusinessSettings() {
                       <div className="flex-1">
                         <p className="font-medium text-foreground">Invoice me monthly</p>
                         <p className="mt-1 text-sm text-muted-foreground">
-                          {normalizeCountryCode(addressData.country) === 'AU' ? 'AUD $12.00' : 'NZD $8.99'} per confirmed booking, invoiced on the 20th.
+                          {normalizeCountryCode(addressData.country) === 'AU' ? 'AUD $12.00' : 'NZD $9.99'} per confirmed booking, invoiced on the 20th.
                         </p>
                       </div>
                     </div>

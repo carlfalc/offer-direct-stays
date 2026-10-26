@@ -146,7 +146,7 @@ export function initLanding(
     amt.textContent = '$' + v;
     const pct = (v - +slider.min) / (+slider.max - +slider.min) * 100;
     slider.style.setProperty('--fill', pct + '%');
-    nets.textContent = '$' + (v - 8.99).toFixed(0);
+    nets.textContent = '$' + (v - 9.99).toFixed(0);
     verdict.classList.remove('go', 'mid');
     if (v >= 160) { verdict.classList.add('go'); vText.textContent = v >= 185 ? "Instant yes — that's near the listed rate." : "Likely accepted — you're in the sweet spot."; verdict.querySelector('.ic').innerHTML = '<path d="M5 13l4 4L19 7"/>'; }
     else if (v >= 142) { verdict.classList.add('mid'); vText.textContent = "They'll probably counter — close, but a touch low."; verdict.querySelector('.ic').innerHTML = '<path d="M12 8v5M12 16v.5"/><circle cx="12" cy="12" r="9"/>'; }

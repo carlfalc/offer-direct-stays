@@ -18,7 +18,7 @@ export function OnboardingSummaryPanel({
   paymentMethod,
   countryCode,
 }: OnboardingSummaryPanelProps) {
-  const getFeeAmount = () => countryCode === 'AU' ? 'A$12.00' : 'NZ$8.99';
+  const getFeeAmount = () => countryCode === 'AU' ? 'A$12.00' : 'NZ$9.99';
   
   const getPaymentMethodLabel = () => {
     if (paymentMethod === 'guest_admin_fee') {

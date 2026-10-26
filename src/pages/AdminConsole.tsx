@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, UserPlus, Megaphone, ClipboardList, Mail, Phone } from 'lucide-react';
+import { commitmentFee } from '@/lib/fees';
 
 interface OnboardingReq {
   id: string; contact_name: string | null; email: string; phone: string | null;
@@ -67,7 +68,7 @@ export default function AdminConsole() {
     </button>
   );
 
-  const revenueFees = bookings.reduce((s, b) => s + ((b.listing?.country === 'AU' ? 12 : 8.99)), 0);
+  const revenueFees = bookings.reduce((s, b) => s + commitmentFee(b.total_offer), 0);
 
   return (
     <div className="mx-auto max-w-4xl">

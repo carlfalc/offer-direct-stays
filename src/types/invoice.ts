@@ -55,7 +55,7 @@ export interface Invoice {
 
 // Fee amounts by currency
 export const BOOKING_FEES = {
-  NZD: 8.99,
+  NZD: 9.99,
   AUD: 12.00,
 } as const;
 

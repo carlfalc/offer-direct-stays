@@ -15,7 +15,7 @@ export function PaymentMethodCard({
   countryCode,
 }: PaymentMethodCardProps) {
   const isPayAtProperty = type === 'guest_admin_fee';
-  const feeAmount = countryCode === 'AU' ? 'A$12.00' : 'NZ$8.99';
+  const feeAmount = countryCode === 'AU' ? 'A$12.00' : 'NZ$9.99';
   const exampleRate = countryCode === 'AU' ? 'A$200' : 'NZ$200';
   const exampleBalance = countryCode === 'AU' ? 'A$188' : 'NZ$191.01';
 

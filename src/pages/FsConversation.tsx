@@ -97,8 +97,8 @@ export default function FsConversation() {
     return <div className="flex min-h-[60vh] items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
   }
 
-  const fee = commitmentFee(currency);
-  const balance = balancePayable(Number(offer.total_offer), currency);
+  const fee = commitmentFee(Number(offer.total_offer));
+  const balance = balancePayable(Number(offer.total_offer));
 
   return (
     <div className="mx-auto flex h-full max-w-2xl flex-col px-4 py-4">

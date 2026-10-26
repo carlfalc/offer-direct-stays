@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { MapPin, Check, MessageCircle, Home } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { commitmentFee } from '@/lib/fees';
 
 // Country-based pricing display
 const BCF_PRICING = {
@@ -170,7 +171,7 @@ export default function OfferConfirmed() {
 
   const country = (offer.properties?.country || 'NZ') as keyof typeof BCF_PRICING;
   const pricing = BCF_PRICING[country] || BCF_PRICING.NZ;
-  const bcfAmount = offer.bcf_amount || pricing.amount;
+  const bcfAmount = offer.bcf_amount || commitmentFee(offer.offer_amount);
   const remainingBalance = offer.offer_amount - bcfAmount;
 
   return (

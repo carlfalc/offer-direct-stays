@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { MapPin, CreditCard, AlertCircle, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { commitmentFee } from '@/lib/fees';
 
 // Country-based pricing display
 const BCF_PRICING = {
@@ -214,7 +215,8 @@ export default function OfferPayment() {
 
   const country = (offer.properties?.country || 'NZ') as keyof typeof BCF_PRICING;
   const pricing = BCF_PRICING[country] || BCF_PRICING.NZ;
-  const remainingBalance = offer.offer_amount - pricing.amount;
+  const bcfAmount = commitmentFee(offer.offer_amount);
+  const remainingBalance = offer.offer_amount - bcfAmount;
 
   return (
     <div className="min-h-full bg-background">
@@ -260,7 +262,7 @@ export default function OfferPayment() {
               
               <div className="flex justify-between items-center text-primary">
                 <span className="font-medium">Booking commitment fee (pay now)</span>
-                <span className="font-bold">{pricing.symbol}{pricing.amount.toFixed(2)} {pricing.currency}</span>
+                <span className="font-bold">{pricing.symbol}{bcfAmount.toFixed(2)} {pricing.currency}</span>
               </div>
               
               <div className="border-t border-border pt-3 flex justify-between items-center">
@@ -272,7 +274,7 @@ export default function OfferPayment() {
             {/* Disclaimer */}
             <div className="p-4 bg-muted/50 rounded-lg text-sm text-muted-foreground space-y-2">
               <p>
-                <strong>Important:</strong> The {pricing.symbol}{pricing.amount.toFixed(2)} booking commitment fee is non-refundable.
+                <strong>Important:</strong> The {pricing.symbol}{bcfAmount.toFixed(2)} booking commitment fee is non-refundable.
               </p>
               <p>
                 findastay does not process the remaining payment. The balance of {pricing.symbol}{remainingBalance.toFixed(2)} is payable directly to the property upon arrival or as arranged with them.
@@ -287,7 +289,7 @@ export default function OfferPayment() {
               size="lg"
             >
               <CreditCard className="h-4 w-4 mr-2" />
-              {processing ? 'Processing...' : `Pay ${pricing.symbol}${pricing.amount.toFixed(2)} ${pricing.currency}`}
+              {processing ? 'Processing...' : `Pay ${pricing.symbol}${bcfAmount.toFixed(2)} ${pricing.currency}`}
             </Button>
           </CardContent>
         </Card>

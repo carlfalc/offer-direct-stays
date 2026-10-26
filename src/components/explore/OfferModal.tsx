@@ -30,6 +30,7 @@ import { MapPin, AlertCircle, Loader2, CalendarClock } from 'lucide-react';
 import OfferSlider from './OfferSlider';
 import RoomPicker from './RoomPicker';
 import { loadLiteApiRoomContent } from '@/lib/listings';
+import { commitmentFee } from '@/lib/fees';
 
 interface OfferModalProps {
   open: boolean;
@@ -88,8 +89,8 @@ export default function OfferModal({
     return n > 0 ? n : 1;
   })();
   const offerTotal = (parseFloat(offerAmount) || 0) * nights;
-  // Flat bands (Carl, confirmed): first $8.99, mid $14.99, top $24.99.
-  const bcfAmount = offerTotal < 500 ? 8.99 : offerTotal <= 1500 ? 14.99 : 24.99;
+  // Tiered traveller commitment fee by booking total (Carl, 2026-10-26).
+  const bcfAmount = commitmentFee(offerTotal);
 
   // "Pay by" cue — when the balance is due, worked out from the owner's terms.
   const payCue = (() => {

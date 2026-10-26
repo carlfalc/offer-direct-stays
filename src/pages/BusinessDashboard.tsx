@@ -12,6 +12,7 @@ import { Loader2, Inbox, Clock, CheckCircle2, Users, CalendarDays, Plus, Refresh
 import { exportBookingsXlsx, exportBookingsPdf, ReportRow } from '@/lib/bookingReports';
 import WeatherTiles from '@/components/explore/WeatherTiles';
 import { useTileOrder } from '@/hooks/useTileOrder';
+import { commitmentFee } from '@/lib/fees';
 
 interface FsOffer {
   id: string;
@@ -355,7 +356,7 @@ export default function BusinessDashboard() {
   const doExport = (kind: 'xlsx' | 'pdf') => {
     const rows: ReportRow[] = bookingList.map((o) => {
       const cur = currencyFor(o);
-      const fee = cur === 'AUD' ? 12 : 8.99;
+      const fee = commitmentFee(o.total_offer);
       return {
         ref: o.booking_number || '—',
         property: o.listing?.name || '',
