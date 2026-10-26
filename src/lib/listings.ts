@@ -201,14 +201,17 @@ export async function searchListings(geo: GeoPoint, limit = 100): Promise<Proper
       const ids = props.map((p) => p.id);
       const { data: listings } = await supabase
         .from('fs_listings')
-        .select('liteapi_hotel_id,status,property_type,payment_terms,payment_lead_days')
+        .select('liteapi_hotel_id,status,published_at,property_type,payment_terms,payment_lead_days')
         .in('liteapi_hotel_id', ids);
       const byId = new Map((listings || []).map((l: any) => [l.liteapi_hotel_id, l]));
       props.forEach((p) => {
         const l = byId.get(p.id);
         if (!l) return;
-        p.is_claimed = l.status === 'active';
-        p.registration_status = l.status === 'active' ? 'registered' : null;
+        // Only a PUBLISHED business is treated as live/registered with owner settings.
+        const live = l.status === 'active' && l.published_at != null;
+        if (!live) return;
+        p.is_claimed = true;
+        p.registration_status = 'registered';
         if (l.property_type) p.category = categoryOf(l.property_type); // owner's declared type wins
         p.payment_terms = l.payment_terms ?? p.payment_terms;
         p.payment_lead_days = l.payment_lead_days ?? p.payment_lead_days;
@@ -223,7 +226,8 @@ export async function searchListings(geo: GeoPoint, limit = 100): Promise<Proper
     const { data: active } = await supabase
       .from('fs_listings')
       .select('liteapi_hotel_id,name,city,country,latitude,longitude,thumbnail,status,property_type,payment_terms,payment_lead_days')
-      .eq('status', 'active');
+      .eq('status', 'active')
+      .not('published_at', 'is', null);
     const existing = new Map(props.map((p) => [p.id, p]));
     (active || []).forEach((l: any) => {
       if (l.latitude == null || l.longitude == null) return;
@@ -272,7 +276,8 @@ export async function searchListings(geo: GeoPoint, limit = 100): Promise<Proper
         .from('fs_listings')
         .select('id,liteapi_hotel_id')
         .in('liteapi_hotel_id', claimedHotelIds)
-        .eq('status', 'active');
+        .eq('status', 'active')
+        .not('published_at', 'is', null);
       const hotelByListing = new Map((ls || []).map((l: any) => [l.id, l.liteapi_hotel_id]));
       const listingIds = (ls || []).map((l: any) => l.id);
       if (listingIds.length) {

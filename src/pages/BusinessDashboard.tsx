@@ -8,7 +8,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Inbox, Clock, CheckCircle2, Users, CalendarDays, Plus, RefreshCw, SlidersHorizontal, ClipboardCheck, ClipboardList, X, Download, RotateCcw, Trophy, Send, DollarSign, Percent, Zap, AlertCircle, BedDouble, Circle } from 'lucide-react';
+import { Loader2, Inbox, Clock, CheckCircle2, Users, CalendarDays, Plus, RefreshCw, SlidersHorizontal, ClipboardCheck, ClipboardList, X, Download, RotateCcw, Trophy, Send, DollarSign, Percent, Zap, BedDouble, Circle, Rocket } from 'lucide-react';
 import { exportBookingsXlsx, exportBookingsPdf, ReportRow } from '@/lib/bookingReports';
 import WeatherTiles from '@/components/explore/WeatherTiles';
 import { useTileOrder } from '@/hooks/useTileOrder';
@@ -88,6 +88,86 @@ function PendingOfferCard({ offer, currency, busy, onRespond }: {
   );
 }
 
+interface Readiness {
+  listing: any; approved: boolean; totalRooms: number; pricedRooms: number;
+  roomsWithAuto: number; allPriced: boolean; published: boolean; ready: boolean;
+}
+
+/** Per-property setup + go-live control with a content-review confirmation. */
+function ReadinessCard({ r, busy, onGoLive, onTakeOffline }: {
+  r: Readiness; busy: boolean;
+  onGoLive: (id: string) => void; onTakeOffline: (id: string) => void;
+}) {
+  const [confirming, setConfirming] = useState(false);
+  const [reviewed, setReviewed] = useState(false);
+  const l = r.listing;
+  const checks = [
+    { ok: r.approved, label: r.approved ? 'Property approved' : 'Awaiting approval', sub: l.name },
+    { ok: r.totalRooms > 0, label: r.totalRooms > 0 ? `${r.totalRooms} room${r.totalRooms === 1 ? '' : 's'} detected` : 'No rooms imported', sub: r.totalRooms > 0 ? 'From your property content' : 'Import rooms on the pricing page' },
+    { ok: r.allPriced, label: r.allPriced ? 'All rooms priced' : `${r.pricedRooms} of ${r.totalRooms || '—'} rooms priced`, sub: r.allPriced ? 'Guide price on every room' : 'Set a guide price on each room' },
+  ];
+  return (
+    <div className={cn('rounded-2xl border p-4 sm:p-5', r.published ? 'border-success/30 bg-success/[0.06]' : 'border-amber-300/50 bg-amber-50')}>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <span className={cn('inline-flex h-2.5 w-2.5 rounded-full', r.published ? 'bg-success' : 'bg-amber-500')} />
+            <h3 className="font-display text-lg font-bold text-foreground">{l.name}</h3>
+            <span className={cn('rounded-full px-2 py-0.5 text-[11px] font-semibold', r.published ? 'bg-success/15 text-success' : 'bg-amber-200/70 text-amber-800')}>{r.published ? 'Live' : 'Not live'}</span>
+          </div>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {r.published ? 'Travellers can find you in search and make offers.' : 'Travellers only see you once you review your content and go live.'}
+          </p>
+        </div>
+        {!r.published && !r.ready && (
+          <Button size="sm" className="gap-1.5 bg-[#0C1A22] text-white hover:bg-[#0C1A22]/90" asChild>
+            <Link to="/business/pricing"><SlidersHorizontal className="h-4 w-4" /> Set room prices</Link>
+          </Button>
+        )}
+      </div>
+      <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
+        {checks.map((c, i) => (
+          <div key={i} className="flex items-start gap-2 rounded-xl border border-border/60 bg-card/70 p-3">
+            {c.ok ? <CheckCircle2 className="mt-0.5 h-4 w-4 flex-none text-success" /> : <Circle className="mt-0.5 h-4 w-4 flex-none text-amber-500" />}
+            <div className="min-w-0"><p className="text-sm font-semibold text-foreground">{c.label}</p><p className="truncate text-xs text-muted-foreground">{c.sub}</p></div>
+          </div>
+        ))}
+      </div>
+      {r.totalRooms > 0 && (
+        <p className="mt-2 text-xs text-muted-foreground">{r.roomsWithAuto} of {r.totalRooms} rooms also have an auto-accept / floor price (optional — lets offers confirm instantly).</p>
+      )}
+      <div className="mt-3 border-t border-border/50 pt-3">
+        {r.published ? (
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm text-success"><CheckCircle2 className="mr-1 inline h-4 w-4" /> Published and visible to travellers.</p>
+            <Button size="sm" variant="outline" disabled={busy} onClick={() => onTakeOffline(l.id)}>Take offline</Button>
+          </div>
+        ) : !confirming ? (
+          <>
+            <Button size="sm" disabled={!r.ready || busy} className="gap-1.5 bg-success text-white hover:bg-success/90 disabled:opacity-50" onClick={() => setConfirming(true)}>
+              <Rocket className="h-4 w-4" /> Go live
+            </Button>
+            {!r.ready && <p className="mt-2 text-xs text-muted-foreground">Go live unlocks once your property is approved and every room has a price.</p>}
+          </>
+        ) : (
+          <div className="space-y-2.5">
+            <label className="flex items-start gap-2 text-sm text-foreground">
+              <input type="checkbox" checked={reviewed} onChange={(e) => setReviewed(e.target.checked)} className="mt-0.5 h-4 w-4 flex-none" />
+              <span>I've reviewed my rooms, photos, details and prices for <strong>{l.name}</strong> and confirm they're correct.</span>
+            </label>
+            <div className="flex gap-2">
+              <Button size="sm" disabled={!reviewed || busy} className="gap-1.5 bg-success text-white hover:bg-success/90 disabled:opacity-50" onClick={() => onGoLive(l.id)}>
+                {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Rocket className="h-4 w-4" /> Publish — go live</>}
+              </Button>
+              <Button size="sm" variant="ghost" disabled={busy} onClick={() => { setConfirming(false); setReviewed(false); }}>Cancel</Button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 const STATUS_LABEL: Record<string, string> = {
   declined: 'Declined', expired: 'Expired', withdrawn: 'Withdrawn by guest',
 };
@@ -124,7 +204,7 @@ export default function BusinessDashboard() {
     if (!user) return;
     setLoading(true);
     const { data: myListings } = await supabase
-      .from('fs_listings').select('id,name,city,country,status,auto_accept_enabled').eq('owner_id', user.id);
+      .from('fs_listings').select('id,name,city,country,status,auto_accept_enabled,published_at,content_reviewed_at').eq('owner_id', user.id);
     const ls = (myListings as any[]) || [];
     setListings(ls);
     if (ls.length === 0) { setOffers([]); setRooms([]); setLoading(false); return; }
@@ -163,6 +243,24 @@ export default function BusinessDashboard() {
       return;
     }
     toast({ title: next ? 'Auto-accept on' : 'Auto-accept off', description: next ? 'Offers at or above your auto price confirm instantly.' : 'Every offer now waits for your response.' });
+  };
+
+  const goLive = async (listingId: string) => {
+    setTogglingId(listingId);
+    const { data, error } = await supabase.rpc('fs_set_live', { p_listing: listingId } as any);
+    setTogglingId(null);
+    if (error) { toast({ title: 'Not live yet', description: error.message || 'Check your rooms and prices first.', variant: 'destructive' }); return; }
+    setListings((ls) => ls.map((l) => (l.id === listingId ? { ...l, published_at: data || new Date().toISOString(), content_reviewed_at: new Date().toISOString() } : l)));
+    toast({ title: 'Your business is now live 🎉', description: 'Travellers can find you in search and make offers.' });
+  };
+
+  const takeOffline = async (listingId: string) => {
+    setTogglingId(listingId);
+    const { error } = await supabase.rpc('fs_set_offline', { p_listing: listingId } as any);
+    setTogglingId(null);
+    if (error) { toast({ title: 'Could not update', description: error.message, variant: 'destructive' }); return; }
+    setListings((ls) => ls.map((l) => (l.id === listingId ? { ...l, published_at: null } : l)));
+    toast({ title: 'Taken offline', description: 'Your property is hidden from search until you go live again.' });
   };
 
   const respond = async (id: string, action: 'accept' | 'counter' | 'decline', counter?: number) => {
@@ -229,13 +327,22 @@ export default function BusinessDashboard() {
   }).sort((a, b) => b.bookings - a.bookings || b.revenue - a.revenue);
   const topBookings = roomPerf[0]?.bookings || 0;
 
-  // Go-live readiness — a property is "live" when approved AND every room has a guide price.
-  const totalRooms = rooms.length;
-  const pricedRooms = rooms.filter((r) => r.base_guide != null).length;
-  const roomsWithAuto = rooms.filter((r) => r.base_auto != null || r.base_floor != null).length;
-  const allActive = listings.length > 0 && listings.every((l) => l.status === 'active');
-  const allPriced = totalRooms > 0 && pricedRooms === totalRooms;
-  const isLive = allActive && allPriced;
+  // Go-live readiness — per property. "Live" = approved + every room priced + owner published.
+  const listingReadiness = listings.map((l) => {
+    const lr = rooms.filter((r) => r.listing_id === l.id);
+    const priced = lr.filter((r) => r.base_guide != null).length;
+    const withAuto = lr.filter((r) => r.base_auto != null || r.base_floor != null).length;
+    return {
+      listing: l,
+      approved: l.status === 'active',
+      totalRooms: lr.length,
+      pricedRooms: priced,
+      roomsWithAuto: withAuto,
+      allPriced: lr.length > 0 && priced === lr.length,
+      published: !!l.published_at,
+      ready: l.status === 'active' && lr.length > 0 && priced === lr.length,
+    };
+  });
 
   // The approved-bookings list the view (and any export) is showing.
   const bookingList = filter === 'to_enter' ? toEnter : filter === 'entered' ? entered : confirmed;
@@ -381,44 +488,11 @@ export default function BusinessDashboard() {
 
       <div className="mx-auto max-w-3xl px-4 py-6">
 
-      {/* Go-live readiness — real reads: approved status + every room priced */}
-      <section className={cn('mb-6 rounded-2xl border p-4 sm:p-5', isLive ? 'border-success/30 bg-success/[0.06]' : 'border-amber-300/50 bg-amber-50')}>
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <span className={cn('inline-flex h-2.5 w-2.5 rounded-full', isLive ? 'bg-success' : 'bg-amber-500')} />
-              <h2 className="font-display text-lg font-bold text-foreground">{isLive ? 'Your business is live' : 'Finish setting up to go live'}</h2>
-            </div>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {isLive
-                ? 'Travellers can find you in search and make offers. Everything below is set.'
-                : 'Travellers only see you once your property is approved and every room has a price set.'}
-            </p>
-          </div>
-          {!isLive && (
-            <Button size="sm" className="gap-1.5 bg-[#0C1A22] text-white hover:bg-[#0C1A22]/90" asChild>
-              <Link to="/business/pricing"><SlidersHorizontal className="h-4 w-4" /> Set room prices</Link>
-            </Button>
-          )}
-        </div>
-        <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
-          {[
-            { ok: allActive, label: allActive ? 'Property approved' : 'Property awaiting approval', sub: listings.map((l) => l.name).join(', ') },
-            { ok: totalRooms > 0, label: totalRooms > 0 ? `${totalRooms} room${totalRooms === 1 ? '' : 's'} detected` : 'No rooms imported yet', sub: totalRooms > 0 ? 'From your property content' : 'Import rooms on the pricing page' },
-            { ok: allPriced, label: allPriced ? 'All rooms priced' : `${pricedRooms} of ${totalRooms || '—'} rooms priced`, sub: allPriced ? 'Guide price set on every room' : 'Set a guide price on each room' },
-          ].map((c, i) => (
-            <div key={i} className="flex items-start gap-2 rounded-xl border border-border/60 bg-card/70 p-3">
-              {c.ok ? <CheckCircle2 className="mt-0.5 h-4 w-4 flex-none text-success" /> : <Circle className="mt-0.5 h-4 w-4 flex-none text-amber-500" />}
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-foreground">{c.label}</p>
-                <p className="truncate text-xs text-muted-foreground">{c.sub}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-        {totalRooms > 0 && (
-          <p className="mt-2 text-xs text-muted-foreground">{roomsWithAuto} of {totalRooms} rooms also have an auto-accept / floor price set (optional, lets offers confirm instantly).</p>
-        )}
+      {/* Go-live readiness — per property, real data + publish control */}
+      <section className="mb-6 space-y-3">
+        {listingReadiness.map((r) => (
+          <ReadinessCard key={r.listing.id} r={r} busy={togglingId === r.listing.id} onGoLive={goLive} onTakeOffline={takeOffline} />
+        ))}
       </section>
 
       {/* Controls — flash on/off toggles per property */}
