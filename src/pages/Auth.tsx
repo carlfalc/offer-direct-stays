@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -30,6 +29,7 @@ export default function Auth() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [signupIntent, setSignupIntent] = useState<string | null>(null);
+  const [tab, setTab] = useState<'login' | 'signup'>('login');
   const [spin, setSpin] = useState(false);
   const triggerSpin = () => { setSpin(true); window.setTimeout(() => setSpin(false), 2600); };
   const [devBusy, setDevBusy] = useState<string | null>(null);
@@ -68,20 +68,29 @@ export default function Auth() {
       });
       return;
     }
-    navigate(role === 'business' ? '/business/onboarding' : '/explore');
+    navigate(role === 'business' ? '/business/dashboard' : '/explore');
   };
 
   useEffect(() => {
-    const intent = localStorage.getItem('signup_intent');
+    const params = new URLSearchParams(window.location.search);
+    const qIntent = params.get('intent');   // 'business' | 'traveller'
+    const qMode = params.get('mode');        // 'signup' | 'login'
+    let intent = localStorage.getItem('signup_intent');
+    if (qIntent === 'business' || qIntent === 'traveller') {
+      intent = qIntent === 'business' ? 'business' : 'guest';
+      localStorage.setItem('signup_intent', intent);
+    }
     setSignupIntent(intent);
+    // Coming from a "Register" link → open the Sign Up tab.
+    if (qIntent || qMode === 'signup') setTab('signup');
+    else if (qMode === 'login') setTab('login');
   }, []);
 
   const getRedirectPath = async () => {
     const intent = localStorage.getItem('signup_intent');
     // Don't remove yet - let the destination page handle it
-    
     if (intent === 'business') {
-      return '/business/onboarding';
+      return '/business/dashboard';
     }
     return '/explore';
   };
@@ -116,27 +125,12 @@ export default function Auth() {
         variant: 'destructive',
       });
     } else {
-      // Check if user has a business record
+      // The business dashboard sends owners to claim their property if they
+      // haven't yet, so a single destination covers first-time and returning.
       const intent = localStorage.getItem('signup_intent');
-      if (intent === 'business') {
-        // Check if they already have a business
-        const { data: session } = await supabase.auth.getSession();
-        if (session?.session?.user) {
-          const { data: existingBusiness } = await supabase
-            .from('businesses')
-            .select('id')
-            .eq('user_id', session.session.user.id)
-            .maybeSingle();
-
-          setIsLoading(false);
-          localStorage.removeItem('signup_intent');
-          navigate(existingBusiness ? '/business/dashboard' : '/business/onboarding');
-          return;
-        }
-      }
       setIsLoading(false);
-      const redirectPath = await getRedirectPath();
-      navigate(redirectPath);
+      localStorage.removeItem('signup_intent');
+      navigate(intent === 'business' ? '/business/dashboard' : '/explore');
     }
   };
 
@@ -177,13 +171,13 @@ export default function Auth() {
       }
     } else {
       const intent = localStorage.getItem('signup_intent');
-      const redirectPath = intent === 'business' ? '/business/onboarding' : '/explore';
+      const redirectPath = intent === 'business' ? '/business/claim' : '/explore';
       localStorage.removeItem('signup_intent');
-      
+
       toast({
         title: 'Account Created',
-        description: redirectPath === '/business/onboarding' 
-          ? 'Welcome! Let\'s set up your business profile.'
+        description: redirectPath === '/business/claim'
+          ? 'Welcome! Let\'s claim your property and set it up.'
           : 'Welcome to findastay! You can now start exploring.',
       });
       setIsLoading(false);
@@ -210,25 +204,42 @@ export default function Auth() {
           <div className="mb-4 p-4 bg-primary/10 rounded-lg border border-primary/20">
             <div className="flex items-center gap-2 mb-1">
               <Building2 className="h-4 w-4 text-primary" />
-              <Badge variant="secondary" className="text-xs">Business Onboarding</Badge>
+              <Badge variant="secondary" className="text-xs">Register your business</Badge>
             </div>
             <p className="text-sm text-muted-foreground">
-              After signup you'll set up your business profile.
+              Create your owner account, then claim your property, set prices and go live.
+            </p>
+          </div>
+        )}
+        {signupIntent === 'guest' && (
+          <div className="mb-4 p-4 bg-primary/10 rounded-lg border border-primary/20">
+            <div className="flex items-center gap-2 mb-1">
+              <MapPin className="h-4 w-4 text-primary" />
+              <Badge variant="secondary" className="text-xs">Register as a traveller</Badge>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Create your free account, then name your price on any stay.
             </p>
           </div>
         )}
 
         <Card className="fas-glass border-border">
           <CardHeader className="space-y-1 pb-4">
-            <CardTitle className="fas-title text-2xl text-center">Welcome</CardTitle>
+            <CardTitle className="fas-title text-2xl text-center">
+              {tab === 'signup' && signupIntent === 'business' ? 'Register your business'
+                : tab === 'signup' && signupIntent === 'guest' ? 'Create your account'
+                : 'Welcome'}
+            </CardTitle>
             <CardDescription className="text-center">
-              {signupIntent === 'business' 
-                ? 'Create a business account to list your properties'
+              {signupIntent === 'business'
+                ? 'List your property — pay only when you\'re booked'
+                : signupIntent === 'guest'
+                ? 'Browse and make offers for free'
                 : 'Sign in or create an account to continue'}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="login" className="w-full" onValueChange={triggerSpin}>
+            <Tabs value={tab} className="w-full" onValueChange={(v) => { setTab(v as 'login' | 'signup'); triggerSpin(); }}>
               <TabsList className="grid w-full grid-cols-2 mb-6">
                 <TabsTrigger value="login">Login</TabsTrigger>
                 <TabsTrigger value="signup">Sign Up</TabsTrigger>
