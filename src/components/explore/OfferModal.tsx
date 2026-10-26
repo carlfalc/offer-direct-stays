@@ -70,6 +70,14 @@ export default function OfferModal({
   const [engineListingId, setEngineListingId] = useState<string | null>(null);
   const [checkIn, setCheckIn] = useState('');
   const [checkOut, setCheckOut] = useState('');
+  const [contactEmail, setContactEmail] = useState('');
+  const [contactPhone, setContactPhone] = useState('');
+  const [contactPref, setContactPref] = useState<'email' | 'phone' | 'text'>('email');
+
+  // Prefill the contact email from the signed-in account (editable).
+  useEffect(() => {
+    if (user?.email && !contactEmail) setContactEmail(user.email);
+  }, [user, contactEmail]);
 
   // Currency based on property country
   const currency = property?.country === 'AU' ? 'AUD' : 'NZD';
@@ -199,6 +207,10 @@ export default function OfferModal({
       setError('Offer amount looks too high — please adjust');
       return;
     }
+    if (!contactPhone.trim()) {
+      setError('Please add a mobile number so the property can book you in if your offer is accepted');
+      return;
+    }
     setError(null);
 
     setIsSubmitting(true);
@@ -218,6 +230,9 @@ export default function OfferModal({
         p_children: children,
         p_nightly: amount,
         p_message: requirements.trim() || null,
+        p_email: contactEmail.trim() || null,
+        p_phone: contactPhone.trim() || null,
+        p_contact_pref: contactPref,
       } as any);
       setIsSubmitting(false);
       if (rpcError) {
@@ -500,6 +515,32 @@ export default function OfferModal({
           <div>
             <p className="text-sm font-semibold text-foreground">{payCue.line}</p>
             <p className="text-xs text-muted-foreground mt-0.5">{payCue.sub}</p>
+          </div>
+        </div>
+
+        {/* How the property should reach you — shared once the booking confirms */}
+        <div className="space-y-3 rounded-lg border border-border bg-muted/20 p-3">
+          <div>
+            <Label className="text-sm font-medium text-foreground">How should the property reach you?</Label>
+            <p className="text-xs text-muted-foreground mt-0.5">If your offer is confirmed, the property uses this to book you in. Shared only after you confirm.</p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1">
+              <Label htmlFor="contact-email" className="text-xs text-muted-foreground">Email</Label>
+              <Input id="contact-email" type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} placeholder="you@example.com" />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="contact-phone" className="text-xs text-muted-foreground">Mobile</Label>
+              <Input id="contact-phone" type="tel" value={contactPhone} onChange={(e) => { setContactPhone(e.target.value); setError(null); }} placeholder="e.g. 021 123 4567" />
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Preferred contact method</Label>
+            <RadioGroup value={contactPref} onValueChange={(v) => setContactPref(v as 'email' | 'phone' | 'text')} className="flex flex-wrap gap-4">
+              <div className="flex items-center gap-1.5"><RadioGroupItem value="email" id="pref-email" /><Label htmlFor="pref-email" className="text-sm text-foreground">Email</Label></div>
+              <div className="flex items-center gap-1.5"><RadioGroupItem value="phone" id="pref-phone" /><Label htmlFor="pref-phone" className="text-sm text-foreground">Phone call</Label></div>
+              <div className="flex items-center gap-1.5"><RadioGroupItem value="text" id="pref-text" /><Label htmlFor="pref-text" className="text-sm text-foreground">Text</Label></div>
+            </RadioGroup>
           </div>
         </div>
       </div>

@@ -6,7 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
-import { Loader2, ArrowLeft, Lock, Send, ShieldCheck } from 'lucide-react';
+import { Loader2, ArrowLeft, Lock, Send, ShieldCheck, Mail, Phone, MessageCircle } from 'lucide-react';
 import { commitmentFee, balancePayable, scanMessage, threadLocked } from '@/lib/messaging';
 
 interface Msg { id: string; sender_id: string | null; kind: string; body: string; created_at: string; }
@@ -36,7 +36,7 @@ export default function FsConversation() {
     if (!user || !offerId) return;
     const { data: o } = await supabase
       .from('fs_offers')
-      .select('id,traveller_id,listing_id,check_in,check_out,nights,adults,children,nightly_offer,total_offer,booking_number,status,room:fs_listing_rooms(room_name),listing:fs_listings(name,city,country,owner_id)')
+      .select('id,traveller_id,listing_id,check_in,check_out,nights,adults,children,nightly_offer,total_offer,booking_number,status,guest_email,guest_phone,guest_contact_pref,room:fs_listing_rooms(room_name),listing:fs_listings(name,city,country,owner_id)')
       .eq('id', offerId)
       .maybeSingle();
     if (!o || (o as any).status !== 'confirmed') { navigate('/messages'); return; }
@@ -133,6 +133,18 @@ export default function FsConversation() {
           <ShieldCheck className="h-3.5 w-3.5 flex-none" /> The property collects the balance directly. Never share card numbers here.
         </p>
       </div>
+
+      {/* Guest contact — shown to the property so they can book the guest in */}
+      {iAmOwner && (offer.guest_email || offer.guest_phone) && (
+        <div className="mt-2 rounded-xl border border-border bg-card p-3">
+          <p className="mb-1.5 text-xs font-semibold text-foreground">Guest contact{offer.guest_contact_pref ? ` · prefers ${offer.guest_contact_pref}` : ''}</p>
+          <div className="flex flex-wrap gap-x-5 gap-y-1 text-sm">
+            {offer.guest_email && <a href={`mailto:${offer.guest_email}`} className="flex items-center gap-1.5 text-primary hover:underline"><Mail className="h-3.5 w-3.5" /> {offer.guest_email}</a>}
+            {offer.guest_phone && <a href={`tel:${offer.guest_phone}`} className="flex items-center gap-1.5 text-primary hover:underline"><Phone className="h-3.5 w-3.5" /> {offer.guest_phone}</a>}
+            {offer.guest_phone && offer.guest_contact_pref === 'text' && <a href={`sms:${offer.guest_phone}`} className="flex items-center gap-1.5 text-primary hover:underline"><MessageCircle className="h-3.5 w-3.5" /> Text</a>}
+          </div>
+        </div>
+      )}
 
       {/* Messages */}
       <div className="mt-3 flex-1 space-y-2 overflow-y-auto py-2">
