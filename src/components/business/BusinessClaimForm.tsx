@@ -78,7 +78,7 @@ export default function BusinessClaimForm({ mode, hotel, busy, onBack, onSubmit 
 
       <div>
         <h2 className="font-display text-xl font-bold text-foreground">{mode === 'claim' ? `Confirm & claim ${hotel?.name || 'your business'}` : 'Create your business'}</h2>
-        <p className="mt-1 text-sm text-muted-foreground">Enter your business details and accept the agreements to {mode === 'claim' ? 'claim this property' : 'create your business'}. You’ll set rooms, photos and prices next.</p>
+        <p className="mt-1 text-sm font-medium text-foreground">Enter your business details and accept the agreements to {mode === 'claim' ? 'claim this property' : 'create your business'}. You’ll set rooms, photos and prices next.</p>
       </div>
 
       {/* Create-only identity fields */}

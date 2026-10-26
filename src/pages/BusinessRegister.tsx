@@ -44,8 +44,8 @@ export default function BusinessRegister() {
     <div className="fas-brand-day min-h-screen bg-background text-foreground">
       <header className="border-b border-border bg-[#0C1A22]">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3">
-          <button onClick={() => navigate('/')} className="font-display text-lg font-extrabold tracking-tight text-white">find<span className="text-[#0C9C8E]">a</span>stay</button>
-          <span className="flex items-center gap-1.5 text-xs font-semibold text-white/70"><Building2 className="h-3.5 w-3.5" /> For business</span>
+          <button onClick={() => navigate('/')} aria-label="findastay home"><img src="/findastay-logo.svg" alt="findastay" className="h-7 w-auto" /></button>
+          <span className="flex items-center gap-1.5 text-xs font-semibold text-white/80"><Building2 className="h-3.5 w-3.5" /> For business</span>
         </div>
       </header>
 
@@ -53,8 +53,8 @@ export default function BusinessRegister() {
         {/* Welcome */}
         <div className="mb-6 rounded-2xl border border-primary/20 bg-primary/5 p-5">
           <p className="flex items-center gap-1.5 font-mono text-[0.65rem] uppercase tracking-[0.18em] text-primary"><Sparkles className="h-3.5 w-3.5" /> Welcome</p>
-          <h1 className="mt-1 font-display text-2xl font-extrabold tracking-tight">Thanks for considering registering with findastay</h1>
-          <p className="mt-2 text-sm text-muted-foreground">We’re really happy to provide you a new way of saving money and increasing your revenue — travellers make you offers, you set the rules, and you keep your full rate. No commission, no fees to you — ever.</p>
+          <h1 className="mt-1 font-display text-2xl font-extrabold tracking-tight text-foreground">Thanks for considering registering with findastay</h1>
+          <p className="mt-2 text-sm font-medium text-foreground">We’re really happy to provide you a new way of saving money and increasing your revenue — travellers make you offers, you set the rules, and you keep your full rate. No commission, no fees to you — ever.</p>
         </div>
 
         {authLoading ? (
@@ -82,8 +82,8 @@ export default function BusinessRegister() {
         ) : (
           <div className="space-y-4">
             <div>
-              <h2 className="font-display text-lg font-bold">To start, let’s find your business</h2>
-              <p className="mt-1 text-sm text-muted-foreground">Search your business below and check it’s available. If you can’t find it, you can create it.</p>
+              <h2 className="font-display text-lg font-bold text-foreground">To start, let’s find your business</h2>
+              <p className="mt-1 text-sm font-medium text-foreground">Search your business below and check it’s available. If you can’t find it, you can create it.</p>
             </div>
             <BusinessOnboard />
           </div>

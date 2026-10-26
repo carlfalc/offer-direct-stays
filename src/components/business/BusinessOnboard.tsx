@@ -122,7 +122,7 @@ export default function BusinessOnboard() {
       </div>
 
       <div className="mt-5 rounded-xl border border-dashed border-border p-4 text-center">
-        <p className="text-sm text-muted-foreground">Can’t find your business, or brand new?</p>
+        <p className="text-sm font-medium text-foreground">Can’t find your business, or brand new?</p>
         <Button variant="outline" size="sm" className="mt-2 gap-1.5" onClick={() => setMode('create')}><Plus className="h-4 w-4" /> Create your business here</Button>
       </div>
     </div>
