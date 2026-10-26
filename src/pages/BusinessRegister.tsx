@@ -54,7 +54,7 @@ export default function BusinessRegister() {
         <div className="mb-6 rounded-2xl border border-primary/20 bg-primary/5 p-5">
           <p className="flex items-center gap-1.5 font-mono text-[0.65rem] uppercase tracking-[0.18em] text-primary"><Sparkles className="h-3.5 w-3.5" /> Welcome</p>
           <h1 className="mt-1 font-display text-2xl font-extrabold tracking-tight">Thanks for considering registering with findastay</h1>
-          <p className="mt-2 text-sm text-muted-foreground">We’re really happy to provide you a new way of saving money and increasing your revenue — travellers make you offers, you set the rules, and you only ever pay a small commitment fee when a booking is confirmed. No commission.</p>
+          <p className="mt-2 text-sm text-muted-foreground">We’re really happy to provide you a new way of saving money and increasing your revenue — travellers make you offers, you set the rules, and you keep your full rate. No commission, no fees to you — ever.</p>
         </div>
 
         {authLoading ? (
