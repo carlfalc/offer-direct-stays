@@ -113,7 +113,7 @@ export default function BusinessOnboard() {
                 </div>
                 {h.claimedByMe ? <Badge variant="secondary" className="bg-success/10 text-success border-success/20">Yours</Badge>
                   : h.claimedByOther ? <Badge variant="outline" className="text-muted-foreground">Already registered</Badge>
-                  : <ArrowRight className="h-4 w-4 flex-shrink-0 text-muted-foreground" />}
+                  : <ArrowRight className="h-6 w-6 flex-shrink-0 text-foreground" strokeWidth={2.5} />}
               </div>
             </Card>
           );
