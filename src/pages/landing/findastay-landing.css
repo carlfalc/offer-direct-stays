@@ -44,3 +44,17 @@
 .fas-landing #faq-roles[data-role="business"] .role-traveller{display:none}
 .fas-landing .readmore{color:var(--gold);font-weight:700;white-space:nowrap}
 .fas-landing .readmore:hover{text-decoration:underline}
+
+/* Business proof comparison */
+.fas-landing .biz-proof{display:flex;align-items:stretch;gap:12px;margin:22px auto 0;max-width:580px;flex-wrap:wrap}
+.fas-landing .bp-card{flex:1;min-width:210px;border-radius:16px;padding:16px 18px;border:1px solid var(--glass-line);display:flex;flex-direction:column;gap:3px;text-align:left}
+.fas-landing .bp-bad{background:linear-gradient(160deg,rgba(180,85,62,.18),rgba(12,19,34,.4));border-color:rgba(180,85,62,.38)}
+.fas-landing .bp-good{background:linear-gradient(160deg,rgba(46,211,192,.16),rgba(12,19,34,.4));border-color:rgba(46,211,192,.42)}
+.fas-landing .bp-lab{font-family:var(--mono);font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.fas-landing .bp-fig{font-family:var(--display);font-weight:800;font-size:1.9rem;letter-spacing:-.02em;line-height:1.1}
+.fas-landing .bp-bad .bp-fig{color:#ff9d86}
+.fas-landing .bp-good .bp-fig{color:var(--gold-bright)}
+.fas-landing .bp-sub{font-size:.82rem;color:var(--muted)}
+.fas-landing .bp-vs{display:flex;align-items:center;font-family:var(--mono);font-size:.8rem;color:var(--muted)}
+.fas-landing .bp-foot{font-size:.86rem;color:var(--muted);margin:12px auto 0;max-width:46ch}
+@media(max-width:540px){.fas-landing .bp-vs{display:none}}
