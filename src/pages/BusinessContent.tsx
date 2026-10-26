@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { Loader2, ArrowLeft, Save, Plus, Trash2, Star, X, ImagePlus, Info, CheckCircle2, SlidersHorizontal } from 'lucide-react';
+import PaymentMethodsCard from '@/components/business/PaymentMethodsCard';
 
 interface Photo { url: string; source: string }
 interface RoomDraft {
@@ -46,7 +47,7 @@ export default function BusinessContent() {
     setLoading(true);
     const { data: listings } = await supabase
       .from('fs_listings')
-      .select('id,liteapi_hotel_id,name,country')
+      .select('id,liteapi_hotel_id,name,country,payment_methods,payment_note')
       .eq('owner_id', user.id)
       .order('claimed_at', { ascending: true });
     const l = (listings as any[])?.[0] || null;
@@ -220,6 +221,11 @@ export default function BusinessContent() {
           otherwise add more images per unit, and fix any names, descriptions or amenities.
           Missing a room, unit or apartment? Add it at the bottom, set its price and details, then save.
         </p>
+      </div>
+
+      {/* Payment methods — editable any time */}
+      <div className="mt-5">
+        <PaymentMethodsCard listingId={listing.id} initialMethods={listing.payment_methods || []} initialNote={listing.payment_note || ''} />
       </div>
 
       <div className="mt-5 space-y-4">

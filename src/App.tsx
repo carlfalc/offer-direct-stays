@@ -26,6 +26,7 @@ import GuestOffers from "./pages/GuestOffers";
 import BusinessDashboard from "./pages/BusinessDashboard";
 import BusinessPricing from "./pages/BusinessPricing";
 import BusinessContent from "./pages/BusinessContent";
+import BusinessRegister from "./pages/BusinessRegister";
 import Messages from "./pages/FsMessages";
 import Conversation from "./pages/FsConversation";
 import Watchlist from "./pages/Watchlist";
@@ -52,6 +53,7 @@ const App = () => (
               <Route path="/faq" element={<FindAStayLanding initialView="faq" />} />
               <Route path="/home-old" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/business/register" element={<BusinessRegister />} />
               
               {/* Authenticated routes with shared layout */}
               <Route path="/dashboard" element={
