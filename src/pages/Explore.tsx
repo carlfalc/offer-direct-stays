@@ -9,7 +9,6 @@ import { Property, ChatMessage, ShortlistItem, Room } from '@/types';
 import SearchForm, { SearchCriteria } from '@/components/explore/SearchForm';
 import PropertyResultCard from '@/components/explore/PropertyResultCard';
 import WeatherTiles from '@/components/explore/WeatherTiles';
-import ResultsFooter from '@/components/explore/ResultsFooter';
 import MapPanel from '@/components/explore/MapPanel';
 import ShortlistPanel from '@/components/explore/ShortlistPanel';
 import TripSummaryBar from '@/components/explore/TripSummaryBar';
@@ -693,8 +692,6 @@ export default function Explore() {
               </div>
             )}
           </div>
-
-          <ResultsFooter />
         </>
 
       {/* MAP OVERLAY — on-demand, opened from the "Map view" tile */}

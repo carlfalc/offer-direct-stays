@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 
 const COLS: { h: string; links: { label: string; to?: string }[] }[] = [
   { h: 'Company', links: [{ label: 'About us' }, { label: 'How it works' }, { label: 'Careers' }, { label: 'Press' }] },
-  { h: 'For hosts', links: [{ label: 'List your property', to: '/business/onboarding' }, { label: 'Business dashboard', to: '/business/dashboard' }, { label: 'Pricing & fees', to: '/business/pricing' }, { label: 'Host help' }] },
+  { h: 'For hosts', links: [{ label: 'List your property', to: '/business/register' }, { label: 'Business dashboard', to: '/business/dashboard' }, { label: 'Pricing & fees', to: '/business/pricing' }, { label: 'Host help' }] },
   { h: 'Support', links: [{ label: 'Help centre' }, { label: 'Contact us' }, { label: 'Trust & safety' }, { label: 'Terms & privacy' }] },
 ];
 

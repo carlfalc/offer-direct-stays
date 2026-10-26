@@ -18,6 +18,7 @@ import { useNotifications } from '@/hooks/useNotifications';
 import { useFsCounts } from '@/hooks/useFsCounts';
 import FsNotificationBell from './FsNotificationBell';
 import '@/styles/findastay-brand.css';
+import ResultsFooter from '@/components/explore/ResultsFooter';
 
 interface AuthenticatedLayoutProps {
   children: ReactNode;
@@ -377,6 +378,8 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
           {children}
         </main>
       )}
+
+      {!fullHeight && <ResultsFooter />}
     </div>
   );
 }

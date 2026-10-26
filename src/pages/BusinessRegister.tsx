@@ -5,6 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import BusinessOnboard from '@/components/business/BusinessOnboard';
 import FsWordmark from '@/components/business/FsWordmark';
+import ResultsFooter from '@/components/explore/ResultsFooter';
 import '@/styles/findastay-onboard.css';
 
 /** Tall skyline / skyscraper mark for the header. */
@@ -92,6 +93,8 @@ export default function BusinessRegister() {
           </div>
         )}
       </main>
+
+      <div style={{ position: 'relative', zIndex: 1 }}><ResultsFooter /></div>
     </div>
   );
 }
