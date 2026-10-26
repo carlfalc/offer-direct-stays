@@ -3,13 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { searchClaimableHotels, ClaimableHotel } from '@/lib/listings';
-import { PAYMENT_METHODS, PaymentMethodId } from '@/lib/paymentMethods';
+import BusinessClaimForm, { ClaimPayload } from './BusinessClaimForm';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
-import { Search, Loader2, MapPin, ImageIcon, ArrowRight, CheckCircle2, Plus } from 'lucide-react';
+import { Search, Loader2, MapPin, ImageIcon, ArrowRight, Plus } from 'lucide-react';
 
 function Thumb({ src, alt }: { src?: string | null; alt: string }) {
   const [failed, setFailed] = useState(false);
@@ -18,9 +17,9 @@ function Thumb({ src, alt }: { src?: string | null; alt: string }) {
 }
 
 /**
- * Clean business onboarding: search the directory and claim, or create a
- * business that isn't listed. Writes only to fs_listings — no legacy tables.
- * After claim/create the owner goes to set up rooms & photos.
+ * Business onboarding: search the directory and claim, or create a business
+ * that isn't listed. Both paths require business details + all four agreements
+ * before anything is claimed. Writes only to fs_listings.
  */
 export default function BusinessOnboard() {
   const navigate = useNavigate();
@@ -30,18 +29,9 @@ export default function BusinessOnboard() {
   const [results, setResults] = useState<ClaimableHotel[]>([]);
   const [searching, setSearching] = useState(false);
   const [selected, setSelected] = useState<ClaimableHotel | null>(null);
-  const [claiming, setClaiming] = useState(false);
+  const [busy, setBusy] = useState(false);
   const [mode, setMode] = useState<'search' | 'create'>('search');
   const reqId = useRef(0);
-
-  // create-your-business form
-  const [cName, setCName] = useState('');
-  const [cAddress, setCAddress] = useState('');
-  const [cCity, setCCity] = useState('');
-  const [cCountry, setCCountry] = useState<'NZ' | 'AU'>('NZ');
-  const [methods, setMethods] = useState<Set<PaymentMethodId>>(new Set(['bank_transfer']));
-  const [note, setNote] = useState('');
-  const [creating, setCreating] = useState(false);
 
   useEffect(() => {
     if (selected || mode === 'create') return;
@@ -56,111 +46,48 @@ export default function BusinessOnboard() {
     return () => clearTimeout(t);
   }, [query, selected, mode]);
 
-  const claim = async () => {
+  const claim = async (p: ClaimPayload) => {
     if (!selected) return;
-    setClaiming(true);
+    setBusy(true);
     const { error } = await supabase.rpc('fs_claim_listing', {
-      p_hotel_id: selected.id, p_name: selected.name, p_city: selected.city,
-      p_country: selected.country, p_lat: selected.latitude, p_lng: selected.longitude, p_thumb: selected.thumbnail,
+      p_hotel_id: selected.id, p_name: selected.name, p_city: selected.city, p_country: selected.country,
+      p_lat: selected.latitude, p_lng: selected.longitude, p_thumb: selected.thumbnail,
+      p_contact_name: p.contactName, p_business_email: p.businessEmail, p_business_phone: p.businessPhone,
+      p_nzbn: p.nzbn, p_property_type: p.propertyType, p_payment_terms: p.paymentTerms,
+      p_payment_lead_days: p.paymentTerms === 'days_before' ? p.leadDays : null, p_agreements: p.agreements,
     } as any);
-    setClaiming(false);
+    // Payment methods aren't a claim arg — save them straight after.
+    if (!error) {
+      await supabase.from('fs_listings').update({ payment_methods: p.paymentMethods, payment_note: p.paymentNote || null } as any).eq('liteapi_hotel_id', selected.id);
+    }
+    setBusy(false);
     if (error) { toast({ title: 'Could not claim', description: error.message || 'Please try again', variant: 'destructive' }); return; }
     toast({ title: 'Business claimed 🎉', description: `${selected.name} is now yours. Let's set up your rooms.` });
     navigate('/business/content');
   };
 
-  const toggleMethod = (id: PaymentMethodId) =>
-    setMethods((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
-
-  const create = async () => {
-    if (!cName.trim()) { toast({ title: 'Name needed', description: 'Give your business a name.', variant: 'destructive' }); return; }
-    setCreating(true);
+  const create = async (p: ClaimPayload) => {
+    setBusy(true);
     const { error } = await supabase.rpc('fs_create_listing', {
-      p_name: cName.trim(), p_city: cCity.trim() || null, p_country: cCountry,
-      p_address: cAddress.trim() || null, p_payment_methods: Array.from(methods), p_payment_note: note.trim() || null,
+      p_name: p.name, p_city: p.city || null, p_country: p.country, p_address: p.address || null,
+      p_payment_methods: p.paymentMethods, p_payment_note: p.paymentNote || null,
+      p_contact_name: p.contactName, p_business_email: p.businessEmail, p_business_phone: p.businessPhone,
+      p_nzbn: p.nzbn, p_property_type: p.propertyType, p_payment_terms: p.paymentTerms,
+      p_payment_lead_days: p.paymentTerms === 'days_before' ? p.leadDays : null, p_agreements: p.agreements,
     } as any);
-    setCreating(false);
+    setBusy(false);
     if (error) { toast({ title: 'Could not create', description: error.message || 'Please try again', variant: 'destructive' }); return; }
-    toast({ title: 'Business created 🎉', description: `${cName.trim()} is set up. Let's add your rooms.` });
+    toast({ title: 'Business created 🎉', description: `${p.name} is set up. Let's add your rooms.` });
     navigate('/business/content');
   };
 
-  // ---- Create form ----
   if (mode === 'create') {
-    return (
-      <div className="space-y-4">
-        <button onClick={() => setMode('search')} className="text-sm text-muted-foreground hover:text-foreground">← Back to search</button>
-        <div>
-          <h2 className="font-display text-xl font-bold text-foreground">Create your business</h2>
-          <p className="mt-1 text-sm text-muted-foreground">Add your details — you can refine everything (rooms, photos, prices) next.</p>
-        </div>
-        <div className="space-y-3">
-          <label className="block text-xs font-medium text-muted-foreground">Business name
-            <Input value={cName} onChange={(e) => setCName(e.target.value)} placeholder="e.g. Aotea Motor Lodge" className="mt-1" />
-          </label>
-          <label className="block text-xs font-medium text-muted-foreground">Address
-            <Input value={cAddress} onChange={(e) => setCAddress(e.target.value)} placeholder="Street address" className="mt-1" />
-          </label>
-          <div className="grid grid-cols-2 gap-3">
-            <label className="block text-xs font-medium text-muted-foreground">Town / city
-              <Input value={cCity} onChange={(e) => setCCity(e.target.value)} placeholder="e.g. Whanganui" className="mt-1" />
-            </label>
-            <label className="block text-xs font-medium text-muted-foreground">Country
-              <select value={cCountry} onChange={(e) => setCCountry(e.target.value as 'NZ' | 'AU')} className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
-                <option value="NZ">New Zealand</option>
-                <option value="AU">Australia</option>
-              </select>
-            </label>
-          </div>
-        </div>
-
-        <div>
-          <p className="text-sm font-semibold text-foreground">How do you want to receive payment?</p>
-          <p className="mb-2 text-xs text-muted-foreground">Tick all you accept — you can change these any time. findastay only ever takes the commitment fee.</p>
-          <div className="space-y-2">
-            {PAYMENT_METHODS.map((m) => (
-              <label key={m.id} className="flex cursor-pointer items-start gap-2.5 rounded-lg border border-border p-2.5 hover:border-primary/40">
-                <input type="checkbox" checked={methods.has(m.id)} onChange={() => toggleMethod(m.id)} className="mt-0.5 h-4 w-4 flex-none" />
-                <span className="min-w-0"><span className="text-sm font-medium text-foreground">{m.label}</span><span className="block text-xs text-muted-foreground">{m.hint}</span></span>
-              </label>
-            ))}
-          </div>
-          {methods.has('payment_link') && (
-            <Textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="Paste your payment link or add any payment notes for guests" className="mt-2 min-h-[56px]" />
-          )}
-        </div>
-
-        <Button className="w-full" onClick={create} disabled={creating}>
-          {creating ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating…</> : 'Create business & set up rooms'}
-        </Button>
-      </div>
-    );
+    return <BusinessClaimForm mode="create" busy={busy} onBack={() => setMode('search')} onSubmit={create} />;
   }
-
-  // ---- Confirm claim ----
   if (selected) {
-    return (
-      <Card className="p-4">
-        <div className="flex items-center gap-3">
-          <Thumb src={selected.thumbnail} alt={selected.name} />
-          <div className="min-w-0 flex-1">
-            <p className="text-base font-semibold text-foreground">{selected.name}</p>
-            <div className="mt-0.5 flex items-center gap-1 text-sm text-muted-foreground"><MapPin className="h-3.5 w-3.5" /><span>{selected.city ? `${selected.city}, ` : ''}{selected.country}</span></div>
-          </div>
-        </div>
-        <div className="mt-4 rounded-lg bg-accent p-3 text-sm text-accent-foreground">
-          <p className="flex items-center gap-2 font-medium"><CheckCircle2 className="h-4 w-4" /> Confirm this is your business</p>
-          <p className="mt-1 text-accent-foreground/80">Claiming links {selected.name} to your account so you can set prices, add photos and take offers.</p>
-        </div>
-        <div className="mt-4 flex gap-3">
-          <Button variant="outline" className="flex-1" onClick={() => setSelected(null)} disabled={claiming}>Not it — search again</Button>
-          <Button className="flex-1" onClick={claim} disabled={claiming}>{claiming ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Claiming…</> : 'Claim this business'}</Button>
-        </div>
-      </Card>
-    );
+    return <BusinessClaimForm mode="claim" hotel={selected} busy={busy} onBack={() => setSelected(null)} onSubmit={claim} />;
   }
 
-  // ---- Search ----
   return (
     <div>
       <div className="relative">
