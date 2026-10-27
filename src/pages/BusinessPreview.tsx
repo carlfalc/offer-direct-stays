@@ -180,7 +180,7 @@ export default function BusinessPreview() {
                       <p className="text-xs font-medium text-amber-600">No guide price set</p>
                     )}
                   </div>
-                  <Button size="sm" disabled title="Preview only">Make an offer</Button>
+                  <button type="button" title="Preview only" className="cursor-default rounded-lg bg-[#19C9B4] px-4 py-2 font-display text-sm font-extrabold text-[#0C1A22] shadow-sm">Make an offer</button>
                 </div>
               </div>
             </Card>
