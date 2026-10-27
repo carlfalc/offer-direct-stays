@@ -6,7 +6,7 @@ import { loadLiteApiRoomContent } from '@/lib/listings';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, ArrowLeft, MapPin, Users, BedDouble, Eye, ImageIcon } from 'lucide-react';
+import { Loader2, ArrowLeft, MapPin, Users, BedDouble, Eye, ImageIcon, Settings2 } from 'lucide-react';
 
 interface Photo { url: string; source: string }
 interface PreviewRoom {
@@ -129,9 +129,14 @@ export default function BusinessPreview() {
           Preview — this is how travellers see your listing
           {listing.status !== 'active' && <Badge variant="outline" className="ml-1 text-amber-600">Not live yet</Badge>}
         </div>
-        <Button variant="ghost" size="sm" onClick={() => navigate('/business/dashboard')}>
-          <ArrowLeft className="mr-1 h-4 w-4" /> Back to dashboard
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => navigate('/business/content')} title="Change rooms, photos, payment methods and when the balance is due">
+            <Settings2 className="mr-1 h-4 w-4" /> Edit settings
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => navigate('/business/dashboard')}>
+            <ArrowLeft className="mr-1 h-4 w-4" /> Back to dashboard
+          </Button>
+        </div>
       </div>
 
       {/* Hero */}

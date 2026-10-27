@@ -47,7 +47,7 @@ export default function BusinessContent() {
     setLoading(true);
     const { data: listings } = await supabase
       .from('fs_listings')
-      .select('id,liteapi_hotel_id,name,country,payment_methods,payment_note')
+      .select('id,liteapi_hotel_id,name,country,payment_methods,payment_note,payment_terms,payment_lead_days')
       .eq('owner_id', user.id)
       .order('claimed_at', { ascending: true });
     const l = (listings as any[])?.[0] || null;
@@ -230,7 +230,7 @@ export default function BusinessContent() {
 
       {/* Payment methods — editable any time */}
       <div className="mt-5">
-        <PaymentMethodsCard listingId={listing.id} initialMethods={listing.payment_methods || []} initialNote={listing.payment_note || ''} />
+        <PaymentMethodsCard listingId={listing.id} initialMethods={listing.payment_methods || []} initialNote={listing.payment_note || ''} initialTerms={listing.payment_terms || 'on_arrival'} initialLeadDays={listing.payment_lead_days || 10} />
       </div>
 
       <div className="mt-5 space-y-4">

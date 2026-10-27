@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Loader2, ShieldCheck, AlertCircle } from 'lucide-react';
 import { PAYMENT_METHODS, PaymentMethodId } from '@/lib/paymentMethods';
+import { AGREEMENTS } from '@/lib/agreements';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import '@/styles/findastay-onboard.css';
 
 const PROPERTY_TYPES = [
@@ -13,13 +15,6 @@ const PROPERTY_TYPES = [
   { v: 'caravan', label: 'Caravan' }, { v: 'holiday_park', label: 'Holiday park' }, { v: 'hostel', label: 'Hostel' },
   { v: 'farmstay', label: 'Farmstay' }, { v: 'glamping', label: 'Glamping' }, { v: 'other', label: 'Other' },
 ];
-
-const AGREEMENTS = [
-  { id: 'terms', label: 'I have read and accept the findastay Terms & Conditions.' },
-  { id: 'liability', label: 'I accept the Liability terms — findastay is a booking platform; the stay contract is between me and the guest.' },
-  { id: 'security', label: 'I agree to the Security & data-handling policy and will keep guest details safe.' },
-  { id: 'declaration', label: 'I declare this is my business and I am authorised to list and manage it.' },
-] as const;
 
 export interface ClaimPayload {
   name: string; address: string; city: string; country: 'NZ' | 'AU';
@@ -52,6 +47,8 @@ export default function BusinessClaimForm({ mode, hotel, busy, onBack, onSubmit 
   const [leadDays, setLeadDays] = useState(10);
   const [agree, setAgree] = useState<Record<string, boolean>>({});
   const [error, setError] = useState<string | null>(null);
+  const [openPolicy, setOpenPolicy] = useState<string | null>(null);
+  const policy = AGREEMENTS.find((a) => a.id === openPolicy) || null;
 
   const allAgreed = AGREEMENTS.every((a) => agree[a.id]);
   const toggleMethod = (id: PaymentMethodId) =>
@@ -132,7 +129,18 @@ export default function BusinessClaimForm({ mode, hotel, busy, onBack, onSubmit 
           {AGREEMENTS.map((a) => (
             <label key={a.id} className="fo-agcheck">
               <input type="checkbox" checked={!!agree[a.id]} onChange={(e) => setAgree((s) => ({ ...s, [a.id]: e.target.checked }))} />
-              <span>{a.label}</span>
+              <span>
+                {a.pre}
+                <button
+                  type="button"
+                  className="fo-aglink"
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOpenPolicy(a.id); }}
+                  title="Click to read"
+                >
+                  {a.link}
+                </button>
+                {a.post}
+              </span>
             </label>
           ))}
         </div>
@@ -143,6 +151,21 @@ export default function BusinessClaimForm({ mode, hotel, busy, onBack, onSubmit 
           {busy ? <><Loader2 className="h-4 w-4 animate-spin" /> {mode === 'claim' ? 'Claiming…' : 'Creating…'}</> : (mode === 'claim' ? 'Claim this business 🎉' : 'Create business 🎉')}
         </button>
       </div>
+
+      <Dialog open={!!policy} onOpenChange={(o) => !o && setOpenPolicy(null)}>
+        <DialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-lg">
+          {policy && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="font-display text-xl">{policy.title}</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-3 text-sm leading-relaxed text-foreground">
+                {policy.body.map((para, i) => <p key={i}>{para}</p>)}
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
