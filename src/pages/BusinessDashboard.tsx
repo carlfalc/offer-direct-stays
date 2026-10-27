@@ -208,7 +208,7 @@ export default function BusinessDashboard() {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [filter, setFilter] = useState<Filter>(null);
-  const [period, setPeriod] = useState<'month' | '6mo' | 'ytd'>('month');
+  const [period, setPeriod] = useState<'30' | '120' | '180' | '365' | 'custom'>('365');
   const [bandColor, setBandColor] = useState<'yellow' | 'orange' | 'navy'>(() => {
     try { return (localStorage.getItem('fs_band_biz') as any) || 'navy'; } catch { return 'navy'; }
   });
@@ -320,13 +320,19 @@ export default function BusinessDashboard() {
   const currencyFor = (o: FsOffer) => (o.listing?.country === 'AU' ? 'AUD' : 'NZD');
 
   // Analytics period (by when the offer came in)
-  const now = new Date();
-  const periodSince =
-    period === 'month' ? new Date(now.getFullYear(), now.getMonth(), 1)
-    : period === '6mo' ? new Date(Date.now() - 182 * 864e5)
-    : new Date(now.getFullYear(), 0, 1); // ytd
-  const sinceISO = periodSince.toISOString().slice(0, 10);
-  const inRange = (o: FsOffer) => (o.created_at || '').slice(0, 10) >= sinceISO;
+  const PERIOD_DAYS: Record<string, number> = { '30': 30, '120': 120, '180': 180, '365': 365 };
+  let sinceISO = '0000-01-01';
+  let untilISO = '9999-12-31';
+  if (period === 'custom') {
+    if (from) sinceISO = from;
+    if (to) untilISO = to;
+  } else {
+    sinceISO = new Date(Date.now() - (PERIOD_DAYS[period] ?? 365) * 864e5).toISOString().slice(0, 10);
+  }
+  const inRange = (o: FsOffer) => {
+    const c = (o.created_at || '').slice(0, 10);
+    return c >= sinceISO && c <= untilISO;
+  };
   const scope = offers.filter(inRange);
 
   const pending = scope.filter((o) => o.status === 'pending');
@@ -346,7 +352,9 @@ export default function BusinessDashboard() {
   const todayISO = new Date().toISOString().slice(0, 10);
   const receivedToday = offers.filter((o) => (o.created_at || '').slice(0, 10) === todayISO).length;
   const curSym = listings[0]?.country === 'AU' ? 'A$' : 'NZ$';
-  const periodLabel = period === 'month' ? 'This month' : period === '6mo' ? 'Last 6 months' : 'Year to date';
+  const periodLabel = period === 'custom'
+    ? (from && to ? `${from} to ${to}` : 'Custom range')
+    : `Last ${PERIOD_DAYS[period] ?? 365} days`;
 
   // Room performance — rank every room by bookings sold (confirmed), with nights + revenue.
   const roomPerf = rooms.map((r) => {
@@ -490,14 +498,6 @@ export default function BusinessDashboard() {
             <div className="min-w-0">
               <p className={cn('font-mono text-[0.65rem] uppercase tracking-[0.18em]', navy ? 'text-white/70' : 'text-foreground/70')}>Your business</p>
               <h1 className={cn('font-display text-3xl font-extrabold tracking-tight md:text-4xl', navy ? 'text-white' : 'text-foreground')}>{listings.map((l) => l.name).join(' · ')}</h1>
-              <div className="mt-1.5 flex items-center gap-2 text-sm">
-                <span className={navy ? 'text-white/80' : 'text-muted-foreground'}>Analytics</span>
-                <select value={period} onChange={(e) => setPeriod(e.target.value as any)} className="rounded-lg border border-black/10 bg-white px-2.5 py-1 text-sm font-semibold text-foreground">
-                  <option value="month">This month</option>
-                  <option value="6mo">Last 6 months</option>
-                  <option value="ytd">Year to date</option>
-                </select>
-              </div>
             </div>
             <div className="flex flex-col items-end gap-2.5">
               <div className={cn('flex items-center gap-2 text-xs font-semibold', navy ? 'text-white/85' : 'text-muted-foreground')}>
@@ -653,9 +653,27 @@ export default function BusinessDashboard() {
 
       {/* Analytics */}
       <section className="mb-6">
-        <div className="mb-3 flex items-center gap-2">
+        <div className="mb-3 flex flex-wrap items-center gap-2">
           <h2 className="font-display text-lg font-bold text-foreground">Analytics</h2>
-          <span className="text-sm text-muted-foreground">· {periodLabel}</span>
+          <select
+            value={period}
+            onChange={(e) => setPeriod(e.target.value as any)}
+            className="rounded-lg border border-border bg-card px-2.5 py-1 text-sm font-semibold text-foreground"
+          >
+            <option value="30">Last 30 days</option>
+            <option value="120">Last 120 days</option>
+            <option value="180">Last 180 days</option>
+            <option value="365">Last 365 days</option>
+            <option value="custom">Custom…</option>
+          </select>
+          {period === 'custom' && (
+            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+              <input type="date" value={from} max={to || undefined} onChange={(e) => setFrom(e.target.value)} className="rounded-lg border border-border bg-card px-2 py-1 text-foreground" />
+              <span>to</span>
+              <input type="date" value={to} min={from || undefined} onChange={(e) => setTo(e.target.value)} className="rounded-lg border border-border bg-card px-2 py-1 text-foreground" />
+            </div>
+          )}
+          {period !== 'custom' && <span className="text-sm text-muted-foreground">· {periodLabel}</span>}
         </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
