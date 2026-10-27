@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -125,12 +126,19 @@ export default function Auth() {
         variant: 'destructive',
       });
     } else {
-      // The business dashboard sends owners to claim their property if they
-      // haven't yet, so a single destination covers first-time and returning.
-      const intent = localStorage.getItem('signup_intent');
       setIsLoading(false);
       localStorage.removeItem('signup_intent');
-      navigate(intent === 'business' ? '/business/dashboard' : '/explore');
+      // Route by the ACTUAL account type: a business owner goes to the business
+      // dashboard, everyone else to their traveller dashboard.
+      let dest = '/dashboard';
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data } = await supabase.from('fs_listings').select('id').eq('owner_id', user.id).limit(1);
+          if ((data?.length ?? 0) > 0) dest = '/business/dashboard';
+        }
+      } catch { /* fall back to traveller dashboard */ }
+      navigate(dest);
     }
   };
 
@@ -157,9 +165,13 @@ export default function Auth() {
     if (error) {
       setIsLoading(false);
       if (error.message.includes('already registered')) {
+        let isBiz = false;
+        try { const { data } = await supabase.rpc('fs_email_is_business', { p_email: signupEmail } as any); isBiz = data === true; } catch { /* ignore */ }
         toast({
-          title: 'Account Exists',
-          description: 'An account with this email already exists. Please login instead.',
+          title: 'Account exists',
+          description: isBiz
+            ? 'This email is already registered as a business and can’t be used for a personal account. Please use a different email — or log in to reach your business dashboard.'
+            : 'An account with this email already exists. Please log in instead.',
           variant: 'destructive',
         });
       } else {
