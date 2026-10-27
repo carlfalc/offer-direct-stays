@@ -91,7 +91,7 @@ export default function BusinessPricing() {
       .eq('id', r.id);
     const { error: e2 } = await supabase
       .from('fs_room_thresholds')
-      .upsert({ listing_room_id: r.id, base_auto: r.base_auto, base_floor: r.base_floor } as any, { onConflict: 'listing_room_id' });
+      .upsert({ listing_room_id: r.id, base_auto: r.base_auto, base_floor: null } as any, { onConflict: 'listing_room_id' });
     setSavingId(null);
     if (e1 || e2) {
       toast({ title: 'Could not save', description: (e1 || e2)?.message || 'Please try again', variant: 'destructive' });
@@ -109,7 +109,7 @@ export default function BusinessPricing() {
         toast({ title: 'No rooms to import', description: 'Either rooms are already imported, or we couldn’t pull any from LiteAPI.', variant: 'destructive' });
         return;
       }
-      toast({ title: `${n} room${n === 1 ? '' : 's'} imported`, description: 'Now set your guide, auto-accept and floor prices.' });
+      toast({ title: `${n} room${n === 1 ? '' : 's'} imported`, description: 'Now set your guide price and auto-accept minimum.' });
       load();
     } finally {
       setImporting(false);
@@ -146,20 +146,20 @@ export default function BusinessPricing() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
-      <button onClick={() => navigate('/business/dashboard')} className="mb-4 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="h-4 w-4" /> Dashboard
+      {/* Magazine header */}
+      <button onClick={() => navigate('/business/dashboard')} className="flex items-center gap-1 font-mono text-xs text-[#0C1A22]/60 hover:text-[#0C1A22]">
+        <ArrowLeft className="h-3.5 w-3.5" /> Dashboard
       </button>
-
-      <h1 className="text-2xl font-semibold text-foreground">Pricing — {listing.name}</h1>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Set three prices per room. Only the <span className="font-medium">guide</span> is ever shown to travellers.
+      <span className="mt-3 inline-block rounded-lg border-2 border-[#0C1A22] bg-[#19C9B4] px-3 py-1 font-display text-sm font-extrabold uppercase tracking-[0.16em] text-[#0C1A22]">{listing.name}</span>
+      <h1 className="mt-3 font-display text-4xl font-extrabold leading-[1.05] text-[#0C1A22] sm:text-5xl">Pricing</h1>
+      <p className="mt-2 text-sm font-medium text-[#0C1A22]/70">
+        Set your guide price and your auto-accept minimum for each room. Only the <b className="text-[#0C1A22]">guide</b> is ever shown to travellers.
       </p>
 
       {/* legend */}
-      <div className="mt-4 grid gap-2 rounded-lg border border-border bg-muted/20 p-3 text-xs text-muted-foreground sm:grid-cols-3">
-        <span className="flex items-center gap-1.5"><Eye className="h-3.5 w-3.5" /> <b className="text-foreground">Guide</b> — public “from” price</span>
-        <span className="flex items-center gap-1.5"><EyeOff className="h-3.5 w-3.5" /> <b className="text-foreground">Auto-accept</b> — offers at/above this auto-accept</span>
-        <span className="flex items-center gap-1.5"><EyeOff className="h-3.5 w-3.5" /> <b className="text-foreground">Floor</b> — below this is auto-declined</span>
+      <div className="mt-4 grid gap-2 rounded-xl border border-border bg-muted/20 p-3 text-xs text-[#0C1A22] sm:grid-cols-2">
+        <span className="flex items-center gap-1.5"><Eye className="h-3.5 w-3.5" /> <b>Guide</b> — the public “from” price travellers see</span>
+        <span className="flex items-center gap-1.5"><EyeOff className="h-3.5 w-3.5" /> <b>Auto-accept (minimum)</b> — offers at/above book instantly; lower ones come to you</span>
       </div>
 
       {/* master auto toggle */}
@@ -182,29 +182,24 @@ export default function BusinessPricing() {
       ) : (
         <div className="mt-6 space-y-3">
           {rooms.map((r) => {
-            const warn =
-              (r.base_floor != null && r.base_auto != null && r.base_floor > r.base_auto) ||
-              (r.base_auto != null && r.base_guide != null && r.base_auto > r.base_guide);
+            const warn = (r.base_auto != null && r.base_guide != null && r.base_auto > r.base_guide);
             return (
               <Card key={r.id} className="p-4">
-                <p className="text-sm font-semibold text-foreground">{r.room_name}</p>
-                <div className="mt-3 grid grid-cols-3 gap-3">
-                  <label className="text-xs text-muted-foreground">
-                    Guide ({currency})
+                <p className="font-display text-base font-bold text-[#0C1A22]">{r.room_name}</p>
+                <div className="mt-3 grid grid-cols-2 gap-3">
+                  <label className="text-xs font-semibold text-[#0C1A22]">
+                    Guide price ({currency})
                     <Input type="number" className="mt-1 h-9" value={r.base_guide ?? ''} onChange={(e) => setField(r.id, 'base_guide', e.target.value)} placeholder="—" />
                   </label>
-                  <label className="text-xs text-muted-foreground">
-                    Auto-accept
+                  <label className="text-xs font-semibold text-[#0C1A22]">
+                    Auto-accept (minimum amount)
                     <Input type="number" className="mt-1 h-9" value={r.base_auto ?? ''} onChange={(e) => setField(r.id, 'base_auto', e.target.value)} placeholder="—" />
                   </label>
-                  <label className="text-xs text-muted-foreground">
-                    Floor
-                    <Input type="number" className="mt-1 h-9" value={r.base_floor ?? ''} onChange={(e) => setField(r.id, 'base_floor', e.target.value)} placeholder="—" />
-                  </label>
                 </div>
+                <p className="mt-2 text-xs font-medium text-[#0C1A22]/70">Offers at or above the minimum book instantly. Anything lower comes to you to accept, counter or decline.</p>
                 {warn && (
                   <p className="mt-2 flex items-center gap-1 text-xs text-amber-600">
-                    <Info className="h-3.5 w-3.5" /> Usually floor ≤ auto-accept ≤ guide.
+                    <Info className="h-3.5 w-3.5" /> Usually auto-accept ≤ guide.
                   </p>
                 )}
                 <div className="mt-3 flex justify-end">
