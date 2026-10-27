@@ -1,0 +1,15 @@
+/* Per-room offer preview — slider, gauge ticks, and tasteful state animations. */
+.rp-range{-webkit-appearance:none;appearance:none;width:100%;height:12px;border-radius:999px;outline:none;
+  background:linear-gradient(90deg,#7db3aa,#0a7d72)}
+.rp-range::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:28px;height:28px;border-radius:50%;
+  background:#0C1A22;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4);cursor:pointer}
+.rp-range::-moz-range-thumb{width:28px;height:28px;border-radius:50%;background:#0C1A22;border:3px solid #fff;cursor:pointer}
+.rp-trk{position:relative}
+.rp-tick{position:absolute;top:-3px;width:2px;height:18px;background:#0C1A22;opacity:.35;border-radius:2px}
+.rp-man{width:5rem;text-align:center;outline:none;border:none;background:transparent}
+.rp-ic{display:inline-block;font-size:1.25rem;line-height:1}
+.rp-ic.sweet{animation:rp-pop .5s ease}
+.rp-ic.manual{animation:rp-roll .5s ease}
+@keyframes rp-pop{0%{transform:scale(.3);opacity:0}60%{transform:scale(1.35)}100%{transform:scale(1)}}
+@keyframes rp-roll{0%{transform:rotate(-200deg) scale(.4);opacity:0}55%{transform:rotate(25deg) scale(1.4)}100%{transform:rotate(0) scale(1)}}
+@media (prefers-reduced-motion: reduce){.rp-ic.sweet,.rp-ic.manual{animation:none}}

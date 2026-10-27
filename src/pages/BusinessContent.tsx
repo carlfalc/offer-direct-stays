@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { Loader2, ArrowLeft, Save, Plus, Trash2, Star, X, ImagePlus, Info, CheckCircle2, SlidersHorizontal, Eye, PenLine } from 'lucide-react';
+import RoomOfferPreview from '@/components/business/RoomOfferPreview';
 
 interface Photo { url: string; source: string }
 interface RoomDraft {
@@ -42,6 +43,7 @@ export default function BusinessContent() {
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const [ownerDesc, setOwnerDesc] = useState('');
   const [savingDesc, setSavingDesc] = useState(false);
+  const [previewRoom, setPreviewRoom] = useState<RoomDraft | null>(null);
 
   const load = useCallback(async () => {
     if (!user) return;
@@ -182,7 +184,7 @@ export default function BusinessContent() {
       }
       const { error: te } = await supabase
         .from('fs_room_thresholds')
-        .upsert({ listing_room_id: id, base_auto: d.base_auto, base_floor: d.base_floor } as any, { onConflict: 'listing_room_id' });
+        .upsert({ listing_room_id: id, base_auto: d.base_auto, base_floor: null } as any, { onConflict: 'listing_room_id' });
       if (te) throw te;
       patch(d.id, { persisted: true });
       if (d.id !== id) patch(d.id, { id }); // swap temp id for real id
@@ -327,25 +329,25 @@ export default function BusinessContent() {
 
               {/* Prices */}
               <div className="mt-4 rounded-lg border border-border bg-muted/20 p-3">
-                <p className="mb-2 text-xs font-medium text-foreground">Prices ({currency}) — only the guide is shown to travellers</p>
-                <div className="grid grid-cols-3 gap-3">
-                  <label className="text-xs text-muted-foreground">
-                    Guide
+                <p className="mb-2 text-xs font-semibold text-[#0C1A22]">Prices ({currency}) — only the guide is shown to travellers</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="text-xs font-semibold text-[#0C1A22]">
+                    Guide price
                     <Input type="number" value={d.base_guide ?? ''} onChange={(e) => patch(d.id, { base_guide: e.target.value === '' ? null : Number(e.target.value) })} className="mt-1 h-9" placeholder="—" />
                   </label>
-                  <label className="text-xs text-muted-foreground">
-                    Auto-accept
+                  <label className="text-xs font-semibold text-[#0C1A22]">
+                    Auto-accept (minimum amount)
                     <Input type="number" value={d.base_auto ?? ''} onChange={(e) => patch(d.id, { base_auto: e.target.value === '' ? null : Number(e.target.value) })} className="mt-1 h-9" placeholder="—" />
                   </label>
-                  <label className="text-xs text-muted-foreground">
-                    Floor
-                    <Input type="number" value={d.base_floor ?? ''} onChange={(e) => patch(d.id, { base_floor: e.target.value === '' ? null : Number(e.target.value) })} className="mt-1 h-9" placeholder="—" />
-                  </label>
                 </div>
+                <p className="mt-2 text-xs font-medium text-[#0C1A22]/70">Offers at or above your minimum book instantly. Anything lower comes to you to accept, counter or decline.</p>
                 {guideMissing && <p className="mt-2 flex items-center gap-1 text-xs text-amber-600"><Info className="h-3.5 w-3.5" /> A guide price is required before you can go live.</p>}
               </div>
 
-              <div className="mt-4 flex justify-end">
+              <div className="mt-4 flex justify-end gap-2">
+                <button onClick={() => setPreviewRoom(d)} className="flex items-center gap-1.5 rounded-md bg-[#0C1A22] px-3 py-1.5 text-sm font-semibold text-white hover:bg-[#0C1A22]/90">
+                  <Eye className="h-4 w-4" /> Preview
+                </button>
                 <Button size="sm" onClick={() => saveRoom(d)} disabled={savingId === d.id}>
                   {savingId === d.id ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving…</> : <><Save className="mr-2 h-4 w-4" /> Save unit</>}
                 </Button>
@@ -367,6 +369,17 @@ export default function BusinessContent() {
           <CheckCircle2 className="h-4 w-4" /> Done — back to dashboard
         </Button>
       </div>
+
+      <RoomOfferPreview
+        open={!!previewRoom}
+        onOpenChange={(o) => { if (!o) setPreviewRoom(null); }}
+        businessName={listing.name}
+        roomName={previewRoom?.room_name || ''}
+        photos={previewRoom?.photos || []}
+        guide={previewRoom?.base_guide ?? null}
+        auto={previewRoom?.base_auto ?? null}
+        currencySymbol={listing.country === 'AU' ? 'A$' : '$'}
+      />
     </div>
   );
 }
