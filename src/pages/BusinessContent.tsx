@@ -245,6 +245,12 @@ export default function BusinessContent() {
         </p>
       </div>
 
+      {/* Image style guide */}
+      <div className="mt-3 flex items-start gap-2.5 rounded-xl border border-border bg-muted/30 p-3 text-xs font-medium text-[#0C1A22]">
+        <ImagePlus className="mt-0.5 h-4 w-4 flex-none text-primary" />
+        <p><span className="font-bold">Photo guide:</span> upload <b>JPG, PNG or WebP</b>. Landscape works best — aim for at least <b>1200×800px</b> (bigger is sharper) and under <b>5MB</b> each. Blurry or very small images look low-quality to travellers.</p>
+      </div>
+
       {/* Owner's description — black, bold, larger */}
       <div className="mt-6 rounded-2xl border border-border bg-card p-5">
         <div className="flex items-center gap-2"><PenLine className="h-5 w-5 text-primary" /><h2 className="font-display text-xl font-extrabold text-[#0C1A22]">Owner's description</h2></div>
@@ -390,7 +396,7 @@ function PhotoAddButton({ busy, onPick }: { busy: boolean; onPick: (files: FileL
   const ref = useRef<HTMLInputElement>(null);
   return (
     <>
-      <input ref={ref} type="file" accept="image/*" multiple className="hidden" onChange={(e) => { onPick(e.target.files); if (ref.current) ref.current.value = ''; }} />
+      <input ref={ref} type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden" onChange={(e) => { onPick(e.target.files); if (ref.current) ref.current.value = ''; }} />
       <Button size="sm" variant="outline" disabled={busy} onClick={() => ref.current?.click()}>
         {busy ? <><Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> Uploading…</> : <><ImagePlus className="mr-1.5 h-4 w-4" /> Add photos</>}
       </Button>

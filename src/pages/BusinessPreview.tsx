@@ -39,12 +39,12 @@ const TYPE_LABEL: Record<string, string> = {
   glamping: 'Glamping', other: 'Property',
 };
 
-function RoomPhoto({ src, alt }: { src?: string | null; alt: string }) {
+function RoomPhoto({ src, alt, heightClass = 'h-40' }: { src?: string | null; alt: string; heightClass?: string }) {
   const [failed, setFailed] = useState(false);
   if (!src || failed) {
-    return <div className="flex h-40 w-full items-center justify-center rounded-xl bg-muted text-muted-foreground"><ImageIcon className="h-6 w-6 opacity-50" /></div>;
+    return <div className={`flex ${heightClass} w-full items-center justify-center rounded-xl bg-muted text-muted-foreground`}><ImageIcon className="h-6 w-6 opacity-50" /></div>;
   }
-  return <img src={src} alt={alt} loading="lazy" onError={() => setFailed(true)} className="h-40 w-full rounded-xl object-cover" />;
+  return <img src={src} alt={alt} loading="lazy" onError={() => setFailed(true)} className={`${heightClass} w-full rounded-xl object-cover`} style={{ objectPosition: 'center' }} />;
 }
 
 /**
@@ -142,7 +142,7 @@ export default function BusinessPreview() {
 
       {/* Hero */}
       <div className="overflow-hidden rounded-2xl border border-border bg-card">
-        <RoomPhoto src={listing.thumbnail || rooms[0]?.photos[0]?.url} alt={listing.name} />
+        <RoomPhoto src={listing.thumbnail || rooms[0]?.photos[0]?.url} alt={listing.name} heightClass="h-64 sm:h-80" />
         <div className="p-5">
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="font-display text-2xl font-extrabold text-foreground">{listing.name}</h1>
