@@ -529,6 +529,98 @@ export default function BusinessDashboard() {
         </div>
       </section>
 
+      {/* Live tasks — the pipeline the owner acts on, above Analytics */}
+      <section className="mb-6">
+        <div className="mb-3 flex items-center gap-2">
+          <h2 className="font-display text-lg font-bold text-foreground">Live tasks</h2>
+          <span className="text-sm text-muted-foreground">· act on these now</span>
+        </div>
+
+        {/* Status tiles — click to filter, drag to rearrange */}
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+          {tileOrder.map((id) => {
+            const cfg: Record<string, { label: string; count: number; tone?: 'alert' | 'success' | 'default' }> = {
+              pending: { label: 'Need response', count: pending.length, tone: pending.length ? 'alert' : 'default' },
+              awaiting: { label: 'Awaiting guest', count: awaiting.length },
+              confirmed: { label: 'Confirmed', count: confirmed.length, tone: 'success' },
+              to_enter: { label: 'To enter', count: toEnter.length, tone: toEnter.length ? 'alert' : 'default' },
+              entered: { label: 'Entered', count: entered.length },
+            };
+            const c = cfg[id];
+            if (!c) return null;
+            return (
+              <div key={id} {...dragProps(id)} className="cursor-grab active:cursor-grabbing">
+                <Tile id={id as Filter} label={c.label} count={c.count} tone={c.tone} />
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Clear filter + exports */}
+        <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
+          {filter && (
+            <Button variant="ghost" size="sm" onClick={() => setFilter(null)}>
+              <X className="mr-1 h-4 w-4" /> Clear filter
+            </Button>
+          )}
+          <Button variant="outline" size="sm" onClick={() => doExport('xlsx')} disabled={bookingList.length === 0} title="Export bookings to Excel">
+            <Download className="mr-1.5 h-4 w-4" /> XLSX
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => doExport('pdf')} disabled={bookingList.length === 0} title="Export bookings to PDF">
+            <Download className="mr-1.5 h-4 w-4" /> PDF
+          </Button>
+        </div>
+
+        {show('pending') && (
+          <Section title="Needs your response" icon={<Inbox className="h-4 w-4" />}>
+            {pending.length === 0 ? <Empty text="No offers waiting. New offers between your floor and auto-accept price appear here." /> : (
+              <div className="space-y-3">{pending.map((o) => <PendingOfferCard key={o.id} offer={o} currency={currencyFor(o)} busy={busyId === o.id} onRespond={respond} />)}</div>
+            )}
+          </Section>
+        )}
+
+        {show('awaiting') && awaiting.length > 0 && (
+          <Section title="Awaiting guest confirmation" icon={<Clock className="h-4 w-4" />}>
+            <div className="space-y-2">
+              {awaiting.map((o) => (
+                <Card key={o.id} className="flex items-center justify-between gap-3 p-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-foreground">{o.room?.room_name || 'Room'}</p>
+                    <p className="text-xs text-muted-foreground">{fmtDate(o.check_in)}–{fmtDate(o.check_out)} · {o.status === 'countered' ? `Countered ${currencyFor(o)} $${Math.round(o.counter_nightly || 0)}` : `Accepted ${currencyFor(o)} $${Math.round(o.nightly_offer)}`}</p>
+                  </div>
+                  <Badge variant="outline" className="flex-shrink-0 text-xs">{countdown(o.confirm_deadline_at)}</Badge>
+                </Card>
+              ))}
+            </div>
+          </Section>
+        )}
+
+        {/* Approved bookings — confirmed, with mark-as-entered */}
+        {(show('confirmed') || show('to_enter') || show('entered')) && (
+          <Section title="Approved bookings" icon={<CheckCircle2 className="h-4 w-4" />}>
+            {bookingList.length === 0
+              ? <Empty text="Confirmed bookings appear here with their reference. Tick each once you've entered it in your own system." />
+              : <div className="space-y-2">{bookingList.map((o) => <BookingRow key={o.id} o={o} />)}</div>}
+          </Section>
+        )}
+
+        {filter === null && history.length > 0 && (
+          <Section title="History" icon={<Clock className="h-4 w-4" />}>
+            <div className="space-y-2">
+              {history.map((o) => (
+                <Card key={o.id} className="flex items-center justify-between gap-3 p-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-foreground">{o.room?.room_name || 'Room'}</p>
+                    <p className="text-xs text-muted-foreground">{fmtDate(o.check_in)}–{fmtDate(o.check_out)} · {currencyFor(o)} ${Math.round(o.nightly_offer)}/night</p>
+                  </div>
+                  <Badge variant="outline" className="flex-shrink-0 text-muted-foreground">{STATUS_LABEL[o.status] || o.status}</Badge>
+                </Card>
+              ))}
+            </div>
+          </Section>
+        )}
+      </section>
+
       {/* Analytics */}
       <section className="mb-6">
         <div className="mb-3 flex items-center gap-2">
@@ -599,89 +691,6 @@ export default function BusinessDashboard() {
         </div>
       </section>
 
-      {/* Tally tiles — click to filter, drag to rearrange */}
-      <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-5">
-        {tileOrder.map((id) => {
-          const cfg: Record<string, { label: string; count: number; tone?: 'alert' | 'success' | 'default' }> = {
-            pending: { label: 'Need response', count: pending.length, tone: pending.length ? 'alert' : 'default' },
-            awaiting: { label: 'Awaiting guest', count: awaiting.length },
-            confirmed: { label: 'Confirmed', count: confirmed.length, tone: 'success' },
-            to_enter: { label: 'To enter', count: toEnter.length, tone: toEnter.length ? 'alert' : 'default' },
-            entered: { label: 'Entered', count: entered.length },
-          };
-          const c = cfg[id];
-          if (!c) return null;
-          return (
-            <div key={id} {...dragProps(id)} className="cursor-grab active:cursor-grabbing">
-              <Tile id={id as Filter} label={c.label} count={c.count} tone={c.tone} />
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Clear filter + exports */}
-      <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
-        {filter && (
-          <Button variant="ghost" size="sm" onClick={() => setFilter(null)}>
-            <X className="mr-1 h-4 w-4" /> Clear filter
-          </Button>
-        )}
-        <Button variant="outline" size="sm" onClick={() => doExport('xlsx')} disabled={bookingList.length === 0} title="Export bookings to Excel">
-          <Download className="mr-1.5 h-4 w-4" /> XLSX
-        </Button>
-        <Button variant="outline" size="sm" onClick={() => doExport('pdf')} disabled={bookingList.length === 0} title="Export bookings to PDF">
-          <Download className="mr-1.5 h-4 w-4" /> PDF
-        </Button>
-      </div>
-
-      {show('pending') && (
-        <Section title="Needs your response" icon={<Inbox className="h-4 w-4" />}>
-          {pending.length === 0 ? <Empty text="No offers waiting. New offers between your floor and auto-accept price appear here." /> : (
-            <div className="space-y-3">{pending.map((o) => <PendingOfferCard key={o.id} offer={o} currency={currencyFor(o)} busy={busyId === o.id} onRespond={respond} />)}</div>
-          )}
-        </Section>
-      )}
-
-      {show('awaiting') && awaiting.length > 0 && (
-        <Section title="Awaiting guest confirmation" icon={<Clock className="h-4 w-4" />}>
-          <div className="space-y-2">
-            {awaiting.map((o) => (
-              <Card key={o.id} className="flex items-center justify-between gap-3 p-3">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-foreground">{o.room?.room_name || 'Room'}</p>
-                  <p className="text-xs text-muted-foreground">{fmtDate(o.check_in)}–{fmtDate(o.check_out)} · {o.status === 'countered' ? `Countered ${currencyFor(o)} $${Math.round(o.counter_nightly || 0)}` : `Accepted ${currencyFor(o)} $${Math.round(o.nightly_offer)}`}</p>
-                </div>
-                <Badge variant="outline" className="flex-shrink-0 text-xs">{countdown(o.confirm_deadline_at)}</Badge>
-              </Card>
-            ))}
-          </div>
-        </Section>
-      )}
-
-      {/* Approved bookings — confirmed, with mark-as-entered */}
-      {(show('confirmed') || show('to_enter') || show('entered')) && (
-        <Section title="Approved bookings" icon={<CheckCircle2 className="h-4 w-4" />}>
-          {bookingList.length === 0
-            ? <Empty text="Confirmed bookings appear here with their reference. Tick each once you've entered it in your own system." />
-            : <div className="space-y-2">{bookingList.map((o) => <BookingRow key={o.id} o={o} />)}</div>}
-        </Section>
-      )}
-
-      {filter === null && history.length > 0 && (
-        <Section title="History" icon={<Clock className="h-4 w-4" />}>
-          <div className="space-y-2">
-            {history.map((o) => (
-              <Card key={o.id} className="flex items-center justify-between gap-3 p-3">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-foreground">{o.room?.room_name || 'Room'}</p>
-                  <p className="text-xs text-muted-foreground">{fmtDate(o.check_in)}–{fmtDate(o.check_out)} · {currencyFor(o)} ${Math.round(o.nightly_offer)}/night</p>
-                </div>
-                <Badge variant="outline" className="flex-shrink-0 text-muted-foreground">{STATUS_LABEL[o.status] || o.status}</Badge>
-              </Card>
-            ))}
-          </div>
-        </Section>
-      )}
     </div>
     </>
   );
