@@ -8,7 +8,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Inbox, Clock, CheckCircle2, Users, CalendarDays, Plus, RefreshCw, SlidersHorizontal, ClipboardCheck, ClipboardList, X, Download, RotateCcw, Trophy, Send, DollarSign, Percent, Zap, BedDouble, Circle, Rocket, Image as ImageIcon } from 'lucide-react';
+import { Loader2, Inbox, Clock, CheckCircle2, Users, CalendarDays, Plus, RefreshCw, SlidersHorizontal, ClipboardCheck, ClipboardList, X, Download, RotateCcw, Trophy, Send, DollarSign, Percent, Zap, BedDouble, Circle, Rocket, Eye, Image as ImageIcon } from 'lucide-react';
 import { exportBookingsXlsx, exportBookingsPdf, ReportRow } from '@/lib/bookingReports';
 import WeatherTiles from '@/components/explore/WeatherTiles';
 import { useTileOrder } from '@/hooks/useTileOrder';
@@ -123,6 +123,9 @@ function ReadinessCard({ r, busy, onGoLive, onTakeOffline }: {
         <div className="flex flex-none gap-2">
           <Button size="sm" variant="outline" className="gap-1.5" asChild>
             <Link to="/business/content"><ImageIcon className="h-4 w-4" /> Rooms & photos</Link>
+          </Button>
+          <Button size="sm" variant="outline" className="gap-1.5" asChild>
+            <Link to="/business/preview"><Eye className="h-4 w-4" /> Preview</Link>
           </Button>
           {!r.published && !r.ready && (
             <Button size="sm" className="gap-1.5 bg-[#0C1A22] text-white hover:bg-[#0C1A22]/90" asChild>

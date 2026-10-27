@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
-import { Loader2, ArrowLeft, Save, Plus, Trash2, Star, X, ImagePlus, Info, CheckCircle2, SlidersHorizontal } from 'lucide-react';
+import { Loader2, ArrowLeft, Save, Plus, Trash2, Star, X, ImagePlus, Info, CheckCircle2, SlidersHorizontal, Eye } from 'lucide-react';
 import PaymentMethodsCard from '@/components/business/PaymentMethodsCard';
 
 interface Photo { url: string; source: string }
@@ -207,9 +207,14 @@ export default function BusinessContent() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
-      <button onClick={() => navigate('/business/dashboard')} className="mb-4 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="h-4 w-4" /> Dashboard
-      </button>
+      <div className="mb-4 flex items-center justify-between">
+        <button onClick={() => navigate('/business/dashboard')} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+          <ArrowLeft className="h-4 w-4" /> Dashboard
+        </button>
+        <Button variant="outline" size="sm" className="gap-1.5" onClick={() => navigate('/business/preview')}>
+          <Eye className="h-4 w-4" /> Preview listing
+        </Button>
+      </div>
 
       <h1 className="font-display text-2xl font-bold text-foreground">Rooms & photos — {listing.name}</h1>
 
