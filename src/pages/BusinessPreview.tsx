@@ -67,13 +67,16 @@ export default function BusinessPreview() {
       if (!user) return;
       const { data: l } = await supabase
         .from('fs_listings')
-        .select('id,liteapi_hotel_id,name,city,country,thumbnail,property_type,status,owner_description,hero_photo_url,hero_focus_x,hero_focus_y')
+        .select('id,liteapi_hotel_id,name,city,country,thumbnail,property_type,status,owner_description')
         .eq('owner_id', user.id)
         .order('created_at', { ascending: true })
         .limit(1)
         .maybeSingle();
       if (!l) { setLoading(false); return; }
-      const listingRow = l as any as PreviewListing;
+      let listingRow = l as any as PreviewListing;
+      // Hero-photo columns are optional (later migration) — best-effort fetch.
+      const { data: hero } = await supabase.from('fs_listings').select('hero_photo_url,hero_focus_x,hero_focus_y').eq('id', (l as any).id).maybeSingle();
+      if (hero) listingRow = { ...listingRow, ...(hero as any) };
       setListing(listingRow);
 
       const { data: rr } = await supabase

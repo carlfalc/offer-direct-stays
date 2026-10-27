@@ -52,10 +52,16 @@ export default function BusinessContent() {
     setLoading(true);
     const { data: listings } = await supabase
       .from('fs_listings')
-      .select('id,liteapi_hotel_id,name,country,thumbnail,payment_methods,payment_note,payment_terms,payment_lead_days,owner_description,hero_photo_url,hero_focus_x,hero_focus_y')
+      .select('id,liteapi_hotel_id,name,country,thumbnail,payment_methods,payment_note,payment_terms,payment_lead_days,owner_description')
       .eq('owner_id', user.id)
       .order('claimed_at', { ascending: true });
-    const l = (listings as any[])?.[0] || null;
+    let l = (listings as any[])?.[0] || null;
+    // Hero-photo columns come from a later migration — fetch best-effort so a
+    // not-yet-run migration can never break listing detection.
+    if (l) {
+      const { data: hero } = await supabase.from('fs_listings').select('hero_photo_url,hero_focus_x,hero_focus_y').eq('id', l.id).maybeSingle();
+      if (hero) l = { ...l, ...hero };
+    }
     setListing(l);
     setOwnerDesc(l?.owner_description || '');
     if (!l) { setRooms([]); setLoading(false); return; }
