@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Inbox, Clock, CheckCircle2, Users, CalendarDays, Plus, RefreshCw, SlidersHorizontal, ClipboardCheck, ClipboardList, X, Download, RotateCcw, Trophy, Send, DollarSign, Percent, Zap, BedDouble, Circle, Rocket, Eye, Image as ImageIcon } from 'lucide-react';
 import { exportBookingsXlsx, exportBookingsPdf, ReportRow } from '@/lib/bookingReports';
+import { importLiteApiRooms } from '@/lib/listings';
 import WeatherTiles from '@/components/explore/WeatherTiles';
 import { useTileOrder } from '@/hooks/useTileOrder';
 import { commitmentFee } from '@/lib/fees';
@@ -95,8 +96,9 @@ interface Readiness {
 }
 
 /** Per-property setup + go-live control with a content-review confirmation. */
-function ReadinessCard({ r, busy, onGoLive, onTakeOffline }: {
-  r: Readiness; busy: boolean;
+function ReadinessCard({ r, busy, importing, onImportRooms, onGoLive, onTakeOffline }: {
+  r: Readiness; busy: boolean; importing: boolean;
+  onImportRooms: (id: string, hotelId: string) => void;
   onGoLive: (id: string) => void; onTakeOffline: (id: string) => void;
 }) {
   const [confirming, setConfirming] = useState(false);
@@ -104,8 +106,8 @@ function ReadinessCard({ r, busy, onGoLive, onTakeOffline }: {
   const l = r.listing;
   const checks = [
     { ok: r.approved, label: r.approved ? 'Property approved' : 'Awaiting approval', sub: l.name },
-    { ok: r.totalRooms > 0, label: r.totalRooms > 0 ? `${r.totalRooms} room${r.totalRooms === 1 ? '' : 's'} detected` : 'No rooms imported', sub: r.totalRooms > 0 ? 'From your property content' : 'Import rooms on the pricing page' },
-    { ok: r.allPriced, label: r.allPriced ? 'All rooms priced' : `${r.pricedRooms} of ${r.totalRooms || '—'} rooms priced`, sub: r.allPriced ? 'Guide price on every room' : 'Set a guide price on each room' },
+    { ok: r.totalRooms > 0, label: r.totalRooms > 0 ? `${r.totalRooms} room${r.totalRooms === 1 ? '' : 's'} imported` : 'No rooms imported yet', sub: r.totalRooms > 0 ? 'From your property content' : 'Tap Import rooms to pull them in', action: r.totalRooms === 0 ? 'import' : undefined },
+    { ok: r.allPriced, label: r.allPriced ? 'All rooms priced' : `${r.pricedRooms} of ${r.totalRooms || 0} rooms priced`, sub: r.allPriced ? 'Guide price on every room' : 'Set a guide price on each room' },
   ];
   return (
     <div className={cn('rounded-2xl border p-4 sm:p-5', r.published ? 'border-success/30 bg-success/[0.06]' : 'border-amber-300/50 bg-amber-50')}>
@@ -138,7 +140,15 @@ function ReadinessCard({ r, busy, onGoLive, onTakeOffline }: {
         {checks.map((c, i) => (
           <div key={i} className="flex items-start gap-2 rounded-xl border border-border/60 bg-card/70 p-3">
             {c.ok ? <CheckCircle2 className="mt-0.5 h-4 w-4 flex-none text-success" /> : <Circle className="mt-0.5 h-4 w-4 flex-none text-amber-500" />}
-            <div className="min-w-0"><p className="text-sm font-semibold text-foreground">{c.label}</p><p className="truncate text-xs text-muted-foreground">{c.sub}</p></div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-foreground">{c.label}</p>
+              <p className="truncate text-xs text-muted-foreground">{c.sub}</p>
+              {c.action === 'import' && (
+                <Button size="sm" className="mt-2 h-7 gap-1.5 bg-[#0C1A22] text-white hover:bg-[#0C1A22]/90" disabled={importing} onClick={() => onImportRooms(l.id, l.liteapi_hotel_id)}>
+                  {importing ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Importing…</> : <><Download className="h-3.5 w-3.5" /> Import rooms</>}
+                </Button>
+              )}
+            </div>
           </div>
         ))}
       </div>
@@ -194,6 +204,7 @@ export default function BusinessDashboard() {
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [importingId, setImportingId] = useState<string | null>(null);
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [filter, setFilter] = useState<Filter>(null);
@@ -213,7 +224,7 @@ export default function BusinessDashboard() {
     if (!user) return;
     setLoading(true);
     const { data: myListings } = await supabase
-      .from('fs_listings').select('id,name,city,country,status,auto_accept_enabled,published_at,content_reviewed_at').eq('owner_id', user.id);
+      .from('fs_listings').select('id,liteapi_hotel_id,name,city,country,status,auto_accept_enabled,published_at,content_reviewed_at').eq('owner_id', user.id);
     const ls = (myListings as any[]) || [];
     setListings(ls);
     if (ls.length === 0) { setOffers([]); setRooms([]); setLoading(false); return; }
@@ -240,6 +251,22 @@ export default function BusinessDashboard() {
   }, [user]);
 
   useEffect(() => { load(); }, [load]);
+
+  const importRooms = async (listingId: string, hotelId: string) => {
+    if (!hotelId) { toast({ title: 'Add rooms manually', description: 'This property has no linked directory rooms — add them on Rooms & photos.', variant: 'destructive' }); navigate('/business/content'); return; }
+    setImportingId(listingId);
+    try {
+      const n = await importLiteApiRooms(listingId, hotelId);
+      if (n === 0) {
+        toast({ title: 'No rooms to import', description: 'We couldn’t pull rooms for this property. Add them on Rooms & photos.', variant: 'destructive' });
+      } else {
+        toast({ title: `${n} room${n === 1 ? '' : 's'} imported`, description: 'Now set a guide price on each room.' });
+        await load();
+      }
+    } finally {
+      setImportingId(null);
+    }
+  };
 
   const toggleAutoAccept = async (listingId: string, next: boolean) => {
     setTogglingId(listingId);
@@ -500,7 +527,7 @@ export default function BusinessDashboard() {
       {/* Go-live readiness — per property, real data + publish control */}
       <section className="mb-6 space-y-3">
         {listingReadiness.map((r) => (
-          <ReadinessCard key={r.listing.id} r={r} busy={togglingId === r.listing.id} onGoLive={goLive} onTakeOffline={takeOffline} />
+          <ReadinessCard key={r.listing.id} r={r} busy={togglingId === r.listing.id} importing={importingId === r.listing.id} onImportRooms={importRooms} onGoLive={goLive} onTakeOffline={takeOffline} />
         ))}
       </section>
 
