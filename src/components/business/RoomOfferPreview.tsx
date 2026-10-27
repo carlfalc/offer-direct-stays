@@ -23,7 +23,7 @@ export default function RoomOfferPreview({ open, onOpenChange, businessName, roo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[460px] border-0 bg-transparent p-0 shadow-none">
+      <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="max-w-[460px] border-0 bg-transparent p-0 shadow-none">
         {hasGuide ? (
           <OfferCard
             property={businessName}
