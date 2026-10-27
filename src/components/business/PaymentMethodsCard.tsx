@@ -10,9 +10,9 @@ type PaymentTerms = 'on_arrival' | 'days_before' | 'upfront';
 
 /** Edit payment settings on a listing — when the balance is due, the lead days,
  *  and the accepted payment methods. Owners can change these any time. */
-export default function PaymentMethodsCard({ listingId, initialMethods, initialNote, initialTerms = 'on_arrival', initialLeadDays = 10 }: {
+export default function PaymentMethodsCard({ listingId, initialMethods, initialNote, initialTerms = 'on_arrival', initialLeadDays = 10, hideHeader = false }: {
   listingId: string; initialMethods: string[]; initialNote: string;
-  initialTerms?: PaymentTerms; initialLeadDays?: number;
+  initialTerms?: PaymentTerms; initialLeadDays?: number; hideHeader?: boolean;
 }) {
   const { toast } = useToast();
   const [methods, setMethods] = useState<Set<string>>(new Set(initialMethods || []));
@@ -40,12 +40,16 @@ export default function PaymentMethodsCard({ listingId, initialMethods, initialN
   };
 
   return (
-    <div className="rounded-xl border border-border bg-card p-4 sm:p-5">
-      <div className="mb-1 flex items-center gap-2">
-        <Wallet className="h-4 w-4 text-primary" />
-        <h2 className="font-display text-lg font-bold text-foreground">Payment settings</h2>
-      </div>
-      <p className="mb-3 text-sm text-muted-foreground">Change these any time. findastay only ever takes the commitment fee — the balance is paid directly to you.</p>
+    <div className={hideHeader ? '' : 'rounded-xl border border-border bg-card p-4 sm:p-5'}>
+      {!hideHeader && (
+        <>
+          <div className="mb-1 flex items-center gap-2">
+            <Wallet className="h-4 w-4 text-primary" />
+            <h2 className="font-display text-lg font-bold text-foreground">Payment settings</h2>
+          </div>
+          <p className="mb-3 text-sm text-muted-foreground">Change these any time. findastay only ever takes the commitment fee — the balance is paid directly to you.</p>
+        </>
+      )}
 
       {/* When is the balance due */}
       <p className="mb-1.5 text-sm font-semibold text-foreground">When is the balance due? <span className="font-normal text-muted-foreground">(after the commitment fee)</span></p>

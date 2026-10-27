@@ -27,6 +27,7 @@ import BusinessDashboard from "./pages/BusinessDashboard";
 import BusinessPricing from "./pages/BusinessPricing";
 import BusinessContent from "./pages/BusinessContent";
 import BusinessPreview from "./pages/BusinessPreview";
+import BusinessPayment from "./pages/BusinessPayment";
 import BusinessRegister from "./pages/BusinessRegister";
 import Messages from "./pages/FsMessages";
 import Conversation from "./pages/FsConversation";
@@ -142,6 +143,11 @@ const App = () => (
               <Route path="/business/preview" element={
                 <AuthenticatedLayout>
                   <BusinessPreview />
+                </AuthenticatedLayout>
+              } />
+              <Route path="/business/payment" element={
+                <AuthenticatedLayout>
+                  <BusinessPayment />
                 </AuthenticatedLayout>
               } />
               <Route path="/business/settings" element={

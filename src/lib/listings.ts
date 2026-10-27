@@ -419,17 +419,39 @@ function geo_currency(_hotelId: string): string {
 export async function importLiteApiRooms(listingId: string, hotelId: string): Promise<number> {
   if (!listingId || !hotelId) return 0;
 
-  // Don't duplicate if rooms are already in.
   const { data: existing } = await supabase
     .from('fs_listing_rooms')
-    .select('id')
-    .eq('listing_id', listingId)
-    .limit(1);
-  if ((existing?.length ?? 0) > 0) return 0;
+    .select('id,liteapi_room_id,photos,description,amenities,bed_configuration')
+    .eq('listing_id', listingId);
+  const existingRows = (existing as any[]) || [];
 
   const liteRooms = await loadLiteApiRooms(hotelId);
   if (liteRooms.length === 0) return 0;
 
+  // Rooms already exist (e.g. created by a seed that stored only names/prices):
+  // backfill the stored content for any room missing photos/text, so we serve
+  // from our own DB instead of calling LiteAPI on every traveller view.
+  if (existingRows.length > 0) {
+    const liteById = new Map(liteRooms.map((lr) => [String(lr.id), lr]));
+    let backfilled = 0;
+    for (const row of existingRows) {
+      const hasPhotos = Array.isArray(row.photos) && row.photos.length > 0;
+      if (hasPhotos && row.description && row.amenities) continue; // already curated/stored
+      const lr = liteById.get(String(row.liteapi_room_id));
+      if (!lr) continue;
+      const patch: Record<string, unknown> = {};
+      if (!hasPhotos && (lr.images || []).length) patch.photos = lr.images.map((url) => ({ url, source: 'liteapi' }));
+      if (!row.description && lr.description) patch.description = lr.description;
+      if (!row.amenities && Array.isArray(lr.amenities) && lr.amenities.length) patch.amenities = lr.amenities.join(', ');
+      if (!row.bed_configuration && lr.bed_configuration) patch.bed_configuration = lr.bed_configuration;
+      if (Object.keys(patch).length === 0) continue;
+      const { error } = await supabase.from('fs_listing_rooms').update(patch as any).eq('id', row.id);
+      if (!error) backfilled++;
+    }
+    return backfilled;
+  }
+
+  // Fresh listing — insert every room with its full content + a threshold row.
   let imported = 0;
   for (const lr of liteRooms) {
     const photos = (lr.images || []).map((url) => ({ url, source: 'liteapi' }));

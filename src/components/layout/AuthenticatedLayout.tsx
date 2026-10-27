@@ -1,7 +1,7 @@
 import { ReactNode, useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { MapPin, LogOut, Heart, Plane, MessageSquare, Send, LayoutDashboard, Settings, Building2, User, ChevronDown, Menu } from 'lucide-react';
+import { MapPin, LogOut, Heart, Plane, MessageSquare, Send, LayoutDashboard, Settings, Building2, User, ChevronDown, Menu, SlidersHorizontal, Wallet, Image as ImageIcon } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import {
   DropdownMenu,
@@ -117,9 +117,11 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
 
   const businessNavItems = [
     { label: 'Dashboard', path: '/business/dashboard', icon: LayoutDashboard },
-    { label: 'Settings', path: '/business/settings', icon: Settings },
-    { label: 'Messages', path: '/messages', icon: MessageSquare },
+    { label: 'Rooms & photos', path: '/business/content', icon: ImageIcon },
+    { label: 'Pricing', path: '/business/pricing', icon: SlidersHorizontal },
+    { label: 'Payment settings', path: '/business/payment', icon: Wallet },
     { label: 'Profile', path: '/profile', icon: User },
+    { label: 'Messages', path: '/messages', icon: MessageSquare },
   ];
 
   // Operational business pages run in the light "day" theme; travellers and

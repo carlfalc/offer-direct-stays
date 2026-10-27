@@ -28,6 +28,7 @@ interface PreviewListing {
   thumbnail: string | null;
   property_type: string | null;
   status: string | null;
+  owner_description: string | null;
 }
 
 const TYPE_LABEL: Record<string, string> = {
@@ -63,7 +64,7 @@ export default function BusinessPreview() {
       if (!user) return;
       const { data: l } = await supabase
         .from('fs_listings')
-        .select('id,liteapi_hotel_id,name,city,country,thumbnail,property_type,status')
+        .select('id,liteapi_hotel_id,name,city,country,thumbnail,property_type,status,owner_description')
         .eq('owner_id', user.id)
         .order('created_at', { ascending: true })
         .limit(1)
@@ -150,6 +151,12 @@ export default function BusinessPreview() {
           <div className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
             <MapPin className="h-4 w-4" />{listing.city ? `${listing.city}, ` : ''}{listing.country === 'AU' ? 'Australia' : 'New Zealand'}
           </div>
+          {listing.owner_description && (
+            <div className="mt-3 border-t border-border pt-3">
+              <p className="font-display text-sm font-bold text-foreground">More details</p>
+              <p className="mt-1 whitespace-pre-line text-sm text-foreground">{listing.owner_description}</p>
+            </div>
+          )}
         </div>
       </div>
 

@@ -9,8 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
-import { Loader2, ArrowLeft, Save, Plus, Trash2, Star, X, ImagePlus, Info, CheckCircle2, SlidersHorizontal, Eye } from 'lucide-react';
-import PaymentMethodsCard from '@/components/business/PaymentMethodsCard';
+import { Loader2, ArrowLeft, Save, Plus, Trash2, Star, X, ImagePlus, Info, CheckCircle2, SlidersHorizontal, Eye, PenLine } from 'lucide-react';
 
 interface Photo { url: string; source: string }
 interface RoomDraft {
@@ -41,17 +40,20 @@ export default function BusinessContent() {
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const [ownerDesc, setOwnerDesc] = useState('');
+  const [savingDesc, setSavingDesc] = useState(false);
 
   const load = useCallback(async () => {
     if (!user) return;
     setLoading(true);
     const { data: listings } = await supabase
       .from('fs_listings')
-      .select('id,liteapi_hotel_id,name,country,payment_methods,payment_note,payment_terms,payment_lead_days')
+      .select('id,liteapi_hotel_id,name,country,payment_methods,payment_note,payment_terms,payment_lead_days,owner_description')
       .eq('owner_id', user.id)
       .order('claimed_at', { ascending: true });
     const l = (listings as any[])?.[0] || null;
     setListing(l);
+    setOwnerDesc(l?.owner_description || '');
     if (!l) { setRooms([]); setLoading(false); return; }
 
     const { data: roomRows } = await supabase
@@ -205,21 +207,33 @@ export default function BusinessContent() {
     );
   }
 
+  const saveOwnerDesc = async () => {
+    if (!listing) return;
+    setSavingDesc(true);
+    const { error } = await supabase.from('fs_listings').update({ owner_description: ownerDesc.trim() || null } as any).eq('id', listing.id);
+    setSavingDesc(false);
+    if (error) { toast({ title: 'Could not save', description: error.message, variant: 'destructive' }); return; }
+    toast({ title: 'Description saved' });
+  };
+
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
-      <div className="mb-4 flex items-center justify-between">
-        <button onClick={() => navigate('/business/dashboard')} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="h-4 w-4" /> Dashboard
-        </button>
-        <Button variant="outline" size="sm" className="gap-1.5" onClick={() => navigate('/business/preview')}>
+      {/* Magazine header */}
+      <button onClick={() => navigate('/business/dashboard')} className="flex items-center gap-1 font-mono text-xs text-[#0C1A22]/60 hover:text-[#0C1A22]">
+        <ArrowLeft className="h-3.5 w-3.5" /> Dashboard
+      </button>
+      <div className="mt-3 flex items-start justify-between gap-3">
+        <div>
+          <span className="inline-block rounded-lg border-2 border-[#0C1A22] bg-[#19C9B4] px-3 py-1 font-display text-sm font-extrabold uppercase tracking-[0.16em] text-[#0C1A22]">{listing.name}</span>
+          <h1 className="mt-3 font-display text-4xl font-extrabold leading-[1.05] text-[#0C1A22] sm:text-5xl">Rooms, Photos<br />&amp; Description</h1>
+        </div>
+        <button onClick={() => navigate('/business/preview')} className="mt-1 flex flex-none items-center gap-1.5 rounded-lg bg-[#0C9C8E] px-4 py-2 font-display text-sm font-extrabold text-white shadow-sm hover:bg-[#0b8c80]">
           <Eye className="h-4 w-4" /> Preview listing
-        </Button>
+        </button>
       </div>
 
-      <h1 className="font-display text-2xl font-bold text-foreground">Rooms & photos — {listing.name}</h1>
-
       {/* Instruction banner */}
-      <div className="mt-3 flex items-start gap-2.5 rounded-xl border border-primary/20 bg-primary/5 p-3.5 text-sm text-foreground">
+      <div className="mt-5 flex items-start gap-2.5 rounded-xl border border-primary/20 bg-primary/5 p-3.5 text-sm font-medium text-[#0C1A22]">
         <Info className="mt-0.5 h-4 w-4 flex-none text-primary" />
         <p>
           Please check the images we have for your rooms/units. If you’re happy with them, you’re done —
@@ -228,9 +242,18 @@ export default function BusinessContent() {
         </p>
       </div>
 
-      {/* Payment methods — editable any time */}
-      <div className="mt-5">
-        <PaymentMethodsCard listingId={listing.id} initialMethods={listing.payment_methods || []} initialNote={listing.payment_note || ''} initialTerms={listing.payment_terms || 'on_arrival'} initialLeadDays={listing.payment_lead_days || 10} />
+      {/* Owner's description — black, bold, larger */}
+      <div className="mt-6 rounded-2xl border border-border bg-card p-5">
+        <div className="flex items-center gap-2"><PenLine className="h-5 w-5 text-primary" /><h2 className="font-display text-xl font-extrabold text-[#0C1A22]">Owner's description</h2></div>
+        <p className="mb-3 mt-1 text-sm font-medium text-[#0C1A22]/70">Tell travellers about your property — shown when they tap <b className="text-[#0C1A22]">More details</b> on your listing.</p>
+        <Textarea value={ownerDesc} onChange={(e) => setOwnerDesc(e.target.value)} rows={4}
+          placeholder="Type anything relevant to travellers — onsite restaurant, Sky TV, free parking, walking distance to town…"
+          className="w-full border-2 text-[1.05rem] font-semibold leading-relaxed text-[#0C1A22]" />
+        <div className="mt-3 flex justify-end">
+          <button onClick={saveOwnerDesc} disabled={savingDesc} className="flex items-center gap-1.5 rounded-lg bg-[#0C9C8E] px-4 py-2 font-display text-sm font-extrabold text-white shadow-sm hover:bg-[#0b8c80] disabled:opacity-60">
+            {savingDesc ? <><Loader2 className="h-4 w-4 animate-spin" /> Saving…</> : <><Save className="h-4 w-4" /> Save description</>}
+          </button>
+        </div>
       </div>
 
       <div className="mt-5 space-y-4">
