@@ -366,7 +366,7 @@ export default function BusinessContent() {
                     <Input type="number" value={d.base_auto ?? ''} onChange={(e) => patch(d.id, { base_auto: e.target.value === '' ? null : Number(e.target.value) })} className="mt-1 h-9" placeholder="—" />
                   </label>
                 </div>
-                <p className="mt-2 text-xs font-medium text-[#0C1A22]/70">Offers at or above your minimum book instantly. Anything lower comes to you to accept, counter or decline.</p>
+                <p className="mt-2 text-xs font-medium text-[#0C1A22]/70">When auto-accept is on, offers at or above your minimum book instantly; otherwise every offer comes to you to accept, counter or decline.</p>
                 {guideMissing && <p className="mt-2 flex items-center gap-1 text-xs text-amber-600"><Info className="h-3.5 w-3.5" /> A guide price is required before you can go live.</p>}
               </div>
 

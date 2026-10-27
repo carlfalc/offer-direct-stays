@@ -196,7 +196,11 @@ export default function BusinessPricing() {
                     <Input type="number" className="mt-1 h-9" value={r.base_auto ?? ''} onChange={(e) => setField(r.id, 'base_auto', e.target.value)} placeholder="—" />
                   </label>
                 </div>
-                <p className="mt-2 text-xs font-medium text-[#0C1A22]/70">Offers at or above the minimum book instantly. Anything lower comes to you to accept, counter or decline.</p>
+                {autoOn ? (
+                  <p className="mt-2 text-xs font-medium text-[#0C1A22]/70">Offers at or above the minimum book instantly. Anything lower comes to you to accept, counter or decline.</p>
+                ) : (
+                  <p className="mt-2 text-xs font-semibold text-amber-600">Auto-accept is off — every offer comes to you to accept, counter or decline (nothing books automatically).</p>
+                )}
                 {warn && (
                   <p className="mt-2 flex items-center gap-1 text-xs text-amber-600">
                     <Info className="h-3.5 w-3.5" /> Usually auto-accept ≤ guide.
