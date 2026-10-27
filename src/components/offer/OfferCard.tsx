@@ -60,7 +60,7 @@ export default function OfferCard({
       {/* Title + OTA price */}
       <div className="flex flex-col gap-1.5">
         <h1 className="text-[22px] font-semibold leading-tight tracking-[-0.01em]">{room}</h1>
-        <div className="flex items-center gap-2 text-[13px] text-[#a8a29e]">
+        <div className="flex items-center gap-2 text-[13px] text-[#c7ccd1]">
           <span>{otaNames.join(' · ')}</span>
           <span className="font-semibold text-[#d6d3d1] line-through">{currencySymbol}{guidePrice}</span>
         </div>
@@ -69,9 +69,9 @@ export default function OfferCard({
       {/* Offer panel */}
       <div className="flex flex-col gap-4 rounded-[20px] border border-[#27333a] bg-[#171f22] p-[22px]">
         <div className="flex flex-col gap-0.5">
-          <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#a8a29e]">Your offer</span>
+          <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#c7ccd1]">Your offer</span>
           <div className="flex items-baseline gap-0.5">
-            <span className="text-[22px] font-medium text-[#a8a29e]">{currencySymbol}</span>
+            <span className="text-[22px] font-medium text-[#c7ccd1]">{currencySymbol}</span>
             <label htmlFor="offer" className="sr-only">Your offer</label>
             <input
               id="offer"
@@ -118,8 +118,8 @@ export default function OfferCard({
         {submitting ? 'Sending…' : `Send offer · ${currencySymbol}${offer}`}
       </button>
 
-      <p className="text-center text-[12px] text-[#78716c]">
-        {readOnly ? 'Preview — this is how travellers make an offer' : 'Drag left to lower your offer · host replies within 2 hrs'}
+      <p className="text-center text-[12px] text-[#c7ccd1]">
+        {readOnly ? 'Preview — this is how travellers make an offer' : 'Drag left to lower your offer · host replies as soon as possible'}
       </p>
     </div>
   );
