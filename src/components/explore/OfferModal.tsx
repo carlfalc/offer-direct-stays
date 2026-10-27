@@ -432,9 +432,8 @@ export default function OfferModal({
           />
         </div>
 
-        {/* Offer slider — brand sweet-spot guidance */}
+        {/* Offer slider — new design; sweet-spot nudge, auto-accept stays hidden */}
         <div className="space-y-2">
-          <label className="text-sm font-medium text-foreground">Your offer per night</label>
           <OfferSlider
             value={sliderVal}
             min={sliderMin}
@@ -444,31 +443,6 @@ export default function OfferModal({
             currency={currency}
             onChange={(v) => { setOfferAmount(String(v)); setError(null); }}
           />
-          <p className="text-xs text-muted-foreground">
-            Guests usually land between <span className="font-medium">{currency} ${sweetLo}–${sweetHi}</span> for stays like this. Drag to your number — you’re always in control.
-          </p>
-        </div>
-
-        {/* Offer Price Input */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-foreground">Or type an exact amount</label>
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
-              {currency}
-            </span>
-            <Input
-              type="number"
-              placeholder="e.g. 180"
-              value={offerAmount}
-              onChange={(e) => {
-                setOfferAmount(e.target.value);
-                setError(null);
-              }}
-              className="pl-12"
-              min={20}
-              max={5000}
-            />
-          </div>
           {error ? (
             <div className="flex items-center gap-1.5 text-destructive text-xs">
               <AlertCircle className="h-3.5 w-3.5" />
@@ -476,7 +450,7 @@ export default function OfferModal({
             </div>
           ) : (
             <p className="text-xs text-muted-foreground">
-              Your offer is sent directly to the business. If accepted, you'll be asked to confirm payment.
+              Your offer is sent directly to the business. If accepted, you’ll be asked to confirm payment.
             </p>
           )}
         </div>

@@ -1,3 +1,5 @@
+import '@/styles/room-preview.css';
+
 interface OfferSliderProps {
   value: number;
   min: number;
@@ -9,53 +11,62 @@ interface OfferSliderProps {
 }
 
 /**
- * Brand offer slider — mirrors the landing-page "name your price" slider:
- * teal fill, glowing thumb, a highlighted sweet-spot band, and a live verdict.
+ * findastay offer slider. The sweet-spot nudge is derived from the PUBLIC guide
+ * (sweetLo/sweetHi), never the private auto-accept price — so it encourages a
+ * fair offer without revealing where instant-booking kicks in. Darker-jade
+ * track, gauge ticks, a manual input, and the sweet-spot / rolling-the-dice
+ * states with a popping star / rolling dice.
  */
 export default function OfferSlider({ value, min, max, sweetLo, sweetHi, currency, onChange }: OfferSliderProps) {
-  const pct = (x: number) => ((Math.min(max, Math.max(min, x)) - min) / (max - min)) * 100;
-  const fill = pct(value);
-  const sLo = pct(sweetLo);
-  const sHi = pct(sweetHi);
-
-  let cls = 'bold';
-  let text = 'Bold offer — worth a shot on a quiet night.';
-  if (value >= sweetHi) {
-    cls = 'go';
-    text = 'Strong offer — right around the going rate.';
-  } else if (value >= sweetLo) {
-    cls = 'go';
-    text = "Likely accepted — you're in the sweet spot.";
-  } else if (value >= sweetLo * 0.88) {
-    cls = 'mid';
-    text = "They'll probably counter — close, but a touch low.";
-  }
+  const sym = currency === 'AUD' ? 'A$' : '$';
+  const clamp = (x: number) => Math.max(min, Math.min(max, Math.round(x || min)));
+  const v = clamp(value);
+  const sweet = v >= sweetLo;
+  const zone = sweet ? 'sweet' : 'dice';
+  const text = sweet
+    ? (v >= sweetHi ? 'Strong offer — right around the rate' : 'Sweet spot — a smart offer')
+    : 'Rolling the dice — let’s try your luck';
 
   return (
-    <div className="fs-offer-slider">
-      <div className="fsos-amt">
-        {currency} ${value}
-        <span>/night</span>
+    <div className="rounded-xl border border-border p-4">
+      <div className="text-center">
+        <span className="font-display text-sm font-extrabold text-[#0C1A22]">find<span style={{ color: '#0C9C8E' }}>a</span>stay</span>
+        <p className="font-display text-2xl font-extrabold text-[#0C1A22]">Make your offer</p>
       </div>
-      <div className="fsos-track-wrap">
-        <div className="fsos-sweet" style={{ left: `${sLo}%`, width: `${sHi - sLo}%` }} />
+
+      <div className="rp-trk mt-3">
         <input
           type="range"
+          className="rp-range"
           min={min}
           max={max}
-          step={1}
-          value={Math.min(max, Math.max(min, value))}
-          style={{ ['--fill' as string]: `${fill}%` } as React.CSSProperties}
-          onChange={(e) => onChange(Number(e.target.value))}
+          value={v}
+          onChange={(e) => onChange(clamp(Number(e.target.value)))}
           aria-label="Your nightly offer"
         />
+        <span className="rp-tick" style={{ left: '25%' }} />
+        <span className="rp-tick" style={{ left: '50%' }} />
+        <span className="rp-tick" style={{ left: '75%' }} />
       </div>
-      <div className="fsos-scale">
-        <span>${min}</span>
-        <span>drag to set your offer</span>
-        <span>${max}</span>
+
+      <div className="mt-3 flex items-center justify-center gap-2 text-sm font-semibold text-[#0C1A22]">
+        <span>or enter your offer:</span>
+        <div className="flex items-center rounded-md border-2 px-2 font-display text-lg font-extrabold text-[#0C1A22]" style={{ borderColor: '#0a7d72' }}>
+          <span>{sym}</span>
+          <input
+            className="rp-man font-display text-lg font-extrabold text-[#0C1A22]"
+            value={v}
+            onChange={(e) => onChange(clamp(Number(e.target.value)))}
+            inputMode="numeric"
+            aria-label="Enter your offer"
+          />
+        </div>
       </div>
-      <div className={`fsos-verdict ${cls}`}>{text}</div>
+
+      <div className="mt-3 flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-bold text-white" style={{ background: sweet ? '#0C1A22' : '#1E2A4A' }}>
+        <span key={zone} className={`rp-ic ${sweet ? 'sweet' : 'manual'}`}>{sweet ? '✨' : '🎲'}</span>
+        {text}
+      </div>
     </div>
   );
 }
