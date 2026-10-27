@@ -479,3 +479,55 @@ export async function importLiteApiRooms(listingId: string, hotelId: string): Pr
   }
   return imported;
 }
+
+/**
+ * Traveller-facing room loader. Serves a claimed listing's rooms from OUR
+ * database (stored photos, descriptions, amenities, bed config) so viewing a
+ * listing no longer calls LiteAPI. Falls back to a live LiteAPI pull only for
+ * an unclaimed property, or a claimed room that has no stored photos yet.
+ */
+export async function loadListingRooms(hotelId: string): Promise<Room[]> {
+  const { data: listing } = await supabase
+    .from('fs_listings')
+    .select('id')
+    .eq('liteapi_hotel_id', hotelId)
+    .maybeSingle();
+  const listingId = (listing as any)?.id;
+  if (listingId) {
+    const { data: lrooms } = await supabase
+      .from('fs_listing_rooms')
+      .select('id,liteapi_room_id,room_name,max_adults,max_children,max_occupancy,base_guide,photos,description,amenities,bed_configuration')
+      .eq('listing_id', listingId)
+      .order('room_name');
+    const rows = (lrooms as any[]) || [];
+    if (rows.length) {
+      const needsLite = rows.some((r) => !(Array.isArray(r.photos) && r.photos.length > 0));
+      const content = needsLite ? await loadLiteApiRoomContent(hotelId) : {};
+      return rows.map((r) => {
+        const c = (content as any)[String(r.liteapi_room_id)] || {};
+        const storedPhotos: string[] = Array.isArray(r.photos) ? r.photos.map((p: any) => p?.url).filter(Boolean) : [];
+        const images = storedPhotos.length ? storedPhotos : (c.images ?? null);
+        return {
+          id: r.id,
+          property_id: hotelId,
+          name: r.room_name,
+          description: r.description ?? c.description ?? null,
+          max_adults: r.max_adults ?? 2,
+          max_children: r.max_children ?? 0,
+          max_occupancy: r.max_occupancy ?? c.max_occupancy ?? null,
+          size_sqm: c.size_sqm ?? null,
+          images,
+          image_url: images?.[0] ?? null,
+          bed_configuration: r.bed_configuration ?? null,
+          amenities: r.amenities ? String(r.amenities).split(',').map((a: string) => a.trim()).filter(Boolean) : null,
+          avg_rate: r.base_guide ?? null,
+          actual_rate: null,
+          currency: 'NZD',
+          created_at: '',
+          updated_at: '',
+        } as Room;
+      });
+    }
+  }
+  return loadLiteApiRooms(hotelId);
+}

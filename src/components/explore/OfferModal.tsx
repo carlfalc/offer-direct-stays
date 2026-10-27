@@ -149,26 +149,31 @@ export default function OfferModal({
           setEngineListingId((listing as any).id);
           const { data: lrooms } = await supabase
             .from('fs_listing_rooms')
-            .select('id,liteapi_room_id,room_name,max_adults,max_children,max_occupancy,base_guide')
+            .select('id,liteapi_room_id,room_name,max_adults,max_children,max_occupancy,base_guide,photos,description,amenities,bed_configuration')
             .eq('listing_id', (listing as any).id)
             .order('room_name');
-          // Attach LiteAPI photos/size to each engine room by its liteapi_room_id.
-          const content = await loadLiteApiRoomContent(propertyId);
-          const mapped: Room[] = ((lrooms as any[]) || []).map((r) => {
+          const rows = ((lrooms as any[]) || []);
+          // Serve from our own stored content. Only fall back to a live LiteAPI
+          // call for a room that has no stored photos yet.
+          const needsLite = rows.some((r) => !(Array.isArray(r.photos) && r.photos.length > 0));
+          const content = needsLite ? await loadLiteApiRoomContent(propertyId) : {};
+          const mapped: Room[] = rows.map((r) => {
             const c = content[String(r.liteapi_room_id)] || {};
+            const storedPhotos: string[] = Array.isArray(r.photos) ? r.photos.map((p: any) => p?.url).filter(Boolean) : [];
+            const images = storedPhotos.length ? storedPhotos : (c.images ?? null);
             return {
               id: r.id,
               property_id: propertyId,
               name: r.room_name,
-              description: c.description ?? null,
+              description: r.description ?? c.description ?? null,
               max_adults: r.max_adults ?? 2,
               max_children: r.max_children ?? 0,
               max_occupancy: r.max_occupancy ?? c.max_occupancy ?? null,
               size_sqm: c.size_sqm ?? null,
-              images: c.images ?? null,
-              image_url: c.images?.[0] ?? null,
-              bed_configuration: null,
-              amenities: null,
+              images,
+              image_url: images?.[0] ?? null,
+              bed_configuration: r.bed_configuration ?? null,
+              amenities: r.amenities ? String(r.amenities).split(',').map((a: string) => a.trim()).filter(Boolean) : null,
               avg_rate: r.base_guide ?? null,
               actual_rate: null,
               currency: 'NZD',

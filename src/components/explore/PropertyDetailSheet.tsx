@@ -10,7 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useTrip } from '@/contexts/TripContext';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-import { loadLiteApiRooms } from '@/lib/listings';
+import { loadListingRooms } from '@/lib/listings';
 import RoomTypeCard from './RoomTypeCard';
 
 interface PropertyDetailSheetProps {
@@ -49,8 +49,8 @@ export default function PropertyDetailSheet({
     setLoadingRooms(true);
     try {
       if (property.id.startsWith('lp')) {
-        // LiteAPI content listing
-        setRooms(await loadLiteApiRooms(property.id));
+        // Prefer our stored copy; LiteAPI only as a fallback.
+        setRooms(await loadListingRooms(property.id));
       } else {
         const { data, error } = await supabase
           .from('rooms')
