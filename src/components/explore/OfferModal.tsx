@@ -432,8 +432,17 @@ export default function OfferModal({
           />
         </div>
 
-        {/* Offer slider — new design; sweet-spot nudge, auto-accept stays hidden */}
-        <div className="space-y-2">
+        {/* Offer section — matches the per-room preview 1:1 */}
+        <div className="space-y-3">
+          {guide ? (
+            <div className="flex items-center justify-between gap-4 rounded-xl p-4" style={{ border: '3px solid #1E2A4A' }}>
+              <div className="min-w-0 pl-3">
+                <p className="text-sm font-extrabold uppercase tracking-wide" style={{ color: '#1E2A4A' }}>Price on other booking sites</p>
+                <p className="mt-2 text-xs font-semibold text-[#0C1A22]">Booking.com · Expedia · Airbnb · Agoda · Hotels.com</p>
+              </div>
+              <span className="flex-none whitespace-nowrap font-display text-xl font-extrabold text-[#0C1A22]">{currency === 'AUD' ? 'A$' : '$'}{Math.round(guide)}<span className="text-sm font-bold text-[#0C1A22]"> /night</span></span>
+            </div>
+          ) : null}
           <OfferSlider
             value={sliderVal}
             min={sliderMin}

@@ -57,7 +57,7 @@ export default function RoomOfferPreview({ open, onOpenChange, businessName, roo
             <>
               {/* Other booking sites anchor */}
               <div className="mt-4 flex items-center justify-between gap-4 rounded-xl p-4" style={{ border: '3px solid #1E2A4A' }}>
-                <div className="min-w-0">
+                <div className="min-w-0 pl-3">
                   <p className="text-sm font-extrabold uppercase tracking-wide" style={{ color: '#1E2A4A' }}>Price on other booking sites</p>
                   <p className="mt-2 text-xs font-semibold text-[#0C1A22]">Booking.com · Expedia · Airbnb · Agoda · Hotels.com</p>
                 </div>
