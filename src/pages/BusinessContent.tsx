@@ -11,6 +11,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { Loader2, ArrowLeft, Save, Plus, Trash2, Star, X, ImagePlus, Info, CheckCircle2, SlidersHorizontal, Eye, PenLine } from 'lucide-react';
 import RoomOfferPreview from '@/components/business/RoomOfferPreview';
+import MainPhotoCard from '@/components/business/MainPhotoCard';
+import PhotoQualityScore from '@/components/business/PhotoQualityScore';
 
 interface Photo { url: string; source: string }
 interface RoomDraft {
@@ -50,7 +52,7 @@ export default function BusinessContent() {
     setLoading(true);
     const { data: listings } = await supabase
       .from('fs_listings')
-      .select('id,liteapi_hotel_id,name,country,payment_methods,payment_note,payment_terms,payment_lead_days,owner_description')
+      .select('id,liteapi_hotel_id,name,country,thumbnail,payment_methods,payment_note,payment_terms,payment_lead_days,owner_description,hero_photo_url,hero_focus_x,hero_focus_y')
       .eq('owner_id', user.id)
       .order('claimed_at', { ascending: true });
     const l = (listings as any[])?.[0] || null;
@@ -249,6 +251,22 @@ export default function BusinessContent() {
       <div className="mt-3 flex items-start gap-2.5 rounded-xl border border-border bg-muted/30 p-3 text-xs font-medium text-[#0C1A22]">
         <ImagePlus className="mt-0.5 h-4 w-4 flex-none text-primary" />
         <p><span className="font-bold">Photo guide:</span> upload <b>JPG, PNG or WebP</b>. Landscape works best — aim for at least <b>1200×800px</b> (bigger is sharper) and under <b>5MB</b> each. Blurry or very small images look low-quality to travellers.</p>
+      </div>
+
+      {/* Main photo — upload + reposition */}
+      <div className="mt-4">
+        <MainPhotoCard
+          listingId={listing.id}
+          initialUrl={listing.hero_photo_url || null}
+          fallbackSrc={listing.thumbnail || rooms.find((r) => r.photos?.[0]?.url)?.photos?.[0]?.url || null}
+          initialFocusX={listing.hero_focus_x ?? 50}
+          initialFocusY={listing.hero_focus_y ?? 50}
+        />
+      </div>
+
+      {/* Photo quality score */}
+      <div className="mt-4">
+        <PhotoQualityScore urls={[listing.hero_photo_url, listing.thumbnail, ...rooms.flatMap((r) => (r.photos || []).map((p) => p.url))].filter(Boolean) as string[]} />
       </div>
 
       {/* Owner's description — black, bold, larger */}

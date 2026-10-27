@@ -29,6 +29,9 @@ interface PreviewListing {
   property_type: string | null;
   status: string | null;
   owner_description: string | null;
+  hero_photo_url: string | null;
+  hero_focus_x: number | null;
+  hero_focus_y: number | null;
 }
 
 const TYPE_LABEL: Record<string, string> = {
@@ -39,12 +42,12 @@ const TYPE_LABEL: Record<string, string> = {
   glamping: 'Glamping', other: 'Property',
 };
 
-function RoomPhoto({ src, alt, heightClass = 'h-40' }: { src?: string | null; alt: string; heightClass?: string }) {
+function RoomPhoto({ src, alt, heightClass = 'h-40', position = 'center' }: { src?: string | null; alt: string; heightClass?: string; position?: string }) {
   const [failed, setFailed] = useState(false);
   if (!src || failed) {
     return <div className={`flex ${heightClass} w-full items-center justify-center rounded-xl bg-muted text-muted-foreground`}><ImageIcon className="h-6 w-6 opacity-50" /></div>;
   }
-  return <img src={src} alt={alt} loading="lazy" onError={() => setFailed(true)} className={`${heightClass} w-full rounded-xl object-cover`} style={{ objectPosition: 'center' }} />;
+  return <img src={src} alt={alt} loading="lazy" onError={() => setFailed(true)} className={`${heightClass} w-full rounded-xl object-cover`} style={{ objectPosition: position }} />;
 }
 
 /**
@@ -64,7 +67,7 @@ export default function BusinessPreview() {
       if (!user) return;
       const { data: l } = await supabase
         .from('fs_listings')
-        .select('id,liteapi_hotel_id,name,city,country,thumbnail,property_type,status,owner_description')
+        .select('id,liteapi_hotel_id,name,city,country,thumbnail,property_type,status,owner_description,hero_photo_url,hero_focus_x,hero_focus_y')
         .eq('owner_id', user.id)
         .order('created_at', { ascending: true })
         .limit(1)
@@ -142,7 +145,7 @@ export default function BusinessPreview() {
 
       {/* Hero */}
       <div className="overflow-hidden rounded-2xl border border-border bg-card">
-        <RoomPhoto src={listing.thumbnail || rooms[0]?.photos[0]?.url} alt={listing.name} heightClass="h-64 sm:h-80" />
+        <RoomPhoto src={listing.hero_photo_url || listing.thumbnail || rooms[0]?.photos[0]?.url} alt={listing.name} heightClass="h-64 sm:h-80" position={`${listing.hero_focus_x ?? 50}% ${listing.hero_focus_y ?? 50}%`} />
         <div className="p-5">
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="font-display text-2xl font-extrabold text-foreground">{listing.name}</h1>
