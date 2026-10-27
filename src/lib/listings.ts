@@ -425,7 +425,10 @@ export async function importLiteApiRooms(listingId: string, hotelId: string): Pr
     .eq('listing_id', listingId);
   const existingRows = (existing as any[]) || [];
 
-  const liteRooms = await loadLiteApiRooms(hotelId);
+  // Skip OTA rate-plan artifacts that aren't real room types (e.g.
+  // "Special Offer - …", "Non-refundable …"). Breakfast-included entries are kept.
+  const SKIP_ROOM = /(special\s*offer|non[-\s]?refundable)/i;
+  const liteRooms = (await loadLiteApiRooms(hotelId)).filter((lr) => !SKIP_ROOM.test(lr.name || ''));
   if (liteRooms.length === 0) return 0;
 
   // Rooms already exist (e.g. created by a seed that stored only names/prices):
