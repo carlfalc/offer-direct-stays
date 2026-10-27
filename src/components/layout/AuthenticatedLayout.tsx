@@ -120,7 +120,7 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
     { label: 'Rooms & photos', path: '/business/content', icon: ImageIcon },
     { label: 'Pricing', path: '/business/pricing', icon: SlidersHorizontal },
     { label: 'Payment settings', path: '/business/payment', icon: Wallet },
-    { label: 'Profile', path: '/profile', icon: User },
+    { label: 'Profile', path: '/business/settings', icon: User },
     { label: 'Messages', path: '/messages', icon: MessageSquare },
   ];
 
@@ -128,7 +128,11 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
   // the claim/onboarding flow keep the dark "night" theme.
   // Any business route (including the pre-claim claim/register pages) gets the
   // business chrome, so a new owner sees the business experience immediately.
-  const businessMode = isBusinessRoute && !isOnboardingRoute;
+  // A business owner stays in the business experience on shared routes too (e.g.
+  // Messages), so they never drop into the traveller/personal nav ("Home" →
+  // traveller dashboard) from the business flow.
+  const sharedBusinessRoute = location.pathname.startsWith('/messages');
+  const businessMode = !isOnboardingRoute && (isBusinessRoute || (hasBusiness === true && sharedBusinessRoute));
   const navItems = businessMode ? businessNavItems : guestNavItems;
 
   if (authLoading) {
@@ -256,7 +260,7 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
               </DropdownMenuLabel>
               <DropdownMenuSeparator className="bg-border/50" />
               <DropdownMenuItem 
-                onClick={() => navigate('/profile')}
+                onClick={() => navigate(businessMode ? '/business/settings' : '/profile')}
                 className="cursor-pointer hover:bg-primary/5 focus:bg-primary/10 focus:text-foreground"
               >
                 <User className="h-4 w-4 mr-2 text-muted-foreground" />
@@ -339,7 +343,7 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
 
                   {/* Profile & Settings in mobile nav */}
                   <button
-                    onClick={() => navigate('/profile')}
+                    onClick={() => navigate(businessMode ? '/business/settings' : '/profile')}
                     className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-primary/5 transition-all duration-300"
                   >
                     <User className="h-4.5 w-4.5" />
