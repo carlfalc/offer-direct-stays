@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { searchClaimableHotels, ClaimableHotel } from '@/lib/listings';
+import { searchClaimableHotels, importLiteApiRooms, ClaimableHotel } from '@/lib/listings';
 import BusinessClaimForm, { ClaimPayload } from './BusinessClaimForm';
 import FsCelebration from './FsCelebration';
 import '@/styles/findastay-onboard.css';
@@ -59,9 +59,18 @@ export default function BusinessOnboard() {
       p_nzbn: p.nzbn, p_property_type: p.propertyType, p_payment_terms: p.paymentTerms,
       p_payment_lead_days: p.paymentTerms === 'days_before' ? p.leadDays : null, p_agreements: p.agreements,
     } as any);
-    // Payment methods aren't a claim arg — save them straight after.
+    // Payment methods aren't a claim arg — save them straight after, and grab
+    // the listing id so we can auto-import its LiteAPI rooms.
     if (!error) {
-      await supabase.from('fs_listings').update({ payment_methods: p.paymentMethods, payment_note: p.paymentNote || null } as any).eq('liteapi_hotel_id', selected.id);
+      const { data: row } = await supabase
+        .from('fs_listings')
+        .update({ payment_methods: p.paymentMethods, payment_note: p.paymentNote || null } as any)
+        .eq('liteapi_hotel_id', selected.id)
+        .select('id')
+        .single();
+      // Pull rooms/photos/descriptions/amenities from LiteAPI so the owner
+      // lands on a populated listing, not an empty one.
+      if (row?.id) { try { await importLiteApiRooms(row.id, selected.id); } catch { /* fallback: manual import on pricing page */ } }
     }
     setBusy(false);
     if (error) { toast({ title: 'Could not claim', description: error.message || 'Please try again', variant: 'destructive' }); return; }

@@ -408,3 +408,52 @@ export async function loadLiteApiRooms(hotelId: string): Promise<Room[]> {
 function geo_currency(_hotelId: string): string {
   return 'NZD';
 }
+
+/**
+ * Pull a claimed property's rooms from LiteAPI and store them against the
+ * listing — name, occupancy, description, amenities, bed config and photos —
+ * and seed a pricing threshold row for each. Idempotent: if the listing
+ * already has rooms it does nothing. Returns the number of rooms imported.
+ * Used both on claim (auto) and from the pricing page (manual re-import).
+ */
+export async function importLiteApiRooms(listingId: string, hotelId: string): Promise<number> {
+  if (!listingId || !hotelId) return 0;
+
+  // Don't duplicate if rooms are already in.
+  const { data: existing } = await supabase
+    .from('fs_listing_rooms')
+    .select('id')
+    .eq('listing_id', listingId)
+    .limit(1);
+  if ((existing?.length ?? 0) > 0) return 0;
+
+  const liteRooms = await loadLiteApiRooms(hotelId);
+  if (liteRooms.length === 0) return 0;
+
+  let imported = 0;
+  for (const lr of liteRooms) {
+    const photos = (lr.images || []).map((url) => ({ url, source: 'liteapi' }));
+    const { data: inserted, error } = await supabase
+      .from('fs_listing_rooms')
+      .insert({
+        listing_id: listingId,
+        liteapi_room_id: lr.id,
+        room_name: lr.name,
+        max_adults: lr.max_adults,
+        max_children: lr.max_children,
+        max_occupancy: lr.max_occupancy ?? null,
+        currency: lr.currency || 'NZD',
+        description: lr.description ?? null,
+        amenities: Array.isArray(lr.amenities) ? lr.amenities.join(', ') : null,
+        bed_configuration: lr.bed_configuration ?? null,
+        photos,
+      } as any)
+      .select('id')
+      .single();
+    if (!error && inserted) {
+      await supabase.from('fs_room_thresholds').insert({ listing_room_id: (inserted as any).id } as any);
+      imported++;
+    }
+  }
+  return imported;
+}

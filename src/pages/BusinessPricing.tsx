@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-import { loadLiteApiRooms } from '@/lib/listings';
+import { importLiteApiRooms } from '@/lib/listings';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -104,30 +104,12 @@ export default function BusinessPricing() {
     if (!listing) return;
     setImporting(true);
     try {
-      const liteRooms = await loadLiteApiRooms(listing.liteapi_hotel_id);
-      if (liteRooms.length === 0) {
-        toast({ title: 'No rooms found', description: 'We couldn’t pull rooms for this property from LiteAPI.', variant: 'destructive' });
+      const n = await importLiteApiRooms(listing.id, listing.liteapi_hotel_id);
+      if (n === 0) {
+        toast({ title: 'No rooms to import', description: 'Either rooms are already imported, or we couldn’t pull any from LiteAPI.', variant: 'destructive' });
         return;
       }
-      for (const lr of liteRooms) {
-        const { data: inserted, error } = await supabase
-          .from('fs_listing_rooms')
-          .insert({
-            listing_id: listing.id,
-            liteapi_room_id: lr.id,
-            room_name: lr.name,
-            max_adults: lr.max_adults,
-            max_children: lr.max_children,
-            max_occupancy: lr.max_occupancy ?? null,
-            currency,
-          } as any)
-          .select('id')
-          .single();
-        if (!error && inserted) {
-          await supabase.from('fs_room_thresholds').insert({ listing_room_id: (inserted as any).id } as any);
-        }
-      }
-      toast({ title: 'Rooms imported', description: 'Now set your guide, auto-accept and floor prices.' });
+      toast({ title: `${n} room${n === 1 ? '' : 's'} imported`, description: 'Now set your guide, auto-accept and floor prices.' });
       load();
     } finally {
       setImporting(false);
