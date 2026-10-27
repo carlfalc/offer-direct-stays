@@ -48,7 +48,7 @@ export default function OfferCard({
     >
       {/* Header */}
       <div className="flex items-center justify-between">
-        <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#a8a29e]">{property}</span>
+        <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#c7ccd1]">{property}</span>
         <span className="text-[11px] font-semibold" style={{ color: accent }}>findastay</span>
       </div>
 
