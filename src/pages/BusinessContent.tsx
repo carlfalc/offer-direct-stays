@@ -120,6 +120,7 @@ export default function BusinessContent() {
   };
 
   const removeUnit = async (d: RoomDraft) => {
+    if (!window.confirm(`Delete “${d.room_name || 'this item'}”? This removes the room along with its photos and prices. This can’t be undone.`)) return;
     if (d.persisted) {
       const { error } = await supabase.from('fs_listing_rooms').delete().eq('id', d.id);
       if (error) { toast({ title: 'Could not remove', description: error.message, variant: 'destructive' }); return; }
@@ -268,11 +269,6 @@ export default function BusinessContent() {
                   <label className="text-xs font-medium text-muted-foreground">Unit name</label>
                   <Input value={d.room_name} onChange={(e) => patch(d.id, { room_name: e.target.value })} placeholder="e.g. Studio Unit" className="mt-1 h-9 font-semibold" />
                 </div>
-                {d.is_custom && (
-                  <Button size="icon" variant="ghost" className="mt-5 text-muted-foreground hover:text-red-600" title="Remove this unit" onClick={() => removeUnit(d)}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                )}
               </div>
 
               {/* Photo gallery */}
@@ -344,13 +340,18 @@ export default function BusinessContent() {
                 {guideMissing && <p className="mt-2 flex items-center gap-1 text-xs text-amber-600"><Info className="h-3.5 w-3.5" /> A guide price is required before you can go live.</p>}
               </div>
 
-              <div className="mt-4 flex justify-end gap-2">
+              <div className="mt-4 flex items-center justify-between gap-2">
+                <button onClick={() => removeUnit(d)} className="flex items-center gap-1.5 rounded-md bg-red-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-red-700">
+                  <Trash2 className="h-4 w-4" /> Delete this item
+                </button>
+                <div className="flex gap-2">
                 <button onClick={() => setPreviewRoom(d)} className="flex items-center gap-1.5 rounded-md bg-[#0C1A22] px-3 py-1.5 text-sm font-semibold text-white hover:bg-[#0C1A22]/90">
                   <Eye className="h-4 w-4" /> Preview
                 </button>
                 <Button size="sm" onClick={() => saveRoom(d)} disabled={savingId === d.id}>
                   {savingId === d.id ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving…</> : <><Save className="mr-2 h-4 w-4" /> Save unit</>}
                 </Button>
+                </div>
               </div>
             </Card>
           );
