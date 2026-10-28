@@ -2,37 +2,31 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Badge } from '@/components/ui/badge';
-import { Loader2, MapPin, Building2 } from 'lucide-react';
 import { z } from 'zod';
-import BrandBackdrop from '@/components/brand/BrandBackdrop';
-import '@/styles/findastay-brand.css';
+import '@/styles/auth-brand.css';
 
 const emailSchema = z.string().email('Please enter a valid email address');
 const passwordSchema = z.string().min(6, 'Password must be at least 6 characters');
+
+const Check = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#19C9B4" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
+);
 
 export default function Auth() {
   const navigate = useNavigate();
   const { signIn, signUp } = useAuth();
   const { toast } = useToast();
-  
+
   const [isLoading, setIsLoading] = useState(false);
+  const [resetBusy, setResetBusy] = useState(false);
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [signupEmail, setSignupEmail] = useState('');
   const [signupPassword, setSignupPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [signupIntent, setSignupIntent] = useState<string | null>(null);
   const [tab, setTab] = useState<'login' | 'signup'>('login');
-  const [spin, setSpin] = useState(false);
-  const triggerSpin = () => { setSpin(true); window.setTimeout(() => setSpin(false), 2600); };
   const [devBusy, setDevBusy] = useState<string | null>(null);
 
   // Dev quick-login: visible ONLY on vercel.app previews and localhost — never on
@@ -48,7 +42,6 @@ export default function Auth() {
     const email = role === 'business' ? 'business.test@findastay.dev' : 'traveller.test@findastay.dev';
     setDevBusy(role);
     localStorage.setItem('signup_intent', role === 'business' ? 'business' : 'guest');
-    // try to sign in; if the account doesn't exist yet, create it then sign in
     let { error } = await signIn(email, DEV_PASSWORD);
     if (error) {
       const { error: signUpErr } = await signUp(email, DEV_PASSWORD, role === 'business' ? 'Test' : 'Travis', role === 'business' ? 'Business' : 'Traveller');
@@ -76,39 +69,21 @@ export default function Auth() {
     const params = new URLSearchParams(window.location.search);
     const qIntent = params.get('intent');   // 'business' | 'traveller'
     const qMode = params.get('mode');        // 'signup' | 'login'
-    let intent = localStorage.getItem('signup_intent');
     if (qIntent === 'business' || qIntent === 'traveller') {
-      intent = qIntent === 'business' ? 'business' : 'guest';
-      localStorage.setItem('signup_intent', intent);
+      localStorage.setItem('signup_intent', qIntent === 'business' ? 'business' : 'guest');
     }
-    setSignupIntent(intent);
-    // Coming from a "Register" link → open the Sign Up tab.
     if (qIntent || qMode === 'signup') setTab('signup');
     else if (qMode === 'login') setTab('login');
   }, []);
 
-  const getRedirectPath = async () => {
-    const intent = localStorage.getItem('signup_intent');
-    // Don't remove yet - let the destination page handle it
-    if (intent === 'business') {
-      return '/business/dashboard';
-    }
-    return '/explore';
-  };
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     try {
       emailSchema.parse(loginEmail);
       passwordSchema.parse(loginPassword);
     } catch (err) {
       if (err instanceof z.ZodError) {
-        toast({
-          title: 'Validation Error',
-          description: err.errors[0].message,
-          variant: 'destructive',
-        });
+        toast({ title: 'Validation Error', description: err.errors[0].message, variant: 'destructive' });
         return;
       }
     }
@@ -120,7 +95,7 @@ export default function Auth() {
       setIsLoading(false);
       toast({
         title: 'Login Failed',
-        description: error.message === 'Invalid login credentials' 
+        description: error.message === 'Invalid login credentials'
           ? 'Invalid email or password. Please try again.'
           : error.message,
         variant: 'destructive',
@@ -144,17 +119,12 @@ export default function Auth() {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     try {
       emailSchema.parse(signupEmail);
       passwordSchema.parse(signupPassword);
     } catch (err) {
       if (err instanceof z.ZodError) {
-        toast({
-          title: 'Validation Error',
-          description: err.errors[0].message,
-          variant: 'destructive',
-        });
+        toast({ title: 'Validation Error', description: err.errors[0].message, variant: 'destructive' });
         return;
       }
     }
@@ -175,17 +145,12 @@ export default function Auth() {
           variant: 'destructive',
         });
       } else {
-        toast({
-          title: 'Signup Failed',
-          description: error.message,
-          variant: 'destructive',
-        });
+        toast({ title: 'Signup Failed', description: error.message, variant: 'destructive' });
       }
     } else {
       const intent = localStorage.getItem('signup_intent');
       const redirectPath = intent === 'business' ? '/business/claim' : '/explore';
       localStorage.removeItem('signup_intent');
-
       toast({
         title: 'Account Created',
         description: redirectPath === '/business/claim'
@@ -197,194 +162,135 @@ export default function Auth() {
     }
   };
 
+  const handleForgot = async () => {
+    try {
+      emailSchema.parse(loginEmail);
+    } catch {
+      toast({
+        title: 'Enter your email first',
+        description: 'Type your email in the field above, then tap “Forgot password?” and we’ll send you a reset link.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    setResetBusy(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(loginEmail, {
+      redirectTo: `${window.location.origin}/auth`,
+    });
+    setResetBusy(false);
+    toast(error
+      ? { title: 'Could not send reset', description: error.message, variant: 'destructive' }
+      : { title: 'Check your email', description: `We’ve sent a password reset link to ${loginEmail}.` });
+  };
+
   return (
-    <div className="fas-brand fas-stage">
-      <BrandBackdrop />
-
-      <div className={`fas-wm fas-wm-logo${spin ? ' gone' : ''}`} aria-label="findastay">
-        <svg viewBox="0 0 1200 230" xmlns="http://www.w3.org/2000/svg">
-          <text x="600" y="178" textAnchor="middle" textLength="1140" lengthAdjust="spacingAndGlyphs"
-                fontFamily="Bricolage Grotesque, Georgia, serif" fontWeight="800" fontSize="210" letterSpacing="-5">
-            <tspan className="w">find</tspan><tspan className="t">a</tspan><tspan className="w">stay</tspan>
-          </text>
-        </svg>
-      </div>
-
-      <div className="w-full max-w-md" style={{ position: 'relative', zIndex: 3 }}>
-
-        {signupIntent === 'business' && (
-          <div className="mb-4 p-4 bg-primary/10 rounded-lg border border-primary/20">
-            <div className="flex items-center gap-2 mb-1">
-              <Building2 className="h-4 w-4 text-primary" />
-              <Badge variant="secondary" className="text-xs">Register your business</Badge>
+    <div className="fa-auth">
+      <div className="fa-wrap">
+        {/* Brand panel */}
+        <aside className="fa-brand">
+          <img className="fa-brand-logo" src="/brand/findastay-tagline.svg" alt="findastay — name your price" />
+          <div>
+            <div className="fa-tagline">Make an offer on any stay.</div>
+            <div className="fa-ticks">
+              <div className="fa-tick"><Check />Free to browse and make offers</div>
+              <div className="fa-tick"><Check />No commission — one small commitment fee</div>
+              <div className="fa-tick"><Check />Deal direct with the property</div>
             </div>
-            <p className="text-sm text-muted-foreground">
-              Create your owner account, then claim your property, set prices and go live.
-            </p>
           </div>
-        )}
-        {signupIntent === 'guest' && (
-          <div className="mb-4 p-4 bg-primary/10 rounded-lg border border-primary/20">
-            <div className="flex items-center gap-2 mb-1">
-              <MapPin className="h-4 w-4 text-primary" />
-              <Badge variant="secondary" className="text-xs">Register as a traveller</Badge>
+        </aside>
+
+        {/* Form card */}
+        <main className="fa-panel">
+          <div className="fa-topbar">
+            <img className="fa-logo" src="/brand/findastay-wordmark-navy.svg" alt="findastay" />
+            <span className="fa-region"><i />NZ · AU</span>
+          </div>
+
+          {tab === 'login' ? (
+            <section>
+              <h1 className="fa-h1">Welcome back.</h1>
+              <p className="fa-sub">Log in — we’ll take you to the right place.</p>
+              <div className="fa-tabs" role="tablist">
+                <button className="fa-tab" role="tab" aria-selected="true" onClick={() => setTab('login')}>Log in</button>
+                <button className="fa-tab" role="tab" aria-selected="false" onClick={() => setTab('signup')}>Sign up</button>
+              </div>
+              <form className="fa-form" onSubmit={handleLogin}>
+                <div className="fa-f">
+                  <label htmlFor="login-email">Email</label>
+                  <input id="login-email" type="email" placeholder="you@example.com" autoComplete="email"
+                    value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} required />
+                </div>
+                <div className="fa-f">
+                  <label htmlFor="login-password">Password</label>
+                  <input id="login-password" type="password" placeholder="••••••••" autoComplete="current-password"
+                    value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} required />
+                </div>
+                <button type="button" className="fa-forgot" onClick={handleForgot} disabled={resetBusy}>
+                  {resetBusy ? 'Sending…' : 'Forgot password?'}
+                </button>
+                <button type="submit" className="fa-cta" disabled={isLoading}>
+                  {isLoading ? <><span className="fa-spin" /> Signing in…</> : 'Sign in'}
+                </button>
+              </form>
+              <p className="fa-hint">A business owner is taken to the business dashboard; everyone else to their trips.</p>
+              <p className="fa-alt">New to findastay? <button className="fa-link" onClick={() => setTab('signup')}>Create an account</button></p>
+              <p className="fa-biz">Listing a property? <button onClick={() => navigate('/business/register')}>Register your business →</button></p>
+            </section>
+          ) : (
+            <section>
+              <h1 className="fa-h1">Create your account.</h1>
+              <p className="fa-sub">Browse and make offers for free — name your price on any stay.</p>
+              <div className="fa-tabs" role="tablist">
+                <button className="fa-tab" role="tab" aria-selected="false" onClick={() => setTab('login')}>Log in</button>
+                <button className="fa-tab" role="tab" aria-selected="true" onClick={() => setTab('signup')}>Sign up</button>
+              </div>
+              <form className="fa-form" onSubmit={handleSignup}>
+                <div className="fa-row">
+                  <div className="fa-f">
+                    <label htmlFor="first-name">First name</label>
+                    <input id="first-name" placeholder="Carl" autoComplete="given-name"
+                      value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+                  </div>
+                  <div className="fa-f">
+                    <label htmlFor="last-name">Last name</label>
+                    <input id="last-name" placeholder="Falconer" autoComplete="family-name"
+                      value={lastName} onChange={(e) => setLastName(e.target.value)} />
+                  </div>
+                </div>
+                <div className="fa-f">
+                  <label htmlFor="signup-email">Email</label>
+                  <input id="signup-email" type="email" placeholder="you@example.com" autoComplete="email"
+                    value={signupEmail} onChange={(e) => setSignupEmail(e.target.value)} required />
+                </div>
+                <div className="fa-f">
+                  <label htmlFor="signup-password">Password</label>
+                  <input id="signup-password" type="password" placeholder="At least 6 characters" autoComplete="new-password"
+                    value={signupPassword} onChange={(e) => setSignupPassword(e.target.value)} required />
+                </div>
+                <button type="submit" className="fa-cta" disabled={isLoading}>
+                  {isLoading ? <><span className="fa-spin" /> Creating account…</> : 'Create account'}
+                </button>
+              </form>
+              <p className="fa-alt">Already have an account? <button className="fa-link" onClick={() => setTab('login')}>Log in</button></p>
+              <p className="fa-biz">Listing a property? <button onClick={() => navigate('/business/register')}>Register your business →</button></p>
+            </section>
+          )}
+
+          {showDevLogin && (
+            <div className="fa-dev">
+              <p>Dev quick login · preview only</p>
+              <div className="fa-dev-row">
+                <button disabled={!!devBusy} onClick={() => quickLogin('guest')}>
+                  {devBusy === 'guest' ? 'Loading…' : 'Enter as Traveller'}
+                </button>
+                <button disabled={!!devBusy} onClick={() => quickLogin('business')}>
+                  {devBusy === 'business' ? 'Loading…' : 'Enter as Business'}
+                </button>
+              </div>
+              <p className="fa-dev-note">Creates a test account on first use. Hidden on the live domain.</p>
             </div>
-            <p className="text-sm text-muted-foreground">
-              Create your free account, then name your price on any stay.
-            </p>
-          </div>
-        )}
-
-        <Card className="fas-glass border-border">
-          <CardHeader className="space-y-1 pb-4">
-            <CardTitle className="fas-title text-2xl text-center">
-              {tab === 'signup' && signupIntent === 'business' ? 'Register your business'
-                : tab === 'signup' && signupIntent === 'guest' ? 'Create your account'
-                : 'Welcome'}
-            </CardTitle>
-            <CardDescription className="text-center">
-              {signupIntent === 'business'
-                ? 'List your property — pay only when you\'re booked'
-                : signupIntent === 'guest'
-                ? 'Browse and make offers for free'
-                : 'Sign in or create an account to continue'}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Tabs value={tab} className="w-full" onValueChange={(v) => { setTab(v as 'login' | 'signup'); triggerSpin(); }}>
-              <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="login">Login</TabsTrigger>
-                <TabsTrigger value="signup">Sign Up</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="login">
-                <form onSubmit={handleLogin} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="login-email">Email</Label>
-                    <Input
-                      id="login-email"
-                      type="email"
-                      placeholder="you@example.com"
-                      value={loginEmail}
-                      onChange={(e) => setLoginEmail(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="login-password">Password</Label>
-                    <Input
-                      id="login-password"
-                      type="password"
-                      placeholder="••••••••"
-                      value={loginPassword}
-                      onChange={(e) => setLoginPassword(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <Button 
-                    type="submit" 
-                    className="w-full bg-primary hover:bg-primary/90"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Signing in...
-                      </>
-                    ) : (
-                      'Sign In'
-                    )}
-                  </Button>
-                </form>
-              </TabsContent>
-              
-              <TabsContent value="signup">
-                <form onSubmit={handleSignup} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="first-name">First Name</Label>
-                      <Input
-                        id="first-name"
-                        placeholder="John"
-                        value={firstName}
-                        onChange={(e) => setFirstName(e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="last-name">Last Name</Label>
-                      <Input
-                        id="last-name"
-                        placeholder="Doe"
-                        value={lastName}
-                        onChange={(e) => setLastName(e.target.value)}
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-email">Email</Label>
-                    <Input
-                      id="signup-email"
-                      type="email"
-                      placeholder="you@example.com"
-                      value={signupEmail}
-                      onChange={(e) => setSignupEmail(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-password">Password</Label>
-                    <Input
-                      id="signup-password"
-                      type="password"
-                      placeholder="••••••••"
-                      value={signupPassword}
-                      onChange={(e) => setSignupPassword(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <Button 
-                    type="submit" 
-                    className="w-full bg-primary hover:bg-primary/90"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Creating account...
-                      </>
-                    ) : (
-                      'Create Account'
-                    )}
-                  </Button>
-                </form>
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
-
-        {showDevLogin && (
-          <div className="mt-4 rounded-xl border border-primary/25 bg-black/30 backdrop-blur px-4 py-3">
-            <p className="text-[11px] font-mono uppercase tracking-wider text-primary mb-2">Dev quick login · preview only</p>
-            <div className="grid grid-cols-2 gap-2">
-              <Button variant="outline" size="sm" disabled={!!devBusy} onClick={() => quickLogin('guest')}>
-                {devBusy === 'guest' ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Enter as Traveller'}
-              </Button>
-              <Button variant="outline" size="sm" disabled={!!devBusy} onClick={() => quickLogin('business')}>
-                {devBusy === 'business' ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Enter as Business'}
-              </Button>
-            </div>
-            <p className="text-[11px] text-muted-foreground mt-2">Creates a test account on first use. Hidden on the live domain.</p>
-          </div>
-        )}
-      </div>
-
-      <div className={`fas-wm fas-wm-newera${spin ? ' gone' : ''}`} aria-label="new era">
-        <svg viewBox="0 0 1200 190" xmlns="http://www.w3.org/2000/svg">
-          <text x="600" y="150" textAnchor="middle" textLength="1140" lengthAdjust="spacingAndGlyphs"
-                fontFamily="Bricolage Grotesque, Georgia, serif" fontWeight="800" fontSize="180" letterSpacing="-4">
-            <tspan className="w">n</tspan><tspan className="t">e</tspan><tspan className="w">w</tspan><tspan> </tspan><tspan className="t">e</tspan><tspan className="w">r</tspan><tspan className="t">a</tspan>
-          </text>
-        </svg>
+          )}
+        </main>
       </div>
     </div>
   );

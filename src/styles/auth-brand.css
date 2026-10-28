@@ -1,0 +1,114 @@
+/* findastay traveller auth — magazine brand (navy panel + light card).
+   Scoped under .fa-auth so it never touches the rest of the app. Light-only by
+   design: this is the approved look, independent of the app theme. */
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Inter:wght@400;500;600;700;800&display=swap');
+
+.fa-auth{
+  --bg:#EEF2F1; --surface:#FFFFFF; --ink:#0C1A22; --ink-soft:rgba(12,26,34,.66);
+  --teal:#19C9B4; --teal-deep:#0E8577; --line:rgba(12,26,34,.14); --field:#F4F6F5;
+  --navy:#1E2A4A; --danger:#C0392B; --danger-bg:rgba(192,57,43,.08);
+  min-height:100vh;background:var(--bg);color:var(--ink);
+  font-family:Inter,system-ui,-apple-system,sans-serif;
+  display:flex;align-items:center;justify-content:center;
+}
+.fa-auth *{box-sizing:border-box}
+
+.fa-wrap{width:100%;max-width:1040px;display:grid;grid-template-columns:1fr 1fr;
+  min-height:620px;padding:28px 16px}
+@media (max-width:760px){.fa-wrap{grid-template-columns:1fr;max-width:460px;min-height:0}}
+
+/* Brand panel */
+.fa-brand{background:var(--navy);color:#fff;border-radius:26px 0 0 26px;
+  padding:40px 36px;display:flex;flex-direction:column;justify-content:space-between;gap:36px;
+  position:relative;overflow:hidden}
+@media (max-width:760px){.fa-brand{border-radius:22px 22px 0 0;padding:28px 24px;gap:20px}}
+.fa-brand::after{content:"";position:absolute;right:-70px;bottom:-70px;width:240px;height:240px;
+  border-radius:50%;background:rgba(255,255,255,.05)}
+.fa-brand-logo{width:min(320px,82%);height:auto;display:block;position:relative;z-index:1}
+@media (max-width:760px){.fa-brand-logo{width:220px}}
+.fa-tagline{font-family:"Bricolage Grotesque",Georgia,serif;font-weight:800;
+  font-size:clamp(26px,4vw,34px);line-height:1.04;letter-spacing:-.02em;max-width:15ch;
+  color:#fff;position:relative;z-index:1}
+.fa-ticks{display:flex;flex-direction:column;gap:12px;position:relative;z-index:1;margin-top:22px}
+.fa-tick{display:flex;align-items:flex-start;gap:10px;font-size:13.5px;font-weight:600;
+  line-height:1.35;color:rgba(255,255,255,.92)}
+.fa-tick svg{flex:none;margin-top:1px}
+@media (max-width:760px){.fa-ticks{display:none}}
+
+/* Form card */
+.fa-panel{background:var(--surface);border:1px solid var(--line);border-left:none;
+  border-radius:0 26px 26px 0;padding:40px 38px;display:flex;flex-direction:column;justify-content:center}
+@media (max-width:760px){.fa-panel{border-left:1px solid var(--line);border-top:none;
+  border-radius:0 0 22px 22px;padding:28px 24px}}
+
+.fa-topbar{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.fa-logo{height:30px;width:auto;display:block}
+.fa-region{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.12em;color:var(--ink-soft);
+  border:1px solid var(--line);border-radius:999px;padding:4px 10px;white-space:nowrap}
+.fa-region i{width:6px;height:6px;border-radius:50%;background:var(--teal);display:inline-block}
+
+.fa-h1{font-family:"Bricolage Grotesque",Georgia,serif;font-weight:800;
+  font-size:clamp(30px,4.4vw,40px);line-height:1.03;letter-spacing:-.02em;
+  margin:16px 0 6px;text-wrap:balance}
+.fa-sub{color:var(--ink-soft);font-size:14px;font-weight:500;margin:0 0 22px}
+
+.fa-tabs{display:flex;border-bottom:1px solid var(--line);margin-bottom:22px}
+.fa-tab{flex:1;background:none;border:none;cursor:pointer;padding:11px 0;
+  font:inherit;font-weight:700;font-size:14px;color:var(--ink-soft);
+  border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .15s}
+.fa-tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--teal)}
+.fa-tab:focus-visible{outline:2px solid var(--teal);outline-offset:2px;border-radius:4px}
+
+.fa-form{display:flex;flex-direction:column;gap:15px}
+.fa-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fa-f{display:flex;flex-direction:column;gap:6px}
+.fa-f label{font-size:12.5px;font-weight:700;letter-spacing:.01em;color:var(--ink)}
+.fa-f input{font:inherit;font-size:15px;color:var(--ink);background:var(--field);
+  border:1px solid var(--line);border-radius:11px;padding:12px 13px;width:100%;
+  transition:border-color .15s,box-shadow .15s}
+.fa-f input::placeholder{color:var(--ink-soft);opacity:.7}
+.fa-f input:focus{outline:none;border-color:var(--teal);
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--teal) 28%,transparent)}
+
+.fa-forgot{align-self:flex-end;font-size:12.5px;font-weight:600;color:var(--teal-deep);
+  margin-top:-6px;background:none;border:none;cursor:pointer;padding:0}
+.fa-forgot:hover{text-decoration:underline}
+.fa-forgot:disabled{opacity:.6;cursor:default}
+
+.fa-cta{margin-top:4px;background:var(--navy);color:#fff;border:none;border-radius:13px;
+  padding:14px;font:inherit;font-weight:800;font-size:15px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:8px;transition:transform .06s,opacity .15s}
+.fa-cta:hover{opacity:.92}
+.fa-cta:active{transform:translateY(1px)}
+.fa-cta:disabled{opacity:.7;cursor:default}
+
+.fa-alt{margin-top:18px;font-size:13.5px;color:var(--ink-soft);text-align:center}
+.fa-link{color:var(--teal-deep);font-weight:700;cursor:pointer;background:none;border:none;font:inherit;padding:0}
+.fa-link:hover{text-decoration:underline}
+.fa-biz{margin-top:14px;padding-top:16px;border-top:1px solid var(--line);
+  font-size:12.5px;color:var(--ink-soft);text-align:center}
+.fa-biz button{color:var(--ink);font-weight:700;text-decoration:underline;text-underline-offset:2px;
+  cursor:pointer;background:none;border:none;font:inherit}
+.fa-hint{font-size:11.5px;color:var(--ink-soft);text-align:center;margin-top:10px;font-weight:500}
+
+.fa-notice{display:flex;gap:9px;background:var(--danger-bg);
+  border:1px solid color-mix(in srgb,var(--danger) 40%,transparent);
+  border-radius:11px;padding:11px 12px;font-size:12.5px;line-height:1.4;color:var(--ink);
+  font-weight:500;margin-top:16px}
+.fa-notice svg{flex:none;color:var(--danger);margin-top:1px}
+
+.fa-dev{margin:16px auto 0;max-width:460px;border:1px dashed var(--line);border-radius:14px;
+  padding:12px 14px;background:var(--field)}
+.fa-dev p{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;
+  color:var(--teal-deep);margin:0 0 8px}
+.fa-dev .fa-dev-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.fa-dev button{font:inherit;font-weight:700;font-size:13px;color:var(--ink);background:var(--surface);
+  border:1px solid var(--line);border-radius:10px;padding:9px;cursor:pointer}
+.fa-dev button:disabled{opacity:.6;cursor:default}
+.fa-dev .fa-dev-note{font-size:11px;font-weight:500;color:var(--ink-soft);
+  text-transform:none;letter-spacing:0;margin:8px 0 0}
+
+@keyframes fa-spin{to{transform:rotate(360deg)}}
+.fa-spin{display:inline-block;width:15px;height:15px;border:2px solid currentColor;
+  border-right-color:transparent;border-radius:50%;animation:fa-spin .7s linear infinite}
