@@ -27,7 +27,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { MapPin, AlertCircle, Loader2, CalendarClock } from 'lucide-react';
-import OfferSlider from './OfferSlider';
+import OfferCard from '@/components/offer/OfferCard';
 import RoomPicker from './RoomPicker';
 import { loadLiteApiRoomContent } from '@/lib/listings';
 import { commitmentFee } from '@/lib/fees';
@@ -432,26 +432,24 @@ export default function OfferModal({
           />
         </div>
 
-        {/* Offer section — matches the per-room preview 1:1 */}
-        <div className="space-y-3">
+        {/* Offer — the new OfferCard (CTA hidden; the footer "Send offer" submits) */}
+        <div className="space-y-2">
           {guide ? (
-            <div className="flex items-center justify-between gap-4 rounded-xl p-4" style={{ border: '3px solid #1E2A4A' }}>
-              <div className="min-w-0 pl-3">
-                <p className="text-sm font-extrabold uppercase tracking-wide" style={{ color: '#1E2A4A' }}>Price on other booking sites</p>
-                <p className="mt-2 text-xs font-semibold text-[#0C1A22]">Booking.com · Expedia · Airbnb · Agoda · Hotels.com</p>
-              </div>
-              <span className="flex-none whitespace-nowrap font-display text-xl font-extrabold text-[#0C1A22]">{currency === 'AUD' ? 'A$' : '$'}{Math.round(guide)}<span className="text-sm font-bold text-[#0C1A22]"> /night</span></span>
-            </div>
-          ) : null}
-          <OfferSlider
-            value={sliderVal}
-            min={sliderMin}
-            max={sliderMax}
-            sweetLo={sweetLo}
-            sweetHi={sweetHi}
-            currency={currency}
-            onChange={(v) => { setOfferAmount(String(v)); setError(null); }}
-          />
+            <OfferCard
+              property={property.name}
+              room={selectedRoom?.name || 'Your room'}
+              photoUrl={selectedRoom?.image_url || selectedRoom?.images?.[0] || null}
+              guidePrice={Math.round(guide)}
+              minOffer={sliderMin}
+              otaNames={['Booking.com', 'Expedia', 'Airbnb', 'Agoda', 'Hotels.com']}
+              currencySymbol={currency === 'AUD' ? 'A$' : '$'}
+              value={sliderVal}
+              onChange={(v) => { setOfferAmount(String(v)); setError(null); }}
+              hideCta
+            />
+          ) : (
+            <p className="rounded-xl border border-dashed border-border p-4 text-center text-sm text-muted-foreground">Choose a room above to set your offer.</p>
+          )}
           {error ? (
             <div className="flex items-center gap-1.5 text-destructive text-xs">
               <AlertCircle className="h-3.5 w-3.5" />

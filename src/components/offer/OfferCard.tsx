@@ -19,6 +19,7 @@ export type OfferCardProps = {
   onSubmit?: (amount: number) => void;
   submitting?: boolean;
   readOnly?: boolean;
+  hideCta?: boolean;
 };
 
 export default function OfferCard({
@@ -35,6 +36,7 @@ export default function OfferCard({
   onSubmit,
   submitting = false,
   readOnly = false,
+  hideCta = false,
 }: OfferCardProps) {
   const clamp = (n: number) => Math.min(guidePrice, Math.max(minOffer, Math.round(n || minOffer)));
   const [internal, setInternal] = useState<number>(clamp(guidePrice));
@@ -108,15 +110,17 @@ export default function OfferCard({
       </div>
 
       {/* CTA */}
-      <button
-        type="button"
-        onClick={() => { if (!readOnly && !submitting) onSubmit?.(offer); }}
-        disabled={submitting}
-        className="h-14 rounded-2xl text-[16px] font-semibold text-[#0f1416] transition-opacity disabled:opacity-70"
-        style={{ background: accent }}
-      >
-        {submitting ? 'Sending…' : `Send offer · ${currencySymbol}${offer}`}
-      </button>
+      {!hideCta && (
+        <button
+          type="button"
+          onClick={() => { if (!readOnly && !submitting) onSubmit?.(offer); }}
+          disabled={submitting}
+          className="h-14 rounded-2xl text-[16px] font-semibold text-[#0f1416] transition-opacity disabled:opacity-70"
+          style={{ background: accent }}
+        >
+          {submitting ? 'Sending…' : `Send offer · ${currencySymbol}${offer}`}
+        </button>
+      )}
 
       <p className="text-center text-[12px] text-[#c7ccd1]">
         {readOnly ? 'Preview — this is how travellers make an offer' : 'Drag left to lower your offer · host replies as soon as possible'}
