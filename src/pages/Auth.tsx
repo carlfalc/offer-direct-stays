@@ -104,8 +104,9 @@ export default function Auth() {
       setIsLoading(false);
       localStorage.removeItem('signup_intent');
       // Route by the ACTUAL account type: a business owner goes to the business
-      // dashboard, everyone else to their traveller dashboard.
-      let dest = '/dashboard';
+      // dashboard; a traveller lands on Search so they can start making offers
+      // right away (their dashboard is one tap away in the header).
+      let dest = '/explore';
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {

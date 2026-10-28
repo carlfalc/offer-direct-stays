@@ -1,7 +1,7 @@
 import { ReactNode, useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { MapPin, LogOut, Heart, Plane, MessageSquare, Send, LayoutDashboard, Settings, Building2, User, ChevronDown, Menu, SlidersHorizontal, Wallet, Image as ImageIcon } from 'lucide-react';
+import { MapPin, LogOut, Heart, Plane, MessageSquare, Send, Search, LayoutDashboard, Settings, Building2, User, ChevronDown, Menu, SlidersHorizontal, Wallet, Image as ImageIcon } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import {
   DropdownMenu,
@@ -32,6 +32,9 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
   const { toast } = useToast();
   const { unreadCount } = useNotifications();
   const [hasBusiness, setHasBusiness] = useState<boolean | null>(null);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  // Navigate AND close the mobile sheet (so the menu doesn't stay open over the page).
+  const go = (path: string) => { navigate(path); setMobileOpen(false); };
 
   // small count badge shown on the Messages nav item
   const { businessPending, toConfirm } = useFsCounts();
@@ -40,8 +43,10 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
   const badgeFor = (label: string) =>
     label === 'Messages'
       ? unreadCount
-      : label === 'Business' || label === 'Dashboard'
+      : label === 'Business'
       ? businessPending
+      : label === 'Dashboard'
+      ? (businessMode ? businessPending : 0)
       : label === 'My Offers'
       ? toConfirm
       : 0;
@@ -98,12 +103,14 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
   }, [hasBusiness, isBusinessRoute, isBusinessEntry, isOnboardingRoute, authLoading, navigate]);
 
   const handleSignOut = async () => {
+    setMobileOpen(false);
     await signOut();
     navigate('/');
   };
 
   const guestNavItems = [
-    { label: 'Home', path: '/dashboard', icon: LayoutDashboard },
+    { label: 'Search', path: '/explore', icon: Search },
+    { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
     { label: 'My Offers', path: '/offers', icon: Send },
     { label: 'Watchlist', path: '/watchlist', icon: Heart },
     { label: 'Trips', path: '/trips', icon: Plane },
@@ -285,7 +292,7 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
           </DropdownMenu>
           
           {/* Mobile menu trigger */}
-          <Sheet>
+          <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
             <SheetTrigger asChild>
               <button className={cn(
                 "md:hidden flex items-center justify-center w-10 h-10 rounded-lg transition-all duration-300",
@@ -320,7 +327,7 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
                     return (
                       <button
                         key={item.path}
-                        onClick={() => navigate(item.path)}
+                        onClick={() => go(item.path)}
                         className={cn(
                           "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300",
                           isActive 
@@ -343,14 +350,14 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
 
                   {/* Profile & Settings in mobile nav */}
                   <button
-                    onClick={() => navigate(businessMode ? '/business/settings' : '/profile')}
+                    onClick={() => go(businessMode ? '/business/settings' : '/profile')}
                     className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-primary/5 transition-all duration-300"
                   >
                     <User className="h-4.5 w-4.5" />
                     <span>Profile</span>
                   </button>
                   <button
-                    onClick={() => navigate(hasBusiness ? '/business/settings' : '/settings')}
+                    onClick={() => go(hasBusiness ? '/business/settings' : '/settings')}
                     className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-primary/5 transition-all duration-300"
                   >
                     <Settings className="h-4.5 w-4.5" />
