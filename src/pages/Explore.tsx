@@ -607,25 +607,25 @@ export default function Explore() {
               <div className="grid gap-4 md:grid-cols-[1.25fr_1fr]">
                 <button type="button" onClick={() => setMapOpen(true)}
                   className="relative flex min-h-[150px] items-center justify-center overflow-hidden rounded-2xl border border-black/10 bg-gradient-to-br from-[#d7e6e4] to-[#c2d6e4]">
-                  <span className="flex items-center gap-2 rounded-full border border-border bg-white px-4 py-2 text-sm font-bold text-foreground shadow"><MapIcon className="h-4 w-4" /> Show on map</span>
+                  <span className="flex items-center gap-2 rounded-full border border-border bg-white px-4 py-2 text-sm font-normal text-foreground shadow"><MapIcon className="h-4 w-4" /> Show on map</span>
                 </button>
                 <div className="rounded-2xl border border-black/10 bg-white p-4">
                   <h4 className="font-display text-base font-bold text-foreground">Property type</h4>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {catButtons.filter((c) => c.id !== 'all').map((c) => (
                       <button key={c.id} type="button" onClick={() => chooseCat(catFilter === c.id ? 'all' : c.id)}
-                        className={cn('inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-sm font-bold',
+                        className={cn('inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-sm font-normal',
                           catFilter === c.id ? 'border-foreground bg-foreground text-background' : 'border-border text-[#0C1A22]')}>
                         {c.Icon && <c.Icon className="h-3.5 w-3.5" />} {c.label}
                       </button>
                     ))}
                   </div>
-                  <div className="mt-4 text-sm font-bold text-[#0C1A22]">Your budget (per night)</div>
+                  <div className="mt-4 text-sm font-normal text-[#0C1A22]">Your budget (per night)</div>
                   <input type="range" min={BUDGET_MIN[catFilter]} max={BUDGET_MAX[catFilter]} step={10}
                     value={maxBudget ?? BUDGET_MAX[catFilter]}
                     onChange={(e) => { const v = Number(e.target.value); setMaxBudget(v >= BUDGET_MAX[catFilter] ? null : v); setPage(1); setMobileCount(20); }}
                     className="mt-2 w-full accent-[#0C1A22]" />
-                  <div className="flex justify-between text-sm font-bold text-[#0C1A22]">
+                  <div className="flex justify-between text-sm font-normal text-[#0C1A22]">
                     <span>{sym}{BUDGET_MIN[catFilter]}</span>
                     <span>Up to {sym}{(maxBudget ?? BUDGET_MAX[catFilter]).toLocaleString()}{maxBudget == null ? '+' : ''}</span>
                   </div>
@@ -641,7 +641,7 @@ export default function Explore() {
             </div>
 
             <div className="mb-4 flex flex-wrap items-center gap-2">
-              <div className="flex flex-1 gap-0.5 rounded-lg border border-border bg-muted/50 p-1 text-sm font-bold">
+              <div className="flex flex-1 gap-0.5 rounded-lg border border-border bg-muted/50 p-1 text-sm font-normal">
                 {catButtons.map((c) => (
                   <button key={c.id} type="button" onClick={() => chooseCat(c.id)}
                     className={cn('flex flex-1 items-center justify-center gap-1 rounded-md px-2 py-1.5 transition', catFilter === c.id ? 'bg-foreground text-background' : 'text-[#0C1A22] hover:text-foreground')}>
@@ -649,21 +649,21 @@ export default function Explore() {
                   </button>
                 ))}
               </div>
-              <button type="button" onClick={() => setMapOpen(true)} className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-sm font-bold text-[#0C1A22] shadow-sm transition hover:border-primary/40">
+              <button type="button" onClick={() => setMapOpen(true)} className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-sm font-normal text-[#0C1A22] shadow-sm transition hover:border-primary/40">
                 <MapIcon className="h-4 w-4 text-primary" /> Map view
               </button>
             </div>
 
             {/* Sort / ranking filter — live platform businesses always rank first */}
             <div className="mb-4 flex flex-wrap items-center gap-2">
-              <div className="flex flex-1 items-center gap-2 rounded-lg border border-border bg-muted/50 px-3 py-1.5 text-sm font-bold text-[#0C1A22]">
+              <div className="flex flex-1 items-center gap-2 rounded-lg border border-border bg-muted/50 px-3 py-1.5 text-sm font-normal text-[#0C1A22]">
                 <SlidersHorizontal className="h-4 w-4 flex-none" />
                 <label htmlFor="fs-sort" className="flex-none">Sort</label>
                 <select
                   id="fs-sort"
                   value={sortBy}
                   onChange={(e) => { setSortBy(e.target.value as any); setPage(1); setMobileCount(20); }}
-                  className="flex-1 cursor-pointer bg-transparent py-1 text-sm font-bold text-[#0C1A22] outline-none"
+                  className="flex-1 cursor-pointer bg-transparent py-1 text-sm font-normal text-[#0C1A22] outline-none"
                 >
                   <option value="most_popular">Most popular</option>
                   <option value="price_asc">Lowest price</option>
