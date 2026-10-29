@@ -89,7 +89,7 @@ export default function PropertyResultCard({
       {/* Body */}
       <div className={cn('grid gap-3 p-4', grid ? '' : 'sm:grid-cols-[1fr_auto]')}>
         <div className="min-w-0">
-          <h3 className="font-display text-lg font-bold text-foreground">{property.name}</h3>
+          <h3 className="font-display text-lg font-bold text-[#1E2A4A]">{property.name}</h3>
           <div className="mt-0.5 flex items-center gap-1.5 text-sm font-normal text-[#0C1A22]">
             <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
             <span className="truncate">{property.area ? `${property.area}, ` : ''}{property.city}</span>
