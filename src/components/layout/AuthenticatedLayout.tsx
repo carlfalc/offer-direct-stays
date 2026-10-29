@@ -110,8 +110,8 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
 
   const guestNavItems = [
     { label: 'Search', path: '/explore', icon: Search },
-    { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
     { label: 'My Offers', path: '/offers', icon: Send },
+    { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
     { label: 'Watchlist', path: '/watchlist', icon: Heart },
     { label: 'Trips', path: '/trips', icon: Plane },
     { label: 'Messages', path: '/messages', icon: MessageSquare },

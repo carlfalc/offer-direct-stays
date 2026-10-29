@@ -503,6 +503,7 @@ export default function Explore() {
   const BAND_BG: Record<string, string> = { yellow: '#FBEFC9', orange: '#F7D6B6', navy: '#1E2A4A' };
   const bandBg = BAND_BG[bandColor];
   const navy = bandColor === 'navy';
+  const firstName = ((user?.user_metadata?.first_name as string | undefined)?.trim()) || user?.email?.split('@')[0] || 'there';
   const sym = trip.currency === 'AUD' ? 'A$' : 'NZ$';
 
   // findastay ranking: LIVE businesses on our platform always rank first (a
@@ -576,7 +577,10 @@ export default function Explore() {
           {/* COLOURED BAND — search + breadcrumb + change-the-look + weather + map + property type */}
           <div style={{ backgroundColor: bandBg }}>
             <div className="mx-auto w-full max-w-6xl px-4 pb-5">
-              <div className="pt-4">
+              <div className={cn('pt-4 font-display text-xl font-extrabold tracking-tight sm:text-2xl', navy ? 'text-white' : 'text-[#0C1A22]')}>
+                Welcome back, {firstName}
+              </div>
+              <div className="pt-3">
                 <SearchForm variant="bar" initial={searchCriteria} loading={isLoading} onSearch={handleSearch} />
               </div>
 
