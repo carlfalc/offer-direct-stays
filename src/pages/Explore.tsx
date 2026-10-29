@@ -16,7 +16,7 @@ import PropertyDetailSheet from '@/components/explore/PropertyDetailSheet';
 import OfferModal from '@/components/explore/OfferModal';
 import { PostStayReviewModal, ReviewPayload } from '@/components/review';
 import { Button } from '@/components/ui/button';
-import { MapPin, LogOut, Menu, Heart, Plane, Star, Map as MapIcon, List, Loader2, Search as SearchIcon, Home, Building2, Tent, LayoutGrid, SlidersHorizontal } from 'lucide-react';
+import { MapPin, LogOut, Menu, Heart, Plane, Star, Map as MapIcon, List, Loader2, Search as SearchIcon, Home, Building2, Tent, LayoutGrid, SlidersHorizontal, Wallet } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
@@ -105,6 +105,8 @@ export default function Explore() {
   };
   const [resultView, setResultView] = useState<'list' | 'grid'>('list');
   const [sortBy, setSortBy] = useState<'most_popular' | 'price_asc' | 'price_avg' | 'price_desc' | 'reviews' | 'most_accepted'>('most_popular');
+  // Payment filter — extensible: add more options (upfront, pay-before) here + in the dropdown.
+  const [payFilter, setPayFilter] = useState<'any' | 'none'>('any');
   const [perPage, setPerPage] = useState(20);
   const [page, setPage] = useState(1);
   const [maxBudget, setMaxBudget] = useState<number | null>(null); // null = no cap
@@ -522,6 +524,9 @@ export default function Explore() {
 
   const filteredList = (() => {
     let list = results.filter((p) => catFilter === 'all' || (p.category || 'hotels') === catFilter);
+    // "No prepayment" = the property takes no prepayment (pay direct), i.e. not
+    // upfront and not pay-before-arrival.
+    if (payFilter === 'none') list = list.filter((p) => p.payment_terms !== 'upfront' && p.payment_terms !== 'days_before');
     if (maxBudget != null) list = list.filter((p) => { const pr = priceOf(p); return pr == null || pr <= maxBudget; });
     list = [...list].sort((a, b) => {
       // Primary: live platform businesses first, always.
@@ -636,7 +641,7 @@ export default function Explore() {
 
           {/* RESULTS (white) */}
           <div className="mx-auto w-full max-w-6xl px-4 py-6">
-            <div className="mb-4 flex items-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground">
+            <div className="mb-4 flex items-center gap-2 rounded-xl bg-[#1E2A4A] px-4 py-3 text-sm font-semibold text-white">
               <SearchIcon className="h-4 w-4 flex-none" /> You set the price — make an offer and the property accepts, counters, or passes.
             </div>
 
@@ -671,6 +676,19 @@ export default function Explore() {
                   <option value="price_desc">Highest price</option>
                   <option value="reviews">Best reviews</option>
                   <option value="most_accepted">Most accepted deals</option>
+                </select>
+              </div>
+              <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/50 px-3 py-1.5 text-sm font-normal text-[#0C1A22]">
+                <Wallet className="h-4 w-4 flex-none" />
+                <label htmlFor="fs-pay" className="flex-none">Payment</label>
+                <select
+                  id="fs-pay"
+                  value={payFilter}
+                  onChange={(e) => { setPayFilter(e.target.value as any); setPage(1); setMobileCount(20); }}
+                  className="cursor-pointer bg-transparent py-1 text-sm font-normal text-[#0C1A22] outline-none"
+                >
+                  <option value="any">Any payment</option>
+                  <option value="none">No prepayment</option>
                 </select>
               </div>
             </div>
