@@ -621,7 +621,7 @@ export default function Explore() {
                       <button key={c.id} type="button" onClick={() => chooseCat(catFilter === c.id ? 'all' : c.id)}
                         className={cn('inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-sm font-normal',
                           catFilter === c.id ? 'border-foreground bg-foreground text-background' : 'border-border text-[#0C1A22]')}>
-                        {c.Icon && <c.Icon className="h-3.5 w-3.5" />} {c.label}
+                        {c.Icon && <c.Icon className={c.id === 'homes' ? 'h-4 w-4' : 'h-3.5 w-3.5'} strokeWidth={c.id === 'homes' ? 2.6 : 2} />} {c.label}
                       </button>
                     ))}
                   </div>
@@ -650,7 +650,7 @@ export default function Explore() {
                 {catButtons.map((c) => (
                   <button key={c.id} type="button" onClick={() => chooseCat(c.id)}
                     className={cn('flex flex-1 items-center justify-center gap-1 rounded-md px-2 py-1.5 transition', catFilter === c.id ? 'bg-foreground text-background' : 'text-[#0C1A22] hover:text-foreground')}>
-                    {c.Icon && <c.Icon className="h-3.5 w-3.5" />} {c.label}
+                    {c.Icon && <c.Icon className={c.id === 'homes' ? 'h-4 w-4' : 'h-3.5 w-3.5'} strokeWidth={c.id === 'homes' ? 2.6 : 2} />} {c.label}
                   </button>
                 ))}
               </div>
