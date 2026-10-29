@@ -650,7 +650,7 @@ export default function Explore() {
                 {catButtons.map((c) => (
                   <button key={c.id} type="button" onClick={() => chooseCat(c.id)}
                     className={cn('flex flex-1 items-center justify-center gap-1 rounded-md px-2 py-1.5 transition', catFilter === c.id ? 'bg-foreground text-background' : 'text-[#0C1A22] hover:text-foreground')}>
-                    {c.Icon && <c.Icon className={c.id === 'homes' ? 'h-4 w-4' : 'h-3.5 w-3.5'} strokeWidth={c.id === 'homes' ? 2.6 : 2} />} {c.label}
+                    {c.Icon && <c.Icon className="h-3.5 w-3.5" />} {c.label}
                   </button>
                 ))}
               </div>
