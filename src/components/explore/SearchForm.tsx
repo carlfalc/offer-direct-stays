@@ -35,9 +35,10 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
 export default function SearchForm({ initial, loading, onSearch, variant = 'default' }: Props) {
   const hero = variant === 'hero';
   const bar = variant === 'bar';
-  const labelCls = hero ? 'text-xs text-white/80' : 'text-xs text-muted-foreground';
-  // On the black hero panel, fields are solid white with dark text for legibility.
-  const fieldCls = (hero || bar) ? 'mt-1 bg-white text-neutral-900 border-black/10 placeholder:text-neutral-500' : 'mt-1';
+  const labelCls = hero ? 'text-xs text-white/80' : bar ? 'text-sm font-bold text-[#0C1A22]' : 'text-xs text-muted-foreground';
+  // On the white bar / black hero panel, fields are solid white with bold dark text for legibility.
+  const fieldCls = (hero || bar) ? 'mt-1 bg-white text-[#0C1A22] font-semibold border-black/10 placeholder:text-neutral-500 placeholder:font-normal' : 'mt-1';
+  const stepperLabelCls = hero ? 'text-white/90' : bar ? 'text-sm font-bold text-[#0C1A22]' : undefined;
   const [country, setCountry] = useState<'NZ' | 'AU'>(initial.country || 'NZ');
   const [city, setCity] = useState(initial.city || '');
   const [checkIn, setCheckIn] = useState(initial.checkIn || iso(new Date(Date.now() + 14 * 864e5)));
@@ -111,8 +112,10 @@ export default function SearchForm({ initial, loading, onSearch, variant = 'defa
       </div>
 
       <div className="flex items-center gap-6">
-        <Stepper label="Adults" value={adults} onChange={setAdults} min={1} max={16} />
-        <Stepper label="Children" value={children} onChange={setChildCount} min={0} max={10} />
+        <Stepper label="Adults" value={adults} onChange={setAdults} min={1} max={16}
+          className={bar ? 'text-[#0C1A22]' : undefined} labelClassName={stepperLabelCls} />
+        <Stepper label="Children" value={children} onChange={setChildCount} min={0} max={10}
+          className={bar ? 'text-[#0C1A22]' : undefined} labelClassName={stepperLabelCls} />
       </div>
 
       {children > 0 && (

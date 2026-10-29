@@ -97,7 +97,7 @@ export default function Explore() {
 
   // Results-page controls
   const [bandColor, setBandColor] = useState<'yellow' | 'orange' | 'navy'>(() => {
-    try { return (localStorage.getItem('fs_band') as any) || 'yellow'; } catch { return 'yellow'; }
+    try { return (localStorage.getItem('fs_band') as any) || 'navy'; } catch { return 'navy'; }
   });
   const pickBand = (c: 'yellow' | 'orange' | 'navy') => {
     setBandColor(c);
@@ -594,18 +594,18 @@ export default function Explore() {
                   <div className="mt-2 flex flex-wrap gap-2">
                     {catButtons.filter((c) => c.id !== 'all').map((c) => (
                       <button key={c.id} type="button" onClick={() => chooseCat(catFilter === c.id ? 'all' : c.id)}
-                        className={cn('inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-semibold',
-                          catFilter === c.id ? 'border-foreground bg-foreground text-background' : 'border-border text-muted-foreground')}>
+                        className={cn('inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-sm font-bold',
+                          catFilter === c.id ? 'border-foreground bg-foreground text-background' : 'border-border text-[#0C1A22]')}>
                         {c.Icon && <c.Icon className="h-3.5 w-3.5" />} {c.label}
                       </button>
                     ))}
                   </div>
-                  <div className="mt-4 text-xs text-muted-foreground">Your budget (per night)</div>
+                  <div className="mt-4 text-sm font-bold text-[#0C1A22]">Your budget (per night)</div>
                   <input type="range" min={BUDGET_MIN[catFilter]} max={BUDGET_MAX[catFilter]} step={10}
                     value={maxBudget ?? BUDGET_MAX[catFilter]}
                     onChange={(e) => { const v = Number(e.target.value); setMaxBudget(v >= BUDGET_MAX[catFilter] ? null : v); setPage(1); setMobileCount(20); }}
                     className="mt-2 w-full accent-[#0C1A22]" />
-                  <div className="flex justify-between text-xs text-muted-foreground">
+                  <div className="flex justify-between text-sm font-bold text-[#0C1A22]">
                     <span>{sym}{BUDGET_MIN[catFilter]}</span>
                     <span>Up to {sym}{(maxBudget ?? BUDGET_MAX[catFilter]).toLocaleString()}{maxBudget == null ? '+' : ''}</span>
                   </div>
@@ -621,15 +621,15 @@ export default function Explore() {
             </div>
 
             <div className="mb-4 flex flex-wrap items-center gap-2">
-              <div className="flex flex-1 gap-0.5 rounded-lg border border-border bg-muted/50 p-1 text-xs font-semibold">
+              <div className="flex flex-1 gap-0.5 rounded-lg border border-border bg-muted/50 p-1 text-sm font-bold">
                 {catButtons.map((c) => (
                   <button key={c.id} type="button" onClick={() => chooseCat(c.id)}
-                    className={cn('flex flex-1 items-center justify-center gap-1 rounded-md px-2 py-1.5 transition', catFilter === c.id ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground')}>
+                    className={cn('flex flex-1 items-center justify-center gap-1 rounded-md px-2 py-1.5 transition', catFilter === c.id ? 'bg-foreground text-background' : 'text-[#0C1A22] hover:text-foreground')}>
                     {c.Icon && <c.Icon className="h-3.5 w-3.5" />} {c.label}
                   </button>
                 ))}
               </div>
-              <button type="button" onClick={() => setMapOpen(true)} className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground shadow-sm transition hover:border-primary/40">
+              <button type="button" onClick={() => setMapOpen(true)} className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-sm font-bold text-[#0C1A22] shadow-sm transition hover:border-primary/40">
                 <MapIcon className="h-4 w-4 text-primary" /> Map view
               </button>
             </div>

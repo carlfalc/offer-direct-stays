@@ -10,6 +10,7 @@ interface StepperProps {
   max?: number;
   label?: string;
   className?: string;
+  labelClassName?: string;
 }
 
 export function Stepper({
@@ -19,6 +20,7 @@ export function Stepper({
   max = 10,
   label,
   className,
+  labelClassName,
 }: StepperProps) {
   const handleDecrement = () => {
     if (value > min) {
@@ -35,7 +37,7 @@ export function Stepper({
   return (
     <div className={cn("flex flex-col gap-1.5", className)}>
       {label && (
-        <span className="text-sm font-medium text-foreground">{label}</span>
+        <span className={cn("text-sm font-medium text-foreground", labelClassName)}>{label}</span>
       )}
       <div className="flex items-center gap-2">
         <Button
@@ -48,7 +50,7 @@ export function Stepper({
         >
           <Minus className="h-4 w-4" />
         </Button>
-        <span className="w-8 text-center text-sm font-medium tabular-nums">
+        <span className="w-8 text-center text-base font-bold tabular-nums">
           {value}
         </span>
         <Button

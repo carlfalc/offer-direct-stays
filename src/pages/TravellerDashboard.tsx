@@ -22,7 +22,7 @@ export default function TravellerDashboard() {
   const [loading, setLoading] = useState(true);
 
   const [bandColor, setBandColor] = useState<'yellow' | 'orange' | 'navy'>(() => {
-    try { return (localStorage.getItem('fs_band') as any) || 'yellow'; } catch { return 'yellow'; }
+    try { return (localStorage.getItem('fs_band') as any) || 'navy'; } catch { return 'navy'; }
   });
   const pickBand = (c: 'yellow' | 'orange' | 'navy') => {
     setBandColor(c);
@@ -73,7 +73,7 @@ export default function TravellerDashboard() {
                   className={cn('h-5 w-5 rounded-full border-2 border-black/10', bandColor === c && (navy ? 'outline outline-2 outline-white' : 'outline outline-2 outline-foreground'))}
                   style={{ backgroundColor: BAND_BG[c] }} />
               ))}
-              <button type="button" onClick={() => { pickBand('yellow'); resetTiles(); }} title="Reset look & tile layout to default"
+              <button type="button" onClick={() => { pickBand('navy'); resetTiles(); }} title="Reset look & tile layout to default"
                 className={cn('ml-1 inline-flex items-center gap-1 rounded-md border px-2 py-1', navy ? 'border-white/30 text-white/80' : 'border-black/15 text-muted-foreground')}>
                 <RotateCcw className="h-3 w-3" /> Reset
               </button>
