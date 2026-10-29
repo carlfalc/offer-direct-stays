@@ -54,6 +54,10 @@ export default function PropertyResultCard({
 
   const typeLabel = TYPE_LABELS[property.property_type] || 'Stay';
   const registered = property.registration_status === 'registered' || property.is_claimed;
+  // Only label a property type when the BUSINESS actually set it up (a claimed /
+  // registered listing with a real type). Imported listings default to "hotel",
+  // which mislabels houses — so for those we show no type label at all.
+  const showType = !!registered && !!property.property_type && !!TYPE_LABELS[property.property_type.toLowerCase()];
 
   const payLine = (() => {
     const t = property.payment_terms;
@@ -80,9 +84,12 @@ export default function PropertyResultCard({
         className={cn('relative bg-muted bg-cover bg-center', grid ? 'aspect-[16/10]' : 'min-h-[190px]')}
         style={property.image_url ? { backgroundImage: `url('${property.image_url}')` } : undefined}
       >
-        <span className="absolute left-2.5 top-2.5 inline-flex items-center gap-1 rounded-lg bg-[rgba(12,26,34,.82)] px-2 py-1 text-[0.7rem] font-bold text-white">
-          <TypeIcon className="h-3 w-3" /> {typeLabel}{registered ? ' · Registered' : ''}
-        </span>
+        {registered && (
+          <span className="absolute left-2.5 top-2.5 inline-flex items-center gap-1 rounded-lg bg-[rgba(12,26,34,.82)] px-2 py-1 text-[0.7rem] font-bold text-white">
+            {showType && <><TypeIcon className="h-3 w-3" /> {typeLabel} · </>}
+            Registered
+          </span>
+        )}
         <SaveToTripButton property={property} saved={saved} onChange={onSavedChange} className="absolute right-2.5 top-2.5 z-10" />
       </div>
 
@@ -94,9 +101,11 @@ export default function PropertyResultCard({
             <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
             <span className="truncate">{property.area ? `${property.area}, ` : ''}{property.city}</span>
           </div>
-          <div className="mt-2 inline-flex w-max items-center gap-1.5 rounded-md bg-muted/70 px-2 py-0.5 text-xs text-foreground">
-            <TypeIcon className="h-3.5 w-3.5 text-muted-foreground" /> {typeLabel}
-          </div>
+          {showType && (
+            <div className="mt-2 inline-flex w-max items-center gap-1.5 rounded-md bg-muted/70 px-2 py-0.5 text-xs text-foreground">
+              <TypeIcon className="h-3.5 w-3.5 text-muted-foreground" /> {typeLabel}
+            </div>
+          )}
           <div className="mt-2 flex items-center gap-1.5 text-[0.8rem] font-medium text-[#0C1A22]">
             {property.payment_terms === 'days_before'
               ? <CalendarClock className="h-3.5 w-3.5" />
