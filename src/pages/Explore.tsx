@@ -16,7 +16,7 @@ import PropertyDetailSheet from '@/components/explore/PropertyDetailSheet';
 import OfferModal from '@/components/explore/OfferModal';
 import { PostStayReviewModal, ReviewPayload } from '@/components/review';
 import { Button } from '@/components/ui/button';
-import { MapPin, LogOut, Menu, Heart, Plane, Star, Map as MapIcon, List, Loader2, Search as SearchIcon, Home, Building2, Tent, LayoutGrid } from 'lucide-react';
+import { MapPin, LogOut, Menu, Heart, Plane, Star, Map as MapIcon, List, Loader2, Search as SearchIcon, Home, Building2, Tent, LayoutGrid, SlidersHorizontal } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
@@ -104,7 +104,7 @@ export default function Explore() {
     try { localStorage.setItem('fs_band', c); } catch { /* ignore */ }
   };
   const [resultView, setResultView] = useState<'list' | 'grid'>('list');
-  const [sortBy, setSortBy] = useState<'price_desc' | 'price_asc' | 'recommended'>('price_desc');
+  const [sortBy, setSortBy] = useState<'most_popular' | 'price_asc' | 'price_avg' | 'price_desc' | 'reviews' | 'most_accepted'>('most_popular');
   const [perPage, setPerPage] = useState(20);
   const [page, setPage] = useState(1);
   const [maxBudget, setMaxBudget] = useState<number | null>(null); // null = no cap
@@ -503,16 +503,42 @@ export default function Explore() {
   const navy = bandColor === 'navy';
   const sym = trip.currency === 'AUD' ? 'A$' : 'NZ$';
 
+  // findastay ranking: LIVE businesses on our platform always rank first (a
+  // reward for being onboard), then the guest's chosen sort within the live and
+  // non-live groups. Every secondary key guards nulls so missing data can't crash.
+  const isLive = (p: Property) => ((p.is_claimed === true || p.registration_status === 'registered') ? 0 : 1);
+  const priceLow = (p: Property) => p.guide_min ?? priceOf(p);
+  const priceHigh = (p: Property) => p.guide_max ?? priceOf(p);
+  const priceAvg = (p: Property) => {
+    const lo = p.guide_min ?? priceOf(p); const hi = p.guide_max ?? lo;
+    return lo == null ? null : (hi == null ? lo : (lo + hi) / 2);
+  };
+  const nAsc = (a: number | null, b: number | null) => (a == null && b == null ? 0 : a == null ? 1 : b == null ? -1 : a - b);
+  const nDesc = (a: number | null, b: number | null) => (a == null && b == null ? 0 : a == null ? 1 : b == null ? -1 : b - a);
+  const byReviews = (a: Property, b: Property) => {
+    const r = nDesc(a.rating ?? null, b.rating ?? null);
+    return r !== 0 ? r : nDesc(a.review_count ?? null, b.review_count ?? null);
+  };
+
   const filteredList = (() => {
     let list = results.filter((p) => catFilter === 'all' || (p.category || 'hotels') === catFilter);
     if (maxBudget != null) list = list.filter((p) => { const pr = priceOf(p); return pr == null || pr <= maxBudget; });
     list = [...list].sort((a, b) => {
-      if (sortBy === 'recommended') return Number(b.is_claimed) - Number(a.is_claimed);
-      const pa = priceOf(a); const pb = priceOf(b);
-      if (pa == null && pb == null) return 0;
-      if (pa == null) return 1;
-      if (pb == null) return -1;
-      return sortBy === 'price_asc' ? pa - pb : pb - pa;
+      // Primary: live platform businesses first, always.
+      const live = isLive(a) - isLive(b);
+      if (live !== 0) return live;
+      // Secondary: the guest's chosen sort.
+      switch (sortBy) {
+        case 'price_asc': return nAsc(priceLow(a), priceLow(b));
+        case 'price_desc': return nDesc(priceHigh(a), priceHigh(b));
+        case 'price_avg': return nAsc(priceAvg(a), priceAvg(b));
+        case 'reviews': return byReviews(a, b);
+        // No per-listing acceptance data yet (see backlog) — fall back to
+        // reviews/popularity so the option works without crashing.
+        case 'most_accepted': return byReviews(a, b);
+        case 'most_popular':
+        default: return byReviews(a, b);
+      }
     });
     return list;
   })();
@@ -569,12 +595,6 @@ export default function Explore() {
                   {searchCriteria.city || 'Stays'} <span className={cn('text-base font-medium', navy ? 'text-white/70' : 'text-muted-foreground')}>· {totalResults} stays you can make an offer on</span>
                 </h1>
                 <div className="flex items-center gap-2">
-                  <select value={sortBy} onChange={(e) => setSortBy(e.target.value as any)}
-                    className="rounded-lg border border-border bg-card px-3 py-2 text-sm font-semibold text-foreground">
-                    <option value="price_desc">Sort: Price (high → low)</option>
-                    <option value="price_asc">Sort: Price (low → high)</option>
-                    <option value="recommended">Sort: Recommended</option>
-                  </select>
                   <div className="inline-flex overflow-hidden rounded-lg border border-border">
                     <button type="button" onClick={() => setResultView('list')} className={cn('flex items-center gap-1 px-3 py-2 text-sm font-semibold', resultView === 'list' ? 'bg-foreground text-background' : 'bg-card text-muted-foreground')}><List className="h-4 w-4" /> List</button>
                     <button type="button" onClick={() => setResultView('grid')} className={cn('flex items-center gap-1 px-3 py-2 text-sm font-semibold', resultView === 'grid' ? 'bg-foreground text-background' : 'bg-card text-muted-foreground')}><LayoutGrid className="h-4 w-4" /> Grid</button>
@@ -632,6 +652,27 @@ export default function Explore() {
               <button type="button" onClick={() => setMapOpen(true)} className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-sm font-bold text-[#0C1A22] shadow-sm transition hover:border-primary/40">
                 <MapIcon className="h-4 w-4 text-primary" /> Map view
               </button>
+            </div>
+
+            {/* Sort / ranking filter — live platform businesses always rank first */}
+            <div className="mb-4 flex flex-wrap items-center gap-2">
+              <div className="flex flex-1 items-center gap-2 rounded-lg border border-border bg-muted/50 px-3 py-1.5 text-sm font-bold text-[#0C1A22]">
+                <SlidersHorizontal className="h-4 w-4 flex-none" />
+                <label htmlFor="fs-sort" className="flex-none">Sort</label>
+                <select
+                  id="fs-sort"
+                  value={sortBy}
+                  onChange={(e) => { setSortBy(e.target.value as any); setPage(1); setMobileCount(20); }}
+                  className="flex-1 cursor-pointer bg-transparent py-1 text-sm font-bold text-[#0C1A22] outline-none"
+                >
+                  <option value="most_popular">Most popular</option>
+                  <option value="price_asc">Lowest price</option>
+                  <option value="price_avg">Average price</option>
+                  <option value="price_desc">Highest price</option>
+                  <option value="reviews">Best reviews</option>
+                  <option value="most_accepted">Most accepted deals</option>
+                </select>
+              </div>
             </div>
 
             {isLoading ? (

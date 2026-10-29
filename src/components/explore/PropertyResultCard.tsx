@@ -90,14 +90,14 @@ export default function PropertyResultCard({
       <div className={cn('grid gap-3 p-4', grid ? '' : 'sm:grid-cols-[1fr_auto]')}>
         <div className="min-w-0">
           <h3 className="font-display text-lg font-bold text-foreground">{property.name}</h3>
-          <div className="mt-0.5 flex items-center gap-1.5 text-sm text-muted-foreground">
-            <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
+          <div className="mt-0.5 flex items-center gap-1.5 text-[0.95rem] font-bold text-[#0C1A22]">
+            <MapPin className="h-4 w-4 flex-shrink-0" />
             <span className="truncate">{property.area ? `${property.area}, ` : ''}{property.city}</span>
           </div>
           <div className="mt-2 inline-flex w-max items-center gap-1.5 rounded-md bg-muted/70 px-2 py-0.5 text-xs text-foreground">
             <TypeIcon className="h-3.5 w-3.5 text-muted-foreground" /> {typeLabel}
           </div>
-          <div className="mt-2 flex items-center gap-1.5 text-[0.8rem] font-semibold text-[#243640]">
+          <div className="mt-2 flex items-center gap-1.5 text-sm font-bold text-[#0C1A22]">
             {property.payment_terms === 'days_before'
               ? <CalendarClock className="h-3.5 w-3.5" />
               : <CheckCircle2 className="h-3.5 w-3.5" />}
