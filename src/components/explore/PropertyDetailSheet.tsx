@@ -4,7 +4,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { MapPin, Heart, Loader2 } from 'lucide-react';
+import { MapPin, Heart, Loader2, Megaphone, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useTrip } from '@/contexts/TripContext';
@@ -32,6 +32,7 @@ export default function PropertyDetailSheet({
 }: PropertyDetailSheetProps) {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loadingRooms, setLoadingRooms] = useState(false);
+  const [nudged, setNudged] = useState(false);
   const { trip, getPropertyPriceEstimate } = useTrip();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -84,8 +85,9 @@ export default function PropertyDetailSheet({
         city: property.city,
         type: 'traveller_nudge',
         requested_by: user?.id ?? null,
-        note: 'Requested from map',
+        note: 'Requested by traveller',
       });
+      setNudged(true);
       toast({
         title: 'Nudge sent',
         description: `We'll do our best to get ${property.name} onto findastay by your next search.`,
@@ -174,6 +176,14 @@ export default function PropertyDetailSheet({
                 style={{ borderColor: '#f0c35b', background: 'rgba(240,195,91,0.1)', color: '#8a5e0f' }}
               >
                 This property isn't on findastay yet. You can view it and claim it, or nudge us to onboard them.
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button size="sm" onClick={handleNudge} disabled={nudged} className="gap-1.5">
+                    {nudged ? <><Check className="h-4 w-4" /> Nudge sent</> : <><Megaphone className="h-4 w-4" /> Nudge us to add this</>}
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={handleClaim} style={{ borderColor: '#f0c35b', color: '#8a5e0f' }}>
+                    This is my property — claim it
+                  </Button>
+                </div>
               </div>
             )}
 

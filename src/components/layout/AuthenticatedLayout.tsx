@@ -35,6 +35,8 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
   const [mobileOpen, setMobileOpen] = useState(false);
   // Navigate AND close the mobile sheet (so the menu doesn't stay open over the page).
   const go = (path: string) => { navigate(path); setMobileOpen(false); };
+  // Emphasise these two nav items so they stand out a little (larger text + icon).
+  const emphNav = (label: string) => label === 'My Offers' || label === 'Messages';
 
   // small count badge shown on the Messages nav item
   const { businessPending, toConfirm } = useFsCounts();
@@ -194,10 +196,11 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
                     "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300",
                     isActive
                       ? "bg-white/15 text-white"
-                      : "text-white/70 hover:text-white hover:bg-white/10"
+                      : "text-white/70 hover:text-white hover:bg-white/10",
+                    emphNav(item.label) && "text-[15px] font-bold"
                   )}
                 >
-                  <item.icon className="h-4 w-4" />
+                  <item.icon className={cn('h-4 w-4', emphNav(item.label) && 'h-[18px] w-[18px]')} />
                   <span>{item.label}</span>
                   {badgeFor(item.label) > 0 && (
                     <CountBadge count={badgeFor(item.label)} tone={item.label === 'Messages' ? 'default' : 'alert'} />
@@ -223,7 +226,7 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
                       : "text-white/70 hover:text-white hover:bg-white/10"
                   )}
                 >
-                  <item.icon className="h-4.5 w-4.5" />
+                  <item.icon className={cn('h-4.5 w-4.5', emphNav(item.label) && 'h-5 w-5')} />
                   {badgeFor(item.label) > 0 && (
                     <span className={cn(
                       "absolute top-1 right-1 min-w-[16px] h-[16px] px-1 rounded-full text-[9px] font-bold inline-flex items-center justify-center leading-none",
@@ -330,12 +333,13 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
                         onClick={() => go(item.path)}
                         className={cn(
                           "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300",
-                          isActive 
-                            ? "bg-primary/15 text-primary shadow-[0_0_12px_rgba(199,167,108,0.15)]" 
-                            : "text-muted-foreground hover:text-foreground hover:bg-primary/5"
+                          isActive
+                            ? "bg-primary/15 text-primary shadow-[0_0_12px_rgba(199,167,108,0.15)]"
+                            : "text-muted-foreground hover:text-foreground hover:bg-primary/5",
+                          emphNav(item.label) && "text-[15px] font-bold"
                         )}
                       >
-                        <item.icon className="h-4.5 w-4.5" />
+                        <item.icon className={cn('h-4.5 w-4.5', emphNav(item.label) && 'h-5 w-5')} />
                         <span>{item.label}</span>
                         {badgeFor(item.label) > 0 && (
                     <CountBadge count={badgeFor(item.label)} tone={item.label === 'Messages' ? 'default' : 'alert'} />

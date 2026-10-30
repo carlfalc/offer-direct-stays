@@ -1,5 +1,5 @@
 import { Property } from '@/types';
-import { MapPin, Home, Building, Building2, Hotel, BedDouble, Tent, CheckCircle2, CalendarClock } from 'lucide-react';
+import { MapPin, Home, Building, Building2, Hotel, BedDouble, Tent, CheckCircle2, CalendarClock, Clock } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useTrip, PropertyPriceEstimate } from '@/contexts/TripContext';
 import { cn } from '@/lib/utils';
@@ -84,10 +84,14 @@ export default function PropertyResultCard({
         className={cn('relative bg-muted bg-cover bg-center', grid ? 'aspect-[16/10]' : 'min-h-[190px]')}
         style={property.image_url ? { backgroundImage: `url('${property.image_url}')` } : undefined}
       >
-        {registered && (
+        {registered ? (
           <span className="absolute left-2.5 top-2.5 inline-flex items-center gap-1 rounded-lg bg-[rgba(12,26,34,.82)] px-2 py-1 text-[0.7rem] font-bold text-white">
             {showType && <><TypeIcon className="h-3 w-3" /> {typeLabel} · </>}
             Registered
+          </span>
+        ) : (
+          <span className="absolute left-2.5 top-2.5 inline-flex items-center gap-1 rounded-lg bg-[#19C9B4] px-2 py-1 text-[0.7rem] font-bold text-[#0C1A22]">
+            <Clock className="h-3 w-3" /> Coming soon
           </span>
         )}
         <SaveToTripButton property={property} saved={saved} onChange={onSavedChange} className="absolute right-2.5 top-2.5 z-10" />
