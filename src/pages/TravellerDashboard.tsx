@@ -43,7 +43,7 @@ export default function TravellerDashboard() {
   }, [user]);
 
   const itemsByTrip = (tripId: string) => items.filter((i) => i.trip_id === tripId);
-  const firstName = (user?.email || 'there').split('@')[0];
+  const firstName = ((user?.user_metadata?.first_name as string | undefined)?.trim()) || (user?.email || 'there').split('@')[0];
 
   const tileCfg: Record<string, { icon: React.ReactNode; label: string; sub: string; badge?: number; to: string }> = {
     offers: { icon: <Send className="h-5 w-5" />, label: 'My offers', sub: toConfirm > 0 ? `${toConfirm} to confirm` : 'Track your offers', badge: toConfirm, to: '/offers' },
@@ -140,7 +140,7 @@ export default function TravellerDashboard() {
                 return (
                   <div key={t.id}>
                     <div className="mb-2 flex items-baseline gap-2">
-                      <h3 className="font-display text-lg font-semibold">{t.name}</h3>
+                      <h3 className="font-display text-lg font-semibold text-[#1E2A4A]">{t.name}</h3>
                       <span className="text-xs text-muted-foreground">{its.length} {its.length === 1 ? 'stay' : 'stays'}</span>
                     </div>
                     {its.length === 0 ? (
@@ -157,7 +157,7 @@ export default function TravellerDashboard() {
                               )}
                             </div>
                             <div className="p-2.5">
-                              <p className="truncate text-sm font-semibold">{it.name || 'Stay'}</p>
+                              <p className="truncate text-sm font-semibold text-[#1E2A4A]">{it.name || 'Stay'}</p>
                               <p className="truncate text-xs text-muted-foreground">{it.city}{it.country ? `, ${it.country}` : ''}</p>
                             </div>
                           </Card>

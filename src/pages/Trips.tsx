@@ -2,254 +2,174 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { Property } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { useToast } from '@/hooks/use-toast';
-import { MapPin, ArrowLeft, Loader2, Calendar, CreditCard, MessageCircle, Plane } from 'lucide-react';
+import { Loader2, Calendar, MessageCircle, Plane, CheckCircle2, MapPin, Search } from 'lucide-react';
 import { format } from 'date-fns';
+import { commitmentFee, balancePayable } from '@/lib/fees';
 
-interface Trip {
+// A confirmed booking is a confirmed fs_offer (the live offer system). The old
+// `offers` table is legacy and no longer used.
+interface FsBooking {
   id: string;
-  offer_amount: number;
-  counter_amount: number | null;
-  check_in_date: string;
-  check_out_date: string;
-  adults: number;
-  children: number;
+  nightly_offer: number;
+  counter_nightly: number | null;
+  total_offer: number | null;
+  nights: number | null;
+  check_in: string | null;
+  check_out: string | null;
   status: string;
-  bcf_payment_status: string | null;
-  bcf_paid_at: string | null;
+  booking_number: string | null;
   created_at: string;
-  property: Property;
-  conversation_id?: string;
+  room: { room_name: string | null } | null;
+  listing: { name: string | null; city: string | null; country: string | null } | null;
 }
+
+const NAVY = '#1E2A4A';
 
 export default function Trips() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const { toast } = useToast();
 
-  const [trips, setTrips] = useState<Trip[]>([]);
+  const [trips, setTrips] = useState<FsBooking[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!authLoading && !user) {
-      navigate('/auth');
-    }
+    if (!authLoading && !user) navigate('/auth');
   }, [user, authLoading, navigate]);
 
   useEffect(() => {
-    if (user) {
-      loadTrips();
-    }
+    if (!user) return;
+    (async () => {
+      setLoading(true);
+      try {
+        const { data } = await supabase
+          .from('fs_offers')
+          .select('id,nightly_offer,counter_nightly,total_offer,nights,check_in,check_out,status,booking_number,created_at,room:fs_listing_rooms(room_name),listing:fs_listings(name,city,country)')
+          .eq('traveller_id', user.id)
+          .eq('status', 'confirmed')
+          .order('check_in', { ascending: true });
+        setTrips((data as any[] as FsBooking[]) || []);
+      } catch (err) {
+        console.error('Error loading trips:', err);
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, [user]);
 
-  const loadTrips = async () => {
-    setLoading(true);
-    try {
-      // Get confirmed offers
-      const { data: offers, error: offersError } = await supabase
-        .from('offers')
-        .select(`
-          id,
-          offer_amount,
-          counter_amount,
-          check_in_date,
-          check_out_date,
-          adults,
-          children,
-          status,
-          bcf_payment_status,
-          bcf_paid_at,
-          created_at,
-          properties:property_id (*)
-        `)
-        .eq('guest_user_id', user?.id)
-        .eq('status', 'confirmed')
-        .order('check_in_date', { ascending: true });
-
-      if (offersError) throw offersError;
-
-      // Get conversations to link to trips
-      const { data: conversations, error: convoError } = await supabase
-        .from('conversations')
-        .select('id, offer_id')
-        .eq('guest_user_id', user?.id);
-
-      if (convoError) throw convoError;
-
-      const convoMap = new Map(
-        (conversations || []).map((c: any) => [c.offer_id, c.id])
-      );
-
-      const tripData = (offers || []).map((offer: any) => ({
-        id: offer.id,
-        offer_amount: offer.offer_amount,
-        counter_amount: offer.counter_amount,
-        check_in_date: offer.check_in_date,
-        check_out_date: offer.check_out_date,
-        adults: offer.adults,
-        children: offer.children,
-        status: offer.status,
-        bcf_payment_status: offer.bcf_payment_status,
-        bcf_paid_at: offer.bcf_paid_at,
-        created_at: offer.created_at,
-        property: offer.properties as Property,
-        conversation_id: convoMap.get(offer.id),
-      }));
-
-      setTrips(tripData);
-    } catch (err) {
-      console.error('Error loading trips:', err);
-      toast({
-        title: 'Error',
-        description: 'Failed to load trips',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const formatDateRange = (checkIn: string, checkOut: string) => {
-    return `${format(new Date(checkIn), 'MMM d')} – ${format(new Date(checkOut), 'MMM d, yyyy')}`;
-  };
-
-  const getAgreedRate = (trip: Trip) => {
-    return trip.counter_amount || trip.offer_amount;
-  };
-
-  const getNights = (checkIn: string, checkOut: string) => {
-    const diff = new Date(checkOut).getTime() - new Date(checkIn).getTime();
-    return Math.ceil(diff / (1000 * 60 * 60 * 24));
+  const dateRange = (ci?: string | null, co?: string | null) => {
+    if (!ci || !co) return '';
+    return `${format(new Date(ci), 'MMM d')} – ${format(new Date(co), 'MMM d, yyyy')}`;
   };
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="fas-brand-day flex min-h-screen items-center justify-center bg-background">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-full bg-background">
-      {/* Content */}
-      <main className="max-w-3xl mx-auto p-4">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-foreground">My Trips</h1>
-          <p className="text-muted-foreground">Your confirmed bookings</p>
+    <div className="fas-brand-day min-h-screen bg-background text-foreground">
+      {/* Navy brand band */}
+      <div style={{ backgroundColor: NAVY }}>
+        <div className="mx-auto w-full max-w-3xl px-4 pb-6 pt-6">
+          <p className="mb-1 font-mono text-[0.65rem] uppercase tracking-[0.18em] text-white/70">Your confirmed bookings</p>
+          <h1 className="font-display text-3xl font-extrabold tracking-tight text-white md:text-4xl">My trips</h1>
         </div>
+      </div>
+
+      <main className="mx-auto max-w-3xl px-4 py-6">
         {loading ? (
           <div className="flex items-center justify-center py-16">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
         ) : trips.length === 0 ? (
-          <div className="text-center py-16">
-            <Plane className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
-            <h2 className="text-lg font-medium mb-2">No confirmed trips yet</h2>
-            <p className="text-muted-foreground mb-4">
-              Once a property accepts your offer and you confirm, your trip will appear here.
+          <div className="rounded-2xl border border-border bg-card py-16 text-center">
+            <Plane className="mx-auto mb-4 h-12 w-12 text-muted-foreground/40" />
+            <h2 className="font-display text-lg font-bold text-[#0C1A22]">No confirmed trips yet</h2>
+            <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
+              Once a property accepts your offer and you confirm, your trip appears here.
             </p>
-            <Button onClick={() => navigate('/explore')}>Start Exploring</Button>
+            <Button className="mt-4 gap-2 bg-[#0C1A22] text-white hover:bg-[#0C1A22]/90" onClick={() => navigate('/explore')}>
+              <Search className="h-4 w-4" /> Find a stay
+            </Button>
           </div>
         ) : (
           <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm font-medium text-[#0C1A22]">
               {trips.length} confirmed {trips.length === 1 ? 'trip' : 'trips'}
             </p>
 
-            {trips.map((trip) => {
-              const nights = getNights(trip.check_in_date, trip.check_out_date);
-              const agreedRate = getAgreedRate(trip);
-              const totalCost = agreedRate * nights;
+            {trips.map((t) => {
+              const sym = t.listing?.country === 'AU' ? 'A$' : 'NZ$';
+              const nights = t.nights ?? 1;
+              const nightly = Math.round(t.counter_nightly ?? t.nightly_offer ?? 0);
+              const total = Math.round(t.total_offer ?? nightly * nights);
+              const fee = commitmentFee(total);
+              const balance = balancePayable(total);
 
               return (
-                <Card key={trip.id} className="overflow-hidden">
-                  <div className="flex gap-4 p-4">
-                    {trip.property.image_url && (
-                      <img
-                        src={trip.property.image_url}
-                        alt={trip.property.name}
-                        className="w-28 h-28 rounded-lg object-cover flex-shrink-0"
-                      />
-                    )}
-                    
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <h3 className="font-semibold truncate">{trip.property.name}</h3>
-                          <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
-                            <MapPin className="h-3 w-3" />
-                            <span>{trip.property.city}, {trip.property.country}</span>
-                          </div>
-                        </div>
-                        <Badge variant="secondary" className="bg-success/10 text-success border-success/20">
-                          Confirmed
-                        </Badge>
-                      </div>
-                      
-                      {/* Trip details */}
-                      <div className="mt-3 space-y-2">
-                        <div className="flex items-center gap-2 text-sm">
-                          <Calendar className="h-4 w-4 text-muted-foreground" />
-                          <span>{formatDateRange(trip.check_in_date, trip.check_out_date)}</span>
-                          <span className="text-muted-foreground">({nights} nights)</span>
-                        </div>
-
-                        <div className="flex items-center gap-4 text-sm">
-                          <span className="font-medium">
-                            ${agreedRate.toFixed(0)} / night
-                          </span>
-                          <span className="text-muted-foreground">
-                            Total: ${totalCost.toFixed(0)}
+                <div key={t.id} className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+                  <div className="p-4 sm:p-5">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <h3 className="truncate font-display text-lg font-bold" style={{ color: NAVY }}>
+                          {t.listing?.name || 'Your stay'}
+                        </h3>
+                        <div className="mt-0.5 flex items-center gap-1.5 text-sm text-muted-foreground">
+                          <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
+                          <span className="truncate">
+                            {t.listing?.city || ''}{t.listing?.country ? `, ${t.listing.country}` : ''}
+                            {t.room?.room_name ? ` · ${t.room.room_name}` : ''}
                           </span>
                         </div>
-
-                        {/* Payment Status */}
-                        <div className="flex items-center gap-2 text-sm">
-                          <CreditCard className="h-4 w-4 text-muted-foreground" />
-                          <div className="flex items-center gap-2">
-                            {trip.bcf_payment_status === 'paid' ? (
-                              <Badge variant="outline" className="text-xs text-success border-success">
-                                BCF Paid
-                              </Badge>
-                            ) : (
-                              <Badge variant="outline" className="text-xs">
-                                BCF Pending
-                              </Badge>
-                            )}
-                            <span className="text-muted-foreground">•</span>
-                            <span className="text-muted-foreground text-xs">
-                              Accommodation: Pay at property
-                            </span>
-                          </div>
-                        </div>
                       </div>
+                      <span className="inline-flex flex-none items-center gap-1.5 rounded-lg bg-[#19C9B4] px-2.5 py-1 text-xs font-bold text-[#0C1A22]">
+                        <CheckCircle2 className="h-3.5 w-3.5" /> Confirmed
+                      </span>
+                    </div>
 
-                      {/* Actions */}
-                      {trip.conversation_id && (
-                        <div className="mt-3">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => navigate(`/messages/${trip.conversation_id}`)}
-                          >
-                            <MessageCircle className="h-4 w-4 mr-2" />
-                            Message property
-                          </Button>
-                        </div>
+                    <div className="mt-3 flex items-center gap-2 text-sm font-medium text-[#0C1A22]">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <span>{dateRange(t.check_in, t.check_out)}</span>
+                      <span className="text-muted-foreground">· {nights} {nights === 1 ? 'night' : 'nights'}</span>
+                    </div>
+
+                    {/* Deal summary */}
+                    <div className="mt-3 grid gap-1.5 rounded-xl border border-border bg-muted/30 p-3 text-sm">
+                      <Row label={`Agreed rate · ${nights} ${nights === 1 ? 'night' : 'nights'}`} value={`${sym}${nightly}/night`} />
+                      <Row label="Booking total" value={`${sym}${total}`} bold />
+                      <Row label="findastay commitment fee" value={`${sym}${fee.toFixed(2)}`} />
+                      <div className="my-1 h-px bg-border" />
+                      <Row label="Pay the property direct" value={`${sym}${balance.toFixed(2)}`} bold />
+                    </div>
+
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <Button size="sm" variant="outline" className="gap-1.5" onClick={() => navigate(`/messages/${t.id}`)}>
+                        <MessageCircle className="h-4 w-4" /> Message property
+                      </Button>
+                      {t.booking_number && (
+                        <span className="rounded-md bg-muted px-2 py-1 text-xs font-semibold text-[#0C1A22]">#{t.booking_number}</span>
                       )}
                     </div>
                   </div>
-                </Card>
+                </div>
               );
             })}
           </div>
         )}
       </main>
+    </div>
+  );
+}
+
+function Row({ label, value, bold }: { label: string; value: string; bold?: boolean }) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <span className="text-muted-foreground">{label}</span>
+      <span className={bold ? 'font-bold text-[#0C1A22]' : 'font-medium text-[#0C1A22]'}>{value}</span>
     </div>
   );
 }
