@@ -212,7 +212,7 @@ export async function searchListings(geo: GeoPoint, limit = 100): Promise<Proper
         if (!live) return;
         p.is_claimed = true;
         p.registration_status = 'registered';
-        if (l.property_type) p.category = categoryOf(l.property_type); // owner's declared type wins
+        if (l.property_type) { p.property_type = l.property_type; p.category = categoryOf(l.property_type); } // owner's declared type wins
         p.payment_terms = l.payment_terms ?? p.payment_terms;
         p.payment_lead_days = l.payment_lead_days ?? p.payment_lead_days;
       });
@@ -236,7 +236,7 @@ export async function searchListings(geo: GeoPoint, limit = 100): Promise<Proper
       if (already) {
         already.is_claimed = true;
         already.registration_status = 'registered';
-        if (l.property_type) already.category = categoryOf(l.property_type);
+        if (l.property_type) { already.property_type = l.property_type; already.category = categoryOf(l.property_type); }
         already.payment_terms = l.payment_terms ?? already.payment_terms;
         already.payment_lead_days = l.payment_lead_days ?? already.payment_lead_days;
         return;
@@ -246,7 +246,7 @@ export async function searchListings(geo: GeoPoint, limit = 100): Promise<Proper
         business_id: null,
         name: l.name || 'Property',
         description: null,
-        property_type: 'hotel',
+        property_type: l.property_type || 'hotel',
         country: l.country === 'AU' ? 'AU' : 'NZ',
         city: l.city || '',
         area: null,

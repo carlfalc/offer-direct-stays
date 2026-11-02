@@ -85,10 +85,11 @@ export default function PropertyResultCard({
         style={property.image_url ? { backgroundImage: `url('${property.image_url}')` } : undefined}
       >
         {registered ? (
-          <span className="absolute left-2.5 top-2.5 inline-flex items-center gap-1 rounded-lg bg-[rgba(12,26,34,.82)] px-2 py-1 text-[0.7rem] font-bold text-white">
-            {showType && <><TypeIcon className="h-3 w-3" /> {typeLabel} · </>}
-            Registered
-          </span>
+          showType && (
+            <span className="absolute left-2.5 top-2.5 inline-flex items-center gap-1 rounded-lg bg-[rgba(12,26,34,.82)] px-2 py-1 text-[0.7rem] font-bold text-white">
+              <TypeIcon className="h-3 w-3" /> {typeLabel}
+            </span>
+          )
         ) : (
           <span className="absolute left-2.5 top-2.5 inline-flex items-center gap-1 rounded-lg bg-[#19C9B4] px-2 py-1 text-[0.7rem] font-bold text-[#0C1A22]">
             <Clock className="h-3 w-3" /> Coming soon
