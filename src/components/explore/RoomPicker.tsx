@@ -3,7 +3,7 @@ import { Room } from '@/types';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Check, Users, Maximize2, ImageIcon, ChevronLeft, ChevronRight, X, Loader2 } from 'lucide-react';
-import OfferSlider from './OfferSlider';
+import OfferCard from '@/components/offer/OfferCard';
 
 interface RoomPickerProps {
   rooms: Room[];
@@ -12,6 +12,7 @@ interface RoomPickerProps {
   onSubmitOffer: (roomId: string, amount: number) => void;
   isSubmitting?: boolean;
   currency: string;
+  propertyName?: string;
 }
 
 /** A room photo with a graceful fallback when the image can't load. */
@@ -55,12 +56,14 @@ function RoomDetail({
   isSubmitting,
   onSend,
   onClose,
+  propertyName,
 }: {
   room: Room;
   currency: string;
   isSubmitting?: boolean;
   onSend: (amount: number) => void;
   onClose: () => void;
+  propertyName?: string;
 }) {
   const images = room.images?.length ? room.images : room.image_url ? [room.image_url] : [];
   const [idx, setIdx] = useState(0);
@@ -143,20 +146,18 @@ function RoomDetail({
             </div>
           ) : null}
 
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-foreground">Your offer per night</p>
-            <OfferSlider
+          <div className="flex justify-center">
+            <OfferCard
+              property={propertyName || 'Your stay'}
+              room={room.name}
+              photoUrl={has ? images[idx] : undefined}
+              guidePrice={band.actual}
+              minOffer={band.min}
+              currencySymbol={currency === 'AUD' ? 'A$' : 'NZ$'}
               value={price}
-              min={band.min}
-              max={band.max}
-              sweetLo={band.sweetLo}
-              sweetHi={band.sweetHi}
-              currency={currency}
               onChange={setPrice}
+              hideCta
             />
-            <p className="text-xs text-muted-foreground">
-              Starts at the property's price of <span className="font-medium">{currency} ${band.actual}</span> — drag down to name your offer. Most guests land between <span className="font-medium">{currency} ${band.sweetLo}–${band.sweetHi}</span>.
-            </p>
           </div>
         </div>
       </div>
@@ -184,6 +185,7 @@ export default function RoomPicker({
   onSubmitOffer,
   isSubmitting,
   currency,
+  propertyName,
 }: RoomPickerProps) {
   const [detailRoom, setDetailRoom] = useState<Room | null>(null);
 
@@ -258,6 +260,7 @@ export default function RoomPicker({
         <RoomDetail
           room={detailRoom}
           currency={currency}
+          propertyName={propertyName}
           isSubmitting={isSubmitting}
           onSend={(amount) => {
             onSelect(detailRoom.id);

@@ -370,6 +370,7 @@ export default function OfferModal({
           ) : rooms.length > 0 ? (
             <RoomPicker
               rooms={rooms}
+              propertyName={property.name}
               selectedRoomId={selectedRoomId}
               currency={currency}
               isSubmitting={isSubmitting}
