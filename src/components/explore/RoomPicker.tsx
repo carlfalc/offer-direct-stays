@@ -165,7 +165,7 @@ function RoomDetail({
 
       {/* Sticky action */}
       <div className="border-t border-border p-4">
-        <Button className="w-full bg-[#19C9B4] text-white hover:bg-[#19C9B4]/90" disabled={isSubmitting} onClick={() => onSend(price)}>
+        <Button className="w-full bg-[#1E2A4A] text-white hover:bg-[#1E2A4A]/90" disabled={isSubmitting} onClick={() => onSend(price)}>
           {isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending…
