@@ -21,7 +21,9 @@ interface FsOffer {
   confirm_deadline_at: string | null;
   booking_number: string | null;
   created_at: string;
-  room?: { room_name: string | null } | null;
+  original_room_id?: string | null;
+  room?: { room_name: string | null; photos?: any[] | null } | null;
+  original?: { room_name: string | null } | null;
   listing?: { name: string | null; city: string | null; country: string | null } | null;
 }
 
@@ -48,14 +50,19 @@ export default function GuestOffers() {
   const load = useCallback(async () => {
     if (!user) return;
     setLoading(true);
-    const { data } = await supabase
-      .from('fs_offers')
-      .select(
-        'id,nightly_offer,counter_nightly,total_offer,nights,check_in,check_out,status,released_at,confirm_deadline_at,booking_number,created_at,room:fs_listing_rooms!listing_room_id(room_name),listing:fs_listings(name,city,country)',
-      )
-      .eq('traveller_id', user.id)
-      .order('created_at', { ascending: false });
-    setOffers(((data as any[]) || []) as FsOffer[]);
+    const base = 'id,nightly_offer,counter_nightly,total_offer,nights,check_in,check_out,status,released_at,confirm_deadline_at,booking_number,created_at';
+    const tail = 'listing:fs_listings(name,city,country)';
+    // Richest select first (alternative-room details + photo); fall back so a not-yet-run migration never blanks the page.
+    const variants = [
+      `${base},original_room_id,room:fs_listing_rooms!listing_room_id(room_name,photos),original:fs_listing_rooms!original_room_id(room_name),${tail}`,
+      `${base},room:fs_listing_rooms!listing_room_id(room_name),${tail}`,
+    ];
+    let rows: any[] = [];
+    for (const sel of variants) {
+      const { data, error } = await supabase.from('fs_offers').select(sel).eq('traveller_id', user.id).order('created_at', { ascending: false });
+      if (!error) { rows = (data as any[]) || []; break; }
+    }
+    setOffers(rows as FsOffer[]);
     setLoading(false);
   }, [user]);
 
@@ -125,6 +132,9 @@ export default function GuestOffers() {
         {offers.map((o) => {
           const cur = currencyFor(o);
           const isCountered = o.status === 'countered';
+          const isAlt = isCountered && !!o.original_room_id;
+          const altPhotoRaw = Array.isArray(o.room?.photos) ? o.room!.photos![0] : null;
+          const altPhoto: string | null = (typeof altPhotoRaw === 'string' ? altPhotoRaw : altPhotoRaw?.url) || null;
           const price = isCountered ? o.counter_nightly ?? o.nightly_offer : o.nightly_offer;
           const canConfirm =
             (o.status === 'accepted_pending_confirm' || o.status === 'countered') &&
@@ -159,7 +169,21 @@ export default function GuestOffers() {
                   </div>
                 ) : canConfirm ? (
                   <div className="space-y-2">
-                    {isCountered ? (
+                    {isAlt ? (
+                      <div className="rounded-xl border border-[#1E2A4A]/20 bg-[#1E2A4A]/[0.04] p-3">
+                        <p className="text-sm font-semibold text-[#1E2A4A]">
+                          Sorry — {o.original?.room_name || 'that room'} isn’t available for your dates.
+                        </p>
+                        <p className="mt-0.5 text-xs text-muted-foreground">{o.listing?.name || 'The property'} can offer you this instead:</p>
+                        <div className="mt-2 flex items-center gap-3">
+                          {altPhoto && <img src={altPhoto} alt={o.room?.room_name || 'Room'} loading="lazy" className="h-14 w-20 flex-none rounded-lg object-cover" />}
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-semibold text-foreground">{o.room?.room_name || 'Another room'}</p>
+                            <p className="text-sm text-foreground"><span className="font-bold">{cur} ${Math.round(price)}/night</span> <span className="text-muted-foreground">· {cur} ${Math.round(price * o.nights)} total</span></p>
+                          </div>
+                        </div>
+                      </div>
+                    ) : isCountered ? (
                       <div className="text-sm">
                         <span className="text-muted-foreground">You offered </span>
                         <span className="font-medium text-foreground">{cur} ${Math.round(o.nightly_offer)}</span>
@@ -171,7 +195,7 @@ export default function GuestOffers() {
                     )}
                     <div className="flex items-center gap-2">
                       <Button size="sm" className="flex-1" disabled={busyId === o.id} onClick={() => confirm(o)}>
-                        {busyId === o.id ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Confirming…</> : 'Confirm booking'}
+                        {busyId === o.id ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Confirming…</> : isAlt ? 'Approve this room' : 'Confirm booking'}
                       </Button>
                       <Button size="sm" variant="ghost" disabled={busyId === o.id} onClick={() => withdraw(o)}>Decline</Button>
                     </div>
