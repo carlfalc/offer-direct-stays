@@ -14,6 +14,7 @@ import { importLiteApiRooms } from '@/lib/listings';
 import WeatherTiles from '@/components/explore/WeatherTiles';
 import { useTileOrder } from '@/hooks/useTileOrder';
 import { commitmentFee } from '@/lib/fees';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 interface FsOffer {
   id: string;
@@ -47,43 +48,114 @@ const countdown = (deadline: string | null): string => {
   return h > 0 ? `${h}h ${m % 60}m left` : `${m}m left`;
 };
 
-/** An offer that needs a response: Accept / Counter / Decline. */
-function PendingOfferCard({ offer, currency, busy, onRespond }: {
-  offer: FsOffer; currency: string; busy: boolean;
+interface RoomOpt { id: string; listing_id: string; room_name: string | null; base_guide: number | null; photo?: string | null }
+
+/** An offer that needs a response: Accept / Counter / Decline, or "Room booked out" options. */
+function PendingOfferCard({ offer, currency, busy, photo, alternatives, onRespond, onAlternative, onUnavailable }: {
+  offer: FsOffer; currency: string; busy: boolean; photo?: string | null; alternatives: RoomOpt[];
   onRespond: (id: string, action: 'accept' | 'counter' | 'decline', counter?: number) => void;
+  onAlternative: (id: string, roomId: string, nightly: number) => void;
+  onUnavailable: (id: string) => void;
 }) {
-  const [showCounter, setShowCounter] = useState(false);
+  const [mode, setMode] = useState<'none' | 'counter' | 'booked'>('none');
   const [counter, setCounter] = useState(String(Math.round(offer.nightly_offer + 15)));
+  const [altRoom, setAltRoom] = useState('');
+  const [altPrice, setAltPrice] = useState('');
+  const guests = [
+    `${offer.adults} adult${offer.adults === 1 ? '' : 's'}`,
+    offer.children > 0 ? `${offer.children} child${offer.children === 1 ? '' : 'ren'}` : null,
+  ].filter(Boolean).join(' · ');
+
+  const pickAlt = (id: string) => {
+    setAltRoom(id);
+    const r = alternatives.find((x) => x.id === id);
+    setAltPrice(r?.base_guide != null ? String(Math.round(r.base_guide)) : '');
+  };
+  const altValid = !!altRoom && parseFloat(altPrice) > 0;
+
   return (
     <Card className="p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-sm font-semibold text-foreground">{offer.room?.room_name || 'Room'}</p>
-          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1"><CalendarDays className="h-3.5 w-3.5" /> {fmtDate(offer.check_in)}–{fmtDate(offer.check_out)} · {offer.nights}n</span>
-            <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" /> {offer.adults + offer.children}</span>
-          </div>
+      <div className="flex items-start gap-3">
+        <div className="h-16 w-20 flex-none overflow-hidden rounded-lg bg-muted">
+          {photo
+            ? <img src={photo} alt={offer.room?.room_name || 'Room'} loading="lazy" className="h-full w-full object-cover" />
+            : <div className="flex h-full w-full items-center justify-center text-muted-foreground"><BedDouble className="h-6 w-6 opacity-50" /></div>}
         </div>
-        <div className="text-right">
-          <p className="text-lg font-bold text-primary">{currency} ${Math.round(offer.nightly_offer)}</p>
-          <p className="text-[11px] text-muted-foreground">/night · {currency} ${Math.round(offer.total_offer)} total</p>
+        <div className="flex min-w-0 flex-1 items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-foreground">{offer.room?.room_name || 'Room'}</p>
+            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1"><CalendarDays className="h-3.5 w-3.5" /> {fmtDate(offer.check_in)}–{fmtDate(offer.check_out)} · {offer.nights}n</span>
+            </div>
+            <p className="mt-1 flex items-center gap-1 text-xs font-medium text-foreground"><Users className="h-3.5 w-3.5" /> Searched for {guests}</p>
+          </div>
+          <div className="text-right">
+            <p className="text-lg font-bold text-primary">{currency} ${Math.round(offer.nightly_offer)}</p>
+            <p className="text-[11px] text-muted-foreground">/night · {currency} ${Math.round(offer.total_offer)} total</p>
+          </div>
         </div>
       </div>
       {offer.message && <p className="mt-2 rounded-md bg-muted/40 p-2 text-xs text-muted-foreground">“{offer.message}”</p>}
-      {!showCounter ? (
-        <div className="mt-3 flex gap-2">
-          <Button size="sm" className="flex-1" disabled={busy} onClick={() => onRespond(offer.id, 'accept')}>Accept</Button>
-          <Button size="sm" variant="outline" className="flex-1" disabled={busy} onClick={() => setShowCounter(true)}>Counter</Button>
-          <Button size="sm" variant="ghost" className="flex-1 text-muted-foreground" disabled={busy} onClick={() => onRespond(offer.id, 'decline')}>Decline</Button>
+
+      {mode === 'none' && (
+        <div className="mt-3 space-y-2">
+          <div className="flex gap-2">
+            <Button size="sm" className="flex-1" disabled={busy} onClick={() => onRespond(offer.id, 'accept')}>Accept</Button>
+            <Button size="sm" variant="outline" className="flex-1" disabled={busy} onClick={() => setMode('counter')}>Counter</Button>
+            <Button size="sm" variant="ghost" className="flex-1 text-muted-foreground" disabled={busy} onClick={() => onRespond(offer.id, 'decline')}>Decline</Button>
+          </div>
+          <Button size="sm" variant="outline" className="w-full border-[#1E2A4A]/30 text-[#1E2A4A]" disabled={busy} onClick={() => setMode('booked')}>
+            Room booked out
+          </Button>
         </div>
-      ) : (
+      )}
+
+      {mode === 'counter' && (
         <div className="mt-3 space-y-2">
           <label className="text-xs font-medium text-foreground">Your counter ({currency}/night)</label>
           <div className="flex gap-2">
             <Input type="number" value={counter} onChange={(e) => setCounter(e.target.value)} className="h-9" min={20} />
             <Button size="sm" className="h-9" disabled={busy} onClick={() => onRespond(offer.id, 'counter', parseFloat(counter))}>Send counter</Button>
-            <Button size="sm" variant="ghost" className="h-9" disabled={busy} onClick={() => setShowCounter(false)}>Cancel</Button>
+            <Button size="sm" variant="ghost" className="h-9" disabled={busy} onClick={() => setMode('none')}>Cancel</Button>
           </div>
+        </div>
+      )}
+
+      {mode === 'booked' && (
+        <div className="mt-3 space-y-3 rounded-xl border border-[#1E2A4A]/20 bg-[#1E2A4A]/[0.04] p-3">
+          <p className="text-sm font-semibold text-[#1E2A4A]">Room booked out options</p>
+
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-foreground">We're sorry that's not available, but we can offer:</label>
+            {alternatives.length === 0 ? (
+              <p className="text-xs text-muted-foreground">You have no other rooms to offer on this property.</p>
+            ) : (
+              <select value={altRoom} onChange={(e) => pickAlt(e.target.value)}
+                className="h-9 w-full rounded-md border border-border bg-card px-2 text-sm text-foreground">
+                <option value="">Choose an available room…</option>
+                {alternatives.map((r) => (
+                  <option key={r.id} value={r.id}>{r.room_name || 'Room'}{r.base_guide != null ? ` — guide ${currency} $${Math.round(r.base_guide)}` : ''}</option>
+                ))}
+              </select>
+            )}
+            {altRoom && (
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-foreground">Price for this room ({currency}/night) — change it to counter</label>
+                <div className="flex gap-2">
+                  <Input type="number" value={altPrice} onChange={(e) => setAltPrice(e.target.value)} className="h-9" min={20} />
+                  <Button size="sm" className="h-9 bg-[#1E2A4A] text-white hover:bg-[#1E2A4A]/90" disabled={busy || !altValid}
+                    onClick={() => onAlternative(offer.id, altRoom, parseFloat(altPrice))}>Send alternative</Button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2 text-[11px] uppercase tracking-wider text-muted-foreground"><span className="h-px flex-1 bg-border" />or<span className="h-px flex-1 bg-border" /></div>
+
+          <Button size="sm" variant="outline" className="w-full" disabled={busy} onClick={() => onUnavailable(offer.id)}>
+            Decline — room is booked out
+          </Button>
+          <Button size="sm" variant="ghost" className="w-full text-muted-foreground" disabled={busy} onClick={() => setMode('none')}>Back</Button>
         </div>
       )}
     </Card>
@@ -208,6 +280,7 @@ export default function BusinessDashboard() {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [filter, setFilter] = useState<Filter>(null);
+  const [taskPopup, setTaskPopup] = useState<Filter>(null);
   const [period, setPeriod] = useState<'30' | '120' | '180' | '365' | 'custom'>('365');
   const [bandColor, setBandColor] = useState<'yellow' | 'orange' | 'navy'>(() => {
     try { return (localStorage.getItem('fs_band_biz') as any) || 'navy'; } catch { return 'navy'; }
@@ -235,7 +308,7 @@ export default function BusinessDashboard() {
         .select('id,listing_id,listing_room_id,nightly_offer,total_offer,nights,adults,children,check_in,check_out,message,status,counter_nightly,confirm_deadline_at,booking_number,entered_at,created_at,room:fs_listing_rooms(room_name),listing:fs_listings(name,city,country)')
         .in('listing_id', ids)
         .order('created_at', { ascending: false }),
-      supabase.from('fs_listing_rooms').select('id,listing_id,room_name,base_guide,sort_order').in('listing_id', ids),
+      supabase.from('fs_listing_rooms').select('id,listing_id,room_name,base_guide,sort_order,photos').in('listing_id', ids),
       supabase.from('fs_room_thresholds').select('listing_room_id,base_auto,base_floor'),
     ]);
     setOffers(((off as any[]) || []) as FsOffer[]);
@@ -308,6 +381,32 @@ export default function BusinessDashboard() {
     load();
   };
 
+  const offerAlternative = async (id: string, roomId: string, nightly: number) => {
+    setBusyId(id);
+    const { error } = await supabase.rpc('fs_business_offer_alternative', { p_offer: id, p_room: roomId, p_nightly: nightly, p_note: null } as any);
+    setBusyId(null);
+    if (error) {
+      const missing = /could not find|does not exist|schema cache/i.test(error.message || '');
+      toast({ title: 'Could not send alternative', description: missing ? 'Run the latest database update (findastay_room_booked_out.sql) first.' : (error.message || 'Please try again'), variant: 'destructive' });
+      return;
+    }
+    toast({ title: 'Alternative room offered', description: 'The guest has 1 hour to confirm.' });
+    load();
+  };
+
+  const declineUnavailable = async (id: string) => {
+    setBusyId(id);
+    const { error } = await supabase.rpc('fs_business_decline_unavailable', { p_offer: id } as any);
+    setBusyId(null);
+    if (error) {
+      const missing = /could not find|does not exist|schema cache/i.test(error.message || '');
+      toast({ title: 'Could not decline', description: missing ? 'Run the latest database update (findastay_room_booked_out.sql) first.' : (error.message || 'Please try again'), variant: 'destructive' });
+      return;
+    }
+    toast({ title: 'Declined — room booked out', description: 'The guest has been told the room is unavailable.' });
+    load();
+  };
+
   const markEntered = async (id: string) => {
     setBusyId(id);
     const { error } = await supabase.rpc('fs_mark_entered', { p_offer: id } as any);
@@ -370,6 +469,21 @@ export default function BusinessDashboard() {
     };
   }).sort((a, b) => b.bookings - a.bookings || b.revenue - a.revenue);
   const topBookings = roomPerf[0]?.bookings || 0;
+
+  // Room helpers for the task cards: thumbnail + other rooms of the same property to offer instead.
+  const roomPhoto = (roomId: string): string | null => {
+    const r: any = rooms.find((x) => x.id === roomId);
+    const p = Array.isArray(r?.photos) ? r.photos[0] : null;
+    return (typeof p === 'string' ? p : p?.url) || null;
+  };
+  const alternativesFor = (o: FsOffer): RoomOpt[] =>
+    rooms.filter((r) => r.listing_id === o.listing_id && r.id !== o.listing_room_id)
+      .map((r) => ({ id: r.id, listing_id: r.listing_id, room_name: r.room_name, base_guide: r.base_guide }));
+  const renderPending = (o: FsOffer) => (
+    <PendingOfferCard key={o.id} offer={o} currency={currencyFor(o)} busy={busyId === o.id}
+      photo={roomPhoto(o.listing_room_id)} alternatives={alternativesFor(o)}
+      onRespond={respond} onAlternative={offerAlternative} onUnavailable={declineUnavailable} />
+  );
 
   // Go-live readiness — per property. "Live" = approved + every room priced + owner published.
   const listingReadiness = listings.map((l) => {
@@ -441,7 +555,7 @@ export default function BusinessDashboard() {
 
   const Tile = ({ id, label, count, tone }: { id: Filter; label: string; count: number; tone?: 'alert' | 'success' | 'default' }) => (
     <button
-      onClick={() => setFilter(filter === id ? null : id)}
+      onClick={() => { setFilter(id); setTaskPopup(id); }}
       className={cn(
         'rounded-xl border p-3 text-center transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_14px_28px_-14px_rgba(8,22,30,.45)]',
         filter === id ? 'border-primary ring-2 ring-primary' : 'border-border hover:border-primary/50',
@@ -604,7 +718,7 @@ export default function BusinessDashboard() {
         {show('pending') && (
           <Section title="Needs your response" icon={<Inbox className="h-4 w-4" />}>
             {pending.length === 0 ? <Empty text="No offers waiting. New offers between your floor and auto-accept price appear here." /> : (
-              <div className="space-y-3">{pending.map((o) => <PendingOfferCard key={o.id} offer={o} currency={currencyFor(o)} busy={busyId === o.id} onRespond={respond} />)}</div>
+              <div className="space-y-3">{pending.map(renderPending)}</div>
             )}
           </Section>
         )}
@@ -650,6 +764,40 @@ export default function BusinessDashboard() {
           </Section>
         )}
       </section>
+
+      {/* Tasks popup — opens when a Live-tasks tile is clicked */}
+      <Dialog open={taskPopup !== null} onOpenChange={(o) => { if (!o) setTaskPopup(null); }}>
+        <DialogContent className="max-h-[88vh] max-w-2xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {{ pending: 'Needs your response', awaiting: 'Awaiting guest', confirmed: 'Confirmed bookings', to_enter: 'To enter in your system', entered: 'Entered' }[taskPopup || 'pending']}
+            </DialogTitle>
+            <DialogDescription>Review and action each task here.</DialogDescription>
+          </DialogHeader>
+          {taskPopup === 'pending' && (
+            pending.length === 0 ? <Empty text="Nothing waiting — you're all caught up." /> : <div className="space-y-3">{pending.map(renderPending)}</div>
+          )}
+          {taskPopup === 'awaiting' && (
+            awaiting.length === 0 ? <Empty text="No offers awaiting a guest." /> : (
+              <div className="space-y-2">
+                {awaiting.map((o) => (
+                  <Card key={o.id} className="flex items-center justify-between gap-3 p-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-foreground">{o.room?.room_name || 'Room'}</p>
+                      <p className="text-xs text-muted-foreground">{fmtDate(o.check_in)}–{fmtDate(o.check_out)} · {o.status === 'countered' ? `Countered ${currencyFor(o)} $${Math.round(o.counter_nightly || 0)}` : `Accepted ${currencyFor(o)} $${Math.round(o.nightly_offer)}`}</p>
+                    </div>
+                    <Badge variant="outline" className="flex-shrink-0 text-xs">{countdown(o.confirm_deadline_at)}</Badge>
+                  </Card>
+                ))}
+              </div>
+            )
+          )}
+          {(taskPopup === 'confirmed' || taskPopup === 'to_enter' || taskPopup === 'entered') && (() => {
+            const list = taskPopup === 'to_enter' ? toEnter : taskPopup === 'entered' ? entered : confirmed;
+            return list.length === 0 ? <Empty text="Nothing here yet." /> : <div className="space-y-2">{list.map((o) => <BookingRow key={o.id} o={o} />)}</div>;
+          })()}
+        </DialogContent>
+      </Dialog>
 
       {/* Analytics */}
       <section className="mb-6">
