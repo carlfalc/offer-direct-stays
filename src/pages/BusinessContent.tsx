@@ -45,6 +45,10 @@ export default function BusinessContent() {
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const [ownerDesc, setOwnerDesc] = useState('');
   const [savingDesc, setSavingDesc] = useState(false);
+  const [checkIn, setCheckIn] = useState('');
+  const [checkOut, setCheckOut] = useState('');
+  const [arrivalNotes, setArrivalNotes] = useState('');
+  const [savingArrival, setSavingArrival] = useState(false);
   const [previewRoom, setPreviewRoom] = useState<RoomDraft | null>(null);
 
   const load = useCallback(async () => {
@@ -61,6 +65,11 @@ export default function BusinessContent() {
     if (l) {
       const { data: hero } = await supabase.from('fs_listings').select('hero_photo_url,hero_focus_x,hero_focus_y').eq('id', l.id).maybeSingle();
       if (hero) l = { ...l, ...hero };
+      // Arrival details come from a later migration — best-effort.
+      const { data: arr } = await supabase.from('fs_listings').select('check_in_time,check_out_time,arrival_notes').eq('id', l.id).maybeSingle();
+      setCheckIn((arr as any)?.check_in_time || '');
+      setCheckOut((arr as any)?.check_out_time || '');
+      setArrivalNotes((arr as any)?.arrival_notes || '');
     }
     setListing(l);
     setOwnerDesc(l?.owner_description || '');
@@ -227,6 +236,23 @@ export default function BusinessContent() {
     toast({ title: 'Description saved' });
   };
 
+  const saveArrival = async () => {
+    if (!listing) return;
+    setSavingArrival(true);
+    const { error } = await supabase.from('fs_listings').update({
+      check_in_time: checkIn.trim() || null,
+      check_out_time: checkOut.trim() || null,
+      arrival_notes: arrivalNotes.trim() || null,
+    } as any).eq('id', listing.id);
+    setSavingArrival(false);
+    if (error) {
+      const missing = /column|schema cache/i.test(error.message || '');
+      toast({ title: 'Could not save', description: missing ? 'Run the latest database update (findastay_trip_details.sql) first.' : error.message, variant: 'destructive' });
+      return;
+    }
+    toast({ title: 'Arrival details saved' });
+  };
+
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
       {/* Magazine header */}
@@ -285,6 +311,30 @@ export default function BusinessContent() {
         <div className="mt-3 flex justify-end">
           <button onClick={saveOwnerDesc} disabled={savingDesc} className="flex items-center gap-1.5 rounded-lg bg-[#0C9C8E] px-4 py-2 font-display text-sm font-extrabold text-white shadow-sm hover:bg-[#0b8c80] disabled:opacity-60">
             {savingDesc ? <><Loader2 className="h-4 w-4 animate-spin" /> Saving…</> : <><Save className="h-4 w-4" /> Save description</>}
+          </button>
+        </div>
+      </div>
+
+      {/* Arrival & check-out — shown to confirmed guests on Upcoming Trips */}
+      <div className="mt-5 rounded-2xl border border-border bg-card p-5">
+        <h2 className="font-display text-xl font-extrabold text-[#0C1A22]">Arrival &amp; check-out</h2>
+        <p className="mb-3 mt-1 text-sm font-medium text-[#0C1A22]/70">Shown to guests once their booking is confirmed.</p>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div>
+            <label className="text-xs font-medium text-muted-foreground">Check-in from</label>
+            <Input value={checkIn} onChange={(e) => setCheckIn(e.target.value)} placeholder="e.g. 2:00 pm" className="mt-1 h-9 font-semibold" />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-muted-foreground">Check-out by</label>
+            <Input value={checkOut} onChange={(e) => setCheckOut(e.target.value)} placeholder="e.g. 10:00 am" className="mt-1 h-9 font-semibold" />
+          </div>
+        </div>
+        <label className="mt-3 block text-xs font-medium text-muted-foreground">Arrival notes (optional)</label>
+        <Textarea value={arrivalNotes} onChange={(e) => setArrivalNotes(e.target.value)} rows={2}
+          placeholder="e.g. Reception is open until 9pm; late arrivals use the key lockbox." className="mt-1 w-full font-medium" />
+        <div className="mt-3 flex justify-end">
+          <button onClick={saveArrival} disabled={savingArrival} className="flex items-center gap-1.5 rounded-lg bg-[#0C9C8E] px-4 py-2 font-display text-sm font-extrabold text-white shadow-sm hover:bg-[#0b8c80] disabled:opacity-60">
+            {savingArrival ? <><Loader2 className="h-4 w-4 animate-spin" /> Saving…</> : <><Save className="h-4 w-4" /> Save arrival details</>}
           </button>
         </div>
       </div>
