@@ -248,7 +248,7 @@ export default function RoomPicker({
                     <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{room.description}</p>
                   ) : null}
                 </div>
-                <Button size="sm" className={cn('h-8 w-full text-xs', selected && 'bg-[#1E2A4A] text-white hover:bg-[#1E2A4A]/90')} variant={selected ? 'default' : 'outline'} onClick={() => setDetailRoom(room)}>
+                <Button size="sm" className="h-8 w-full border-0 bg-[#1E2A4A] text-xs text-white hover:bg-[#1E2A4A]/90 hover:text-white" onClick={() => setDetailRoom(room)}>
                   View & make offer
                 </Button>
               </div>

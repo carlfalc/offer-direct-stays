@@ -149,7 +149,7 @@ export default function PropertyResultCard({
           </div>
 
           <button
-            className="rounded-lg bg-foreground px-4 py-2.5 font-display text-sm font-bold text-background transition hover:opacity-90"
+            className="rounded-lg bg-[#1E2A4A] px-4 py-2.5 font-display text-sm font-bold text-white transition hover:bg-[#1E2A4A]/90"
             onClick={(e) => { e.stopPropagation(); onMakeOffer(); }}
           >
             Make an offer
