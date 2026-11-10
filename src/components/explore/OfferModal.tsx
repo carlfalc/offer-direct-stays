@@ -555,7 +555,7 @@ export default function OfferModal({
       <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
         Cancel
       </Button>
-      <Button className="flex-1" onClick={() => handleSubmit()} disabled={isSubmitting}>
+      <Button className="flex-1 bg-[#1E2A4A] text-white hover:bg-[#1E2A4A]/90" onClick={() => handleSubmit()} disabled={isSubmitting}>
         {isSubmitting ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />

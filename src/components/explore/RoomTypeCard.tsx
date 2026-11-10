@@ -86,7 +86,7 @@ export default function RoomTypeCard({
             ~{currencySymbol}{estimatedRate}
           </p>
           <p className="text-xs text-muted-foreground">per night</p>
-          <Button size="sm" className="mt-2 text-xs h-7" onClick={onMakeOffer}>
+          <Button size="sm" className="mt-2 text-xs h-7 bg-[#1E2A4A] text-white hover:bg-[#1E2A4A]/90" onClick={onMakeOffer}>
             Make offer
           </Button>
         </div>

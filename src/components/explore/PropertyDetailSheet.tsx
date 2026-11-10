@@ -177,7 +177,7 @@ export default function PropertyDetailSheet({
               >
                 This property isn't on findastay yet. You can view it and claim it, or nudge us to onboard them.
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <Button size="sm" onClick={handleNudge} disabled={nudged} className="gap-1.5">
+                  <Button size="sm" onClick={handleNudge} disabled={nudged} className="gap-1.5 bg-[#1E2A4A] text-white hover:bg-[#1E2A4A]/90">
                     {nudged ? <><Check className="h-4 w-4" /> Nudge sent</> : <><Megaphone className="h-4 w-4" /> Nudge us to add this</>}
                   </Button>
                   <Button size="sm" variant="outline" onClick={handleClaim} style={{ borderColor: '#f0c35b', color: '#8a5e0f' }}>
@@ -244,12 +244,12 @@ export default function PropertyDetailSheet({
 
         <div className="pt-4 border-t border-border">
           {isClaimed ? (
-            <Button className="w-full" onClick={() => onMakeOffer(property)}>
+            <Button className="w-full bg-[#1E2A4A] text-white hover:bg-[#1E2A4A]/90" onClick={() => onMakeOffer(property)}>
               Make an offer for this property
             </Button>
           ) : (
             <div className="space-y-2">
-              <Button className="w-full" onClick={handleClaim}>
+              <Button className="w-full bg-[#1E2A4A] text-white hover:bg-[#1E2A4A]/90" onClick={handleClaim}>
                 Claim this business
               </Button>
               <Button variant="outline" className="w-full" onClick={handleNudge}>
