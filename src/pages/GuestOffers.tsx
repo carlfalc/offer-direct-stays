@@ -106,27 +106,30 @@ export default function GuestOffers() {
 
   if (loading) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      <div className="flex min-h-[70vh] items-center justify-center bg-white">
+        <Loader2 className="h-6 w-6 animate-spin text-[#1E2A4A]" />
       </div>
     );
   }
 
   if (offers.length === 0) {
     return (
-      <div className="mx-auto max-w-xl px-4 py-16 text-center">
-        <Send className="mx-auto h-10 w-10 text-muted-foreground/50" />
-        <h1 className="mt-4 text-xl font-semibold text-foreground">No offers yet</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Find a place and name your price — your offers show up here.</p>
-        <Button className="mt-5" onClick={() => navigate('/explore')}>Explore stays</Button>
+      <div className="min-h-[70vh] bg-white">
+        <div className="mx-auto max-w-xl px-4 py-16 text-center">
+          <Send className="mx-auto h-10 w-10 text-[#1E2A4A]/40" />
+          <h1 className="mt-4 text-xl font-semibold text-[#1E2A4A]">No offers yet</h1>
+          <p className="mt-1 text-sm text-[#1E2A4A]/70">Find a place and name your price — your offers show up here.</p>
+          <Button className="mt-5" onClick={() => navigate('/explore')}>Explore stays</Button>
+        </div>
       </div>
     );
   }
 
   return (
+    <div className="min-h-[70vh] bg-white">
     <div className="mx-auto max-w-2xl px-4 py-8">
-      <h1 className="text-2xl font-semibold text-foreground">My offers</h1>
-      <p className="mt-1 text-sm text-muted-foreground">Track your offers and confirm the moment a property says yes.</p>
+      <h1 className="text-2xl font-semibold text-[#1E2A4A]">My offers</h1>
+      <p className="mt-1 text-sm text-[#1E2A4A]/70">Track your offers and confirm the moment a property says yes.</p>
 
       <div className="mt-6 space-y-3">
         {offers.map((o) => {
@@ -221,6 +224,7 @@ export default function GuestOffers() {
           );
         })}
       </div>
+    </div>
     </div>
   );
 }
