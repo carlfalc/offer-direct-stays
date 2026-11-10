@@ -143,6 +143,8 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
   const sharedBusinessRoute = location.pathname.startsWith('/messages');
   const businessMode = !isOnboardingRoute && (isBusinessRoute || (hasBusiness === true && sharedBusinessRoute));
   const navItems = businessMode ? businessNavItems : guestNavItems;
+  // Traveller pages that sit on a clean white page (header + footer stay dark).
+  const lightPage = !businessMode && ['/watchlist', '/messages', '/profile'].some((p) => location.pathname.startsWith(p));
 
   if (authLoading) {
     return (
@@ -391,11 +393,11 @@ export default function AuthenticatedLayout({ children, fullHeight = false }: Au
 
       {/* Main content */}
       {fullHeight ? (
-        <div className="flex-1 min-h-0 overflow-hidden">
+        <div className={cn('flex-1 min-h-0 overflow-hidden', lightPage && 'fas-brand-day !min-h-0')}>
           {children}
         </div>
       ) : (
-        <main className="flex-1">
+        <main className={cn('flex-1', lightPage && 'fas-brand-day')}>
           {children}
         </main>
       )}
