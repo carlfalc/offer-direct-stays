@@ -26,6 +26,7 @@ export default function Auth() {
   const [signupPassword, setSignupPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [phone, setPhone] = useState('');
   const [tab, setTab] = useState<'login' | 'signup'>('login');
   const [devBusy, setDevBusy] = useState<string | null>(null);
 
@@ -130,8 +131,13 @@ export default function Auth() {
       }
     }
 
+    if (phone.replace(/\D/g, '').length < 7) {
+      toast({ title: 'Mobile number required', description: 'Please enter a valid mobile number so properties can reach you about your offers.', variant: 'destructive' });
+      return;
+    }
+
     setIsLoading(true);
-    const { error } = await signUp(signupEmail, signupPassword, firstName, lastName);
+    const { error } = await signUp(signupEmail, signupPassword, firstName, lastName, phone);
 
     if (error) {
       setIsLoading(false);
@@ -267,6 +273,11 @@ export default function Auth() {
                   <label htmlFor="signup-password">Password</label>
                   <input id="signup-password" type="password" placeholder="At least 6 characters" autoComplete="new-password"
                     value={signupPassword} onChange={(e) => setSignupPassword(e.target.value)} required />
+                </div>
+                <div className="fa-f">
+                  <label htmlFor="signup-phone">Mobile number</label>
+                  <input id="signup-phone" type="tel" placeholder="+64 21 123 456" autoComplete="tel"
+                    value={phone} onChange={(e) => setPhone(e.target.value)} required />
                 </div>
                 <button type="submit" className="fa-cta" disabled={isLoading}>
                   {isLoading ? <><span className="fa-spin" /> Creating account…</> : 'Create account'}

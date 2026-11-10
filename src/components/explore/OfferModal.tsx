@@ -75,6 +75,13 @@ export default function OfferModal({
   const [contactPhone, setContactPhone] = useState('');
   const [contactPref, setContactPref] = useState<'email' | 'phone' | 'text'>('email');
 
+  // Prefill the contact phone from the traveller's profile (compulsory at signup; editable).
+  useEffect(() => {
+    if (!user) return;
+    supabase.from('profiles').select('phone').eq('user_id', user.id).maybeSingle()
+      .then(({ data }) => { if (data?.phone) setContactPhone((cur) => cur || data.phone); });
+  }, [user]);
+
   // Prefill the contact email from the signed-in account (editable).
   useEffect(() => {
     if (user?.email && !contactEmail) setContactEmail(user.email);

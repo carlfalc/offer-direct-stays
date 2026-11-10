@@ -52,16 +52,28 @@ export default function Profile() {
   const handleSave = async () => {
     if (!user) return;
 
+    if (!phone.trim()) {
+      toast({
+        title: 'Mobile number required',
+        description: 'Properties need a number to reach you about your offers.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setIsSaving(true);
-    const { error } = await supabase
+    // The profile row always exists (created at signup), so UPDATE — an upsert
+    // would attempt an INSERT, which RLS blocks (no INSERT policy on profiles).
+    const { data: updated, error } = await supabase
       .from('profiles')
-      .upsert({
-        user_id: user.id,
+      .update({
         email: email || user.email || null,
         first_name: firstName || null,
         last_name: lastName || null,
-        phone: phone || null,
-      }, { onConflict: 'user_id' });
+        phone: phone.trim(),
+      })
+      .eq('user_id', user.id)
+      .select('user_id');
 
     setIsSaving(false);
 
@@ -69,6 +81,15 @@ export default function Profile() {
       toast({
         title: 'Save failed',
         description: error.message,
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!updated || updated.length === 0) {
+      toast({
+        title: 'Save failed',
+        description: 'Your profile record is missing. Please run the latest database update, then try again.',
         variant: 'destructive',
       });
       return;
@@ -142,9 +163,11 @@ export default function Profile() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="phone">Phone (optional)</Label>
+            <Label htmlFor="phone">Mobile number</Label>
             <Input
               id="phone"
+              type="tel"
+              required
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="+64 21 123 456"
