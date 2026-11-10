@@ -68,7 +68,7 @@ export default function Trips() {
       try {
         const { data } = await supabase
           .from('fs_offers')
-          .select('id,listing_id,listing_room_id,nightly_offer,counter_nightly,total_offer,nights,check_in,check_out,status,booking_number,created_at,room:fs_listing_rooms(room_name),listing:fs_listings(name,city,country)')
+          .select('id,listing_id,listing_room_id,nightly_offer,counter_nightly,total_offer,nights,check_in,check_out,status,booking_number,created_at,room:fs_listing_rooms!listing_room_id(room_name),listing:fs_listings(name,city,country)')
           .eq('traveller_id', user.id)
           .eq('status', 'confirmed')
           .order('check_in', { ascending: true });

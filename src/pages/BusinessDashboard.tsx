@@ -305,7 +305,7 @@ export default function BusinessDashboard() {
     const [{ data: off }, { data: rms }, { data: thr }] = await Promise.all([
       supabase
         .from('fs_offers')
-        .select('id,listing_id,listing_room_id,nightly_offer,total_offer,nights,adults,children,check_in,check_out,message,status,counter_nightly,confirm_deadline_at,booking_number,entered_at,created_at,room:fs_listing_rooms(room_name),listing:fs_listings(name,city,country)')
+        .select('id,listing_id,listing_room_id,nightly_offer,total_offer,nights,adults,children,check_in,check_out,message,status,counter_nightly,confirm_deadline_at,booking_number,entered_at,created_at,room:fs_listing_rooms!listing_room_id(room_name),listing:fs_listings(name,city,country)')
         .in('listing_id', ids)
         .order('created_at', { ascending: false }),
       supabase.from('fs_listing_rooms').select('id,listing_id,room_name,base_guide,sort_order,photos').in('listing_id', ids),

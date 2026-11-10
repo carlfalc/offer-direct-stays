@@ -40,7 +40,7 @@ export default function AdminConsole() {
       supabase.from('fs_onboarding_requests').select('*').order('created_at', { ascending: false }),
       supabase.from('fs_listing_leads').select('*').order('created_at', { ascending: false }),
       supabase.from('fs_offers')
-        .select('id,booking_number,nightly_offer,total_offer,nights,check_in,check_out,entered_at,created_at,room:fs_listing_rooms(room_name),listing:fs_listings(name,city,country)')
+        .select('id,booking_number,nightly_offer,total_offer,nights,check_in,check_out,entered_at,created_at,room:fs_listing_rooms!listing_room_id(room_name),listing:fs_listings(name,city,country)')
         .eq('status', 'confirmed').order('created_at', { ascending: false }),
     ]);
     setReqs(((r1.data as any[]) || []) as OnboardingReq[]);

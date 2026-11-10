@@ -32,7 +32,7 @@ export default function FsMessages() {
     // RLS returns only offers where I'm the traveller or the listing owner.
     const { data: offers } = await supabase
       .from('fs_offers')
-      .select('id,traveller_id,check_in,check_out,booking_number,room:fs_listing_rooms(room_name),listing:fs_listings(name,city,owner_id)')
+      .select('id,traveller_id,check_in,check_out,booking_number,room:fs_listing_rooms!listing_room_id(room_name),listing:fs_listings(name,city,owner_id)')
       .eq('status', 'confirmed')
       .order('confirmed_at', { ascending: false });
     const offs = (offers as any[]) || [];

@@ -36,7 +36,7 @@ export default function FsConversation() {
     if (!user || !offerId) return;
     const { data: o } = await supabase
       .from('fs_offers')
-      .select('id,traveller_id,listing_id,check_in,check_out,nights,adults,children,nightly_offer,total_offer,booking_number,status,guest_email,guest_phone,guest_contact_pref,room:fs_listing_rooms(room_name),listing:fs_listings(name,city,country,owner_id)')
+      .select('id,traveller_id,listing_id,check_in,check_out,nights,adults,children,nightly_offer,total_offer,booking_number,status,guest_email,guest_phone,guest_contact_pref,room:fs_listing_rooms!listing_room_id(room_name),listing:fs_listings(name,city,country,owner_id)')
       .eq('id', offerId)
       .maybeSingle();
     if (!o || (o as any).status !== 'confirmed') { navigate('/messages'); return; }

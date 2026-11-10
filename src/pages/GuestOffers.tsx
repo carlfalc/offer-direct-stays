@@ -51,7 +51,7 @@ export default function GuestOffers() {
     const { data } = await supabase
       .from('fs_offers')
       .select(
-        'id,nightly_offer,counter_nightly,total_offer,nights,check_in,check_out,status,released_at,confirm_deadline_at,booking_number,created_at,room:fs_listing_rooms(room_name),listing:fs_listings(name,city,country)',
+        'id,nightly_offer,counter_nightly,total_offer,nights,check_in,check_out,status,released_at,confirm_deadline_at,booking_number,created_at,room:fs_listing_rooms!listing_room_id(room_name),listing:fs_listings(name,city,country)',
       )
       .eq('traveller_id', user.id)
       .order('created_at', { ascending: false });
