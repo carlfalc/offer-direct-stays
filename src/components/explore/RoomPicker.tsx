@@ -154,6 +154,7 @@ function RoomDetail({
               guidePrice={band.actual}
               minOffer={band.min}
               currencySymbol={currency === 'AUD' ? 'A$' : 'NZ$'}
+              accent="#19C9B4"
               value={price}
               onChange={setPrice}
               hideCta
@@ -164,7 +165,7 @@ function RoomDetail({
 
       {/* Sticky action */}
       <div className="border-t border-border p-4">
-        <Button className="w-full" disabled={isSubmitting} onClick={() => onSend(price)}>
+        <Button className="w-full bg-[#19C9B4] text-white hover:bg-[#19C9B4]/90" disabled={isSubmitting} onClick={() => onSend(price)}>
           {isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending…
@@ -265,6 +266,7 @@ export default function RoomPicker({
           onSend={(amount) => {
             onSelect(detailRoom.id);
             onSubmitOffer(detailRoom.id, amount);
+            setDetailRoom(null); // close the room view so modal feedback (dates/phone) is visible
           }}
           onClose={() => setDetailRoom(null)}
         />

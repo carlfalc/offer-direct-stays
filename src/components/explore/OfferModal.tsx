@@ -213,8 +213,16 @@ export default function OfferModal({
       setError('Offer amount looks too high — please adjust');
       return;
     }
+    if (!checkIn || !checkOut) {
+      const msg = 'Please choose your check-in and check-out dates below before sending.';
+      setError(msg);
+      toast({ title: 'Add your dates', description: msg, variant: 'destructive' });
+      return;
+    }
     if (!contactPhone.trim()) {
-      setError('Please add a mobile number so the property can book you in if your offer is accepted');
+      const msg = 'Please add a mobile number below so the property can book you in if your offer is accepted.';
+      setError(msg);
+      toast({ title: 'Add a mobile number', description: msg, variant: 'destructive' });
       return;
     }
     setError(null);
