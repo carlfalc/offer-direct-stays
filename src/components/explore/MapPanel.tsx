@@ -138,9 +138,9 @@ export default function MapPanel({
               background: ${isShortlisted || isWatchlisted 
                 ? 'linear-gradient(135deg, hsl(190, 64%, 34%), hsl(190, 64%, 44%))' 
                 : isSelected 
-                  ? 'linear-gradient(135deg, hsl(40, 45%, 55%), hsl(40, 55%, 65%))' 
+                  ? 'linear-gradient(135deg, hsl(222, 42%, 21%), hsl(222, 42%, 28%))' 
                   : 'linear-gradient(135deg, hsl(220, 26%, 15%), hsl(220, 26%, 25%))'};
-              color: ${isSelected || isShortlisted || isWatchlisted ? 'hsl(220, 26%, 9%)' : 'hsl(40, 33%, 96%)'};
+              color: ${isSelected || isShortlisted || isWatchlisted ? 'hsl(0, 0%, 100%)' : 'hsl(40, 33%, 96%)'};
               font-size: 12px;
               font-weight: 600;
               padding: 6px 12px;
@@ -184,7 +184,7 @@ export default function MapPanel({
               background: ${isShortlisted || isWatchlisted 
                 ? 'hsl(190, 64%, 34%)' 
                 : isSelected 
-                  ? 'hsl(40, 45%, 60%)' 
+                  ? 'hsl(222, 42%, 21%)' 
                   : 'hsl(220, 26%, 20%)'};
               margin-top: 2px;
             "></div>
@@ -194,7 +194,7 @@ export default function MapPanel({
               background: ${isShortlisted || isWatchlisted 
                 ? 'hsl(190, 64%, 34%)' 
                 : isSelected 
-                  ? 'hsl(40, 45%, 60%)' 
+                  ? 'hsl(222, 42%, 21%)' 
                   : 'hsl(220, 26%, 20%)'};
               border-radius: 50%;
               box-shadow: 0 2px 4px rgba(0,0,0,0.2);

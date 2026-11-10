@@ -567,7 +567,7 @@ export default function Explore() {
       {/* Demo: Post-stay review trigger button (floating) */}
       <button
         onClick={() => setReviewModalOpen(true)}
-        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-2.5 rounded-full bg-gradient-to-r from-gold to-gold/80 text-charcoal font-medium shadow-lg hover:shadow-xl transition-all duration-300"
+        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-2.5 rounded-full bg-[#1E2A4A] text-white font-medium shadow-lg hover:shadow-xl transition-all duration-300"
       >
         <Star className="w-4 h-4" />
         <span className="hidden sm:inline">Demo Review</span>

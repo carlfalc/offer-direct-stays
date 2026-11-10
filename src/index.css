@@ -21,9 +21,9 @@
     --popover: 40 33% 96%;
     --popover-foreground: 220 20% 10%;
 
-    /* Primary: Gold accent #C7A76C */
-    --primary: 40 45% 60%;
-    --primary-foreground: 220 20% 10%;
+    /* Primary: brand navy #1E2A4A with white text */
+    --primary: 222 42% 21%;
+    --primary-foreground: 0 0% 100%;
 
     /* Secondary: Charcoal #111827 */
     --secondary: 220 26% 11%;
@@ -46,7 +46,7 @@
 
     --border: 40 20% 88%;
     --input: 40 20% 88%;
-    --ring: 40 45% 60%;
+    --ring: 222 42% 21%;
 
     --radius: 0.75rem;
 
@@ -93,7 +93,7 @@
     --shadow-2xl: 0 25px 50px -12px hsl(220 26% 11% / 0.25);
 
     /* Gold glow for premium elements */
-    --glow-gold: 0 0 40px hsl(40 45% 60% / 0.4), 0 0 80px hsl(40 45% 60% / 0.2);
+    --glow-gold: 0 0 40px hsl(222 42% 21% / 0.35), 0 0 80px hsl(222 42% 21% / 0.18);
     --glow-teal: 0 0 40px hsl(190 64% 34% / 0.3), 0 0 80px hsl(190 64% 34% / 0.15);
 
     --tracking-normal: 0em;
@@ -111,9 +111,9 @@
     --popover: 220 26% 14%;
     --popover-foreground: 40 33% 96%;
 
-    /* Primary: Gold */
-    --primary: 40 50% 55%;
-    --primary-foreground: 220 26% 9%;
+    /* Primary: brand navy, lifted so it reads on the dark theme; white text */
+    --primary: 222 58% 52%;
+    --primary-foreground: 0 0% 100%;
 
     /* Secondary */
     --secondary: 40 20% 20%;
@@ -134,7 +134,7 @@
 
     --border: 220 20% 20%;
     --input: 220 20% 20%;
-    --ring: 40 50% 55%;
+    --ring: 222 58% 52%;
 
     --chat-user: 220 26% 16%;
     --chat-assistant: 220 26% 12%;
@@ -164,7 +164,7 @@
     --shadow-xl: 0 20px 25px -5px hsl(0 0% 0% / 0.4), 0 8px 10px -6px hsl(0 0% 0% / 0.35);
     --shadow-2xl: 0 25px 50px -12px hsl(0 0% 0% / 0.5);
 
-    --glow-gold: 0 0 40px hsl(40 50% 55% / 0.5), 0 0 80px hsl(40 50% 55% / 0.25);
+    --glow-gold: 0 0 40px hsl(222 58% 52% / 0.45), 0 0 80px hsl(222 58% 52% / 0.22);
     --glow-teal: 0 0 40px hsl(190 64% 40% / 0.4), 0 0 80px hsl(190 64% 40% / 0.2);
   }
 }
@@ -290,7 +290,7 @@
 
   /* Gradient text */
   .text-gradient-gold {
-    background: linear-gradient(135deg, hsl(40 45% 60%), hsl(40 60% 70%));
+    background: linear-gradient(135deg, hsl(222 42% 21%), hsl(222 42% 32%));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
